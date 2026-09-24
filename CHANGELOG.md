@@ -28,6 +28,12 @@ Versions come from git tags (see [publishing](docs/publishing.md)): a `v*` tag r
   `"method": "letters"`; nothing is fitted. JevK5's knockout reads more than 16 options.
   `scripts/letters_parity.py` compares the probabilities with each runtime on its README examples.
 
+- **Opt-in OpenTelemetry export** (`JUL_ENABLE_TELEMETRY=1`, `pip install "jul[otel]"`): metrics (`jul.session.count`,
+  `jul.decision.count`, `jul.token.usage`, `jul.request.duration`, `jul.decision.confidence`, `jul.request.error.count`)
+  and events (`jul.request`, `jul.decision`, `jul.request_error`) to the collector set by the standard `OTEL_*`
+  variables, named after Claude Code's. State, question details and probabilities stay out unless switched on
+  (`JUL_OTEL_LOG_*`); off, OpenTelemetry is never imported. See [docs/telemetry.md](docs/telemetry.md) (#6).
+
 ### Changed
 
 - The encoder and onnx cuts were a `warnings.warn` shown once per call site; they are now logged on every
