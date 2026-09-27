@@ -1,0 +1,15 @@
+{
+  "name": "usejul",
+  "description": "Agent skills for building with JuL: local typed decisions with the Jev SDK's API.",
+  "owner": {
+    "name": "JuL",
+    "url": "https://usejul.github.io/jul/"
+  },
+  "plugins": [
+    {
+      "name": "jul",
+      "description": "Write JuL questions, tune them on your data, and deploy them (serve, pack, AWS Lambda)",
+      "source": "./"
+    }
+  ]
+}

@@ -203,6 +203,7 @@ ships only the model(s) the questions need. Step by step, with the AWS CLI or CD
 - [Deployment](https://github.com/usejul/jul/blob/main/docs/deployment.md): `jul pack`, ONNX bundles, AWS Lambda
 - [Serving over HTTP](https://github.com/usejul/jul/blob/main/docs/serve.md): `jul serve`
 - [Command line](https://github.com/usejul/jul/blob/main/docs/cli.md): every command and file format
+- [Agent skills](https://github.com/usejul/jul/blob/main/docs/agent-skills.md): skills for Claude Code, Codex and other coding agents
 - [Benchmarks](https://github.com/usejul/jul/blob/main/docs/benchmarks.md): full results and how to reproduce them
 - [Development](https://github.com/usejul/jul/blob/main/docs/development.md) and [Publishing](https://github.com/usejul/jul/blob/main/docs/publishing.md)
 

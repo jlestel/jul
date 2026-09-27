@@ -1,0 +1,12 @@
+{
+  "name": "jul",
+  "version": "0.1.0",
+  "description": "Agent skills for building with JuL: local typed decisions with the Jev SDK's API.",
+  "author": {
+    "name": "JuL",
+    "url": "https://usejul.github.io/jul/"
+  },
+  "homepage": "https://usejul.github.io/jul/",
+  "repository": "https://github.com/usejul/jul",
+  "license": "Apache-2.0"
+}
