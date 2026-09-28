@@ -16,6 +16,10 @@ Versions come from git tags (see [publishing](docs/publishing.md)): a `v*` tag r
   every option in one pass), mixed with the vector reading (`mix`).
 - A preset's `cross` entry may name a repo for some backends only (`{"torch": ...}`); the others read with
   the vectors.
+- **Contrastive models (CLM-8B)**: `jul models add clm-8b --repo Contrastive-LM/CLM-v0.1-8B` converts CLM's
+  projection heads once and runs them on their frozen Qwen3-8B, on MLX (8-bit) or torch (bf16), without vLLM.
+  Same texts as CLM's `build_pairs`; CLM's reference answers reproduced within 0.025. `autotune` trains its heads
+  on the encoder embedding. `jul/contrastive.py`, docs/models.md#contrastive-models-clm-8b.
 
 ## 0.3.0 — 2026-09-28
 
