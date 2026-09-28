@@ -196,8 +196,8 @@ REFERENCE = [  # CLM README / independent runs on vLLM (bf16): state, question, 
 
 @pytest.mark.slow
 def test_clm_reference_answers():
-    """Needs a preset added with `jul models add clm-8b --repo Contrastive-LM/CLM-v0.1-8B` (~16 GB torch,
-    ~4.6 GB MLX 4-bit)."""
+    """Needs a preset added with `jul models add clm-8b --repo Contrastive-LM/CLM-v0.1-8B` (16 GB bf16 on
+    torch, 8.7 GB 8-bit on MLX). Passes on MLX 8-bit; 4-bit gives urgency 0.713 and fails the first case."""
     from jul import TypeSafeClient
     client = TypeSafeClient(model=os.environ.get("JUL_CLM_PRESET", "clm-8b"))
     for state, q, ok in REFERENCE:

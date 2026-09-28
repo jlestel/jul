@@ -35,11 +35,12 @@ from .types import NOUL_DEFAULTS, Option
 
 SPEC_FILE = "contrastive.json"
 HEADS_FILE = "heads.npz"
-#: The reference head and the backbone it was trained on, per backend. MLX has no bf16 Qwen3-8B from
-#: Qwen; the 4-bit community conversion moves the embeddings (measured in the PR, see tests).
+#: The reference head and the backbone it was trained on, per backend. On MLX, 8-bit: on CLM's reference
+#: requests (M1 Pro) it answers within 0.02 of bf16 vLLM (urgency 0.865 vs 0.84-0.85), while 4-bit moves
+#: the Noul to 0.713 (same argmax). `python -m jul.contrastive convert --backbone-mlx` picks another.
 CLM_REPO = "Contrastive-LM/CLM-v0.1-8B"
 CLM_FILE = "CLM_v0.1-8B.pt"
-CLM_BACKBONE = {"torch": "Qwen/Qwen3-8B", "mlx": "mlx-community/Qwen3-8B-4bit"}
+CLM_BACKBONE = {"torch": "Qwen/Qwen3-8B", "mlx": "mlx-community/Qwen3-8B-8bit"}
 
 
 # --- the texts, as CLM's schema.py writes them --------------------------------------------------
