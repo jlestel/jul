@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>JuL — Just use Less</title>
-<meta name="description" content="Typed decisions from a local LLM. Calibrated probabilities in 55 ms, on your own machine, ahead of Jev on its own benchmark. No API, no tokens generated.">
+<meta name="description" content="One JuL to rule them all: turn any model into a typed decider. Calibrated probabilities from a local 4B, an encoder, Ollama or OpenAI embeddings; escalate only the unsure questions.">
 <meta property="og:title" content="JuL — Just use Less">
-<meta property="og:description" content="Typed decisions from a local LLM. Ahead of Jev. 55 ms. 2.6 GB. Zero tokens generated. Zero bytes sent.">
+<meta property="og:description" content="Any model, tested as a decider. Local by default, escalate only the hard ones. Same calls as Jev's SDK.">
 <meta name="theme-color" content="#0a0600">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230a0600'/%3E%3Ctext x='2' y='12' font-family='monospace' font-size='11' fill='%23ffb000'%3E%3E_%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -290,7 +290,7 @@ ul.dos b { font-weight: 400; background: var(--ph); color: var(--ink); text-shad
 </div>
 
 <nav class="menubar" aria-label="Main">
-  <span class="brand">▓ JuL-DOS 0.1</span>
+  <span class="brand">▓ JuL-DOS 0.3</span>
   <a href="#install"><u>I</u>nstall</a>
   <a href="#bench"><u>B</u>ench</a>
   <a href="#how"><u>H</u>ow</a>
@@ -314,28 +314,61 @@ ul.dos b { font-weight: 400; background: var(--ph); color: var(--ink); text-shad
 ╚█████╔╝╚██████╔╝███████╗
  ╚════╝  ╚═════╝ ╚══════╝</pre>
       <div>
-        <p class="eyebrow">JUST USE LESS · v0.3 · APACHE-2.0</p>
-        <h1>Decisions, not chat.<br>On your machine.</h1>
+        <p class="eyebrow">JUST USE LESS · v0.3 · APACHE-2.0 · EVERY MODEL, ONE WAY TO DECIDE.</p>
+        <h1>One JuL to<br>rule them all.</h1>
         <p class="tag">
-          Ask a typed question, get a <b>calibrated probability per option</b>.
-          A 4B model read once, stopped one step before its first word:
-          no API, no tokens generated, no data leaving the box.
+          Not a router for text: JuL turns <b>any model into a typed decider</b>. Ask Choice, Noul or Score
+          questions, get a calibrated probability per option, from a 4B model on your Mac, a 90 MB encoder in a
+          Lambda, Ollama, OpenAI or Mistral embeddings, or your own. Measure them on your data, keep the one that
+          wins, and escalate only the questions it is unsure about.
           Same calls as Jev's SDK: change one import.
         </p>
         <div class="cta">
-          <a class="primary" href="#install">[ INSTALL ]</a>
-          <a href="https://github.com/usejul/jul">[ SOURCE ]</a>
-          <a href="#bench">[ NUMBERS ]</a>
+          <a class="primary" href="#anymodel">[ TRY ANY MODEL ]</a>
+          <a href="#escalate">[ ESCALATE ]</a>
         </div>
+        <p class="note" style="margin-top:1em">Local by default: 0 tokens generated · 0 bytes sent · no key · $0 per call.</p>
       </div>
       <p class="hero-foot">It has nothing to say, and it says it in 55 milliseconds.<span class="blink">_</span></p>
     </div>
   </section>
 
   <!-- ── STATS ──────────────────────────────────────────────── -->
-  <section class="win c12" data-title="VS_JEV.EXE" id="vs">
+
+  <!-- ── ANY MODEL / ESCALATE ───────────────────────────────── -->
+  <section class="win c6" data-title="ANYMODEL.EXE" id="anymodel">
+    <p class="eyebrow">ANY MODEL · ONE COMMAND · MEASURED</p>
+    <h2 class="h">Any model, tested as a decider.</h2>
+<pre class="scroll">C:\> jul models add qwen3-emb \
+       --repo ollama:qwen3-embedding:0.6b --backend api
+<span class="dim">qwen3-emb on api: center options, tau 0.05019
+  dev accuracy 0.635 ± 0.034 (n=200); ECE 0.172; 2237 ms per decision</span>
+C:\> jul ask choice "Which team?" -o billing -o tech \
+       --state "I was charged twice" --model qwen3-emb --backend api</pre>
+    <p style="margin-top:1em">A model on the Hugging Face Hub, an embeddings API (Ollama, OpenAI, Mistral, Voyage, any
+    OpenAI-compatible), your own fine-tune: <code>jul models add</code> fits it on development sets and tells you
+    how good a decider it is. Then the same code uses it. Some models are weak zero-shot: <b>measure, keep the one
+    that wins on your data</b>.</p>
+    <p class="note">Numbers above are from a real run (Ollama on a CPU, hence 2.2 s), output trimmed. <a href="docs/hub.html">Every model, backend and provider →</a></p>
+  </section>
+
+  <section class="win c6" data-title="ESCALATE.EXE" id="escalate">
+    <p class="eyebrow">LOCAL FIRST · A BIGGER DECIDER WHEN UNSURE</p>
+    <h2 class="h">Escalate only the hard ones.</h2>
+<pre class="scroll">question ──► local 4B (97 ms on an A10G, no API bill)
+               ├─ confidence ≥ 0.8 ──► answer
+               └─ unsure ──► Jev · Clef · Nimble · your server</pre>
+    <p style="margin-top:1em">On the decision bench (2,108 Choice, Noul and Score questions), with
+    <code>jul-decision-wemm-4b</code> local and Jev as the next tier at a 0.8 bar:
+    <b>80% of the questions stay local</b>, and accuracy goes from 0.849 (local alone) to 0.866.
+    Choice and Noul mostly stay local (95% and 89%); Score questions mostly go up (93%).</p>
+    <p class="note">Computed from the recorded predictions of both systems on the bench, not a live run; the share
+    depends on your data and your bar. <a href="docs/serve.html#escalation-local-first-a-bigger-decider-when-unsure">How to set it up →</a></p>
+  </section>
+
+  <section class="win c12" data-title="CHOOSE.EXE" id="vs">
     <div class="vs-head">
-      <p class="eyebrow">YOUR MACHINE VS JEV'S API · JEV'S OWN BENCHMARK</p>
+      <p class="eyebrow">CHOOSE YOUR MODEL · AG NEWS, BANKING77, EMOTION · 300 EXAMPLES</p>
       <div class="chart-bar vs-models" role="group" aria-label="Model">
         <button type="button" data-vs-model="wemm-4b-4bit" aria-pressed="true">[ WEMM-4B-4BIT ]</button>
         <button type="button" data-vs-model="f2llm-1.7b" aria-pressed="false">[ F2LLM-1.7B ]</button>
@@ -368,7 +401,7 @@ ul.dos b { font-weight: 400; background: var(--ph); color: var(--ink); text-shad
         <pre class="minibars" id="kpi-gb-b"></pre>
       </div>
     </div>
-    <p class="vs-foot">0 tokens generated · 0 bytes sent · no key · $0 per call. <span class="dim">Jev: every text goes to an API.</span></p>
+    <p class="vs-foot">0 tokens generated · 0 bytes sent · no key · $0 per call.</p>
     <p class="note" id="kpi-note"></p>
   </section>
 
@@ -383,8 +416,8 @@ ul.dos b { font-weight: 400; background: var(--ph); color: var(--ink); text-shad
 
   <!-- ── BENCH CHART ────────────────────────────────────────── -->
   <section class="win c5" data-title="BENCH.CHT" id="chart">
-    <p class="eyebrow">JEV BENCH · 300 EXAMPLES</p>
-    <h2 class="h" id="chart-title">Ahead of Jev.</h2>
+    <p class="eyebrow">AG NEWS · BANKING77 · EMOTION · 300 EXAMPLES</p>
+    <h2 class="h" id="chart-title">Accuracy, zero-shot.</h2>
     <div class="chart-bar" role="group" aria-label="Metric">
       <button type="button" data-metric="acc" aria-pressed="true">[ ACCURACY ]</button>
       <button type="button" data-metric="ms" aria-pressed="false">[ LATENCY ]</button>
@@ -473,8 +506,8 @@ r.choices["team"].probabilities  <span class="dim"># {"billing": 0.88, ...}</spa
 
   <!-- ── BENCH ──────────────────────────────────────────────── -->
   <section class="win c12" data-title="BENCH.TXT" id="bench">
-    <p class="eyebrow">ZERO-SHOT · JEV'S PUBLISHED BENCHMARK · 300 EXAMPLES</p>
-    <h2 class="h">Jev's own benchmark, beaten by 12 points.</h2>
+    <p class="eyebrow">ZERO-SHOT · AG NEWS, BANKING77, EMOTION · 300 EXAMPLES</p>
+    <h2 class="h">Up to 0.877 zero-shot, 0.897 with labels.</h2>
 <div class="scroll bench-wrap">
     <table class="bench" id="bench-table" aria-label="Benchmark table, sortable by column">
       <thead><tr><th scope="col"><button type="button">MODEL</button></th><th scope="col" data-best="max"><button type="button">AG NEWS</button></th><th scope="col" data-best="max"><button type="button">BANKING77</button></th><th scope="col" data-best="max"><button type="button">EMOTION</button></th><th scope="col" data-best="max"><button type="button">MEAN</button></th><th scope="col" data-best="min"><button type="button">ECE ↓</button></th><th scope="col" data-best="min"><button type="button">P50</button></th><th scope="col" data-best="min"><button type="button">MEMORY</button></th></tr></thead>
@@ -485,25 +518,23 @@ r.choices["team"].probabilities  <span class="dim"># {"billing": 0.88, ...}</spa
         <tr><th scope="row">jul f2llm-4b ²</th><td data-v="0.89">0.89</td><td data-v="0.82">0.82</td><td data-v="0.81">0.81</td><td data-v="0.84">0.840</td><td data-v="0.09">0.090</td><td data-v="46">46 ms</td><td data-v="3.0">3.0 GB</td></tr>
         <tr><th scope="row">jul f2llm-1.7b ²</th><td data-v="0.91">0.91</td><td data-v="0.67">0.67</td><td data-v="0.87">0.87</td><td data-v="0.817">0.817</td><td data-v="0.082">0.082</td><td data-v="24">24 ms</td><td data-v="1.0">1.0 GB</td></tr>
         <tr><th scope="row">jul minicpm5-2b-decision ¹</th><td data-v="0.91">0.91</td><td data-v="0.79">0.79</td><td data-v="0.69">0.69</td><td data-v="0.796">0.796</td><td data-v="0.133">0.133</td><td data-v="217">217 ms</td><td data-v="1.3">1.3 GB</td></tr>
-        <tr class="jev"><th scope="row">Jev (published)</th><td data-v="0.91">0.91</td><td data-v="0.87">0.87</td><td data-v="0.48">0.48</td><td data-v="0.753">0.753</td><td data-v="0.156">0.156</td><td data-v="246">246 ms</td><td data-v="">hosted</td></tr>
         <tr><th scope="row">jul harrier-0.6b ²</th><td data-v="0.72">0.72</td><td data-v="0.52">0.52</td><td data-v="0.76">0.76</td><td data-v="0.667">0.667</td><td data-v="0.144">0.144</td><td data-v="13">13 ms</td><td data-v="0.31">0.31 GB</td></tr>
         <tr><th scope="row">jul-decision-e5-small ³</th><td data-v="0.72">0.72</td><td data-v="0.59">0.59</td><td data-v="0.36">0.36</td><td data-v="0.557">0.557</td><td data-v="0.14">0.140</td><td data-v="4">4 ms</td><td data-v="0.09">0.09 GB</td></tr>
         <tr><th scope="row">jul minicpm5-2b</th><td data-v="0.8">0.80</td><td data-v="0.59">0.59</td><td data-v="0.46">0.46</td><td data-v="0.617">0.617</td><td data-v="0.113">0.113</td><td data-v="64">64 ms</td><td data-v="2.7">2.7 GB</td></tr>
-        <tr><th scope="row">GLiNER2.5 (published)</th><td data-v="0.7">0.70</td><td data-v="0.61">0.61</td><td data-v="0.44">0.44</td><td data-v="0.583">0.583</td><td data-v="0.101">0.101</td><td data-v="128">128 ms</td><td data-v="">—</td></tr>
       </tbody>
     </table>
     </div>
     <p class="note">Click a column to sort. Highlighted: the best value in each column.</p>
     <div class="two" style="margin-top:1.2em">
       <ul class="dos">
-        <li><span>² Embedding LLMs (Tencent, CodeFuse-AI, Microsoft), read by jul like any other model: <code>jul models add</code>. <b>Better calibrated than Jev, every one.</b></span></li>
+        <li><span>² Embedding LLMs (Tencent, CodeFuse-AI, Microsoft), read by jul like any other model: <code>jul models add</code>.</span></li>
         <li><span>Banking77 and Emotion are in MTEB, which embedding models train on. AG News is not: there, <b>wemm-9b scores 0.97 against 0.91</b>.</span></li>
-        <li><span>¹ Trained on these three tasks' training splits. On six sources neither model trained on, Jev leads: 0.857 against 0.721.</span></li>
+        <li><span>¹ Trained on these three tasks' training splits. On six sources it never trained on: 0.721.</span></li>
       </ul>
       <ul class="dos">
         <li><span>⁴ WeMM-Embedding-4B, 4-bit, with LoRA adapters for yes/no and scores, switched off for Choice: this benchmark asks only Choice questions, so these are its vectors' numbers. On Kev's typed decisions, never trained on, the adapters take <b>yes/no from 0.762 to 0.841</b>, one model in memory.</span></li>
-        <li><span>With 1,000 labeled examples, <b>jul-decision-wemm-4b-4bit reaches 0.897</b> and 0.94 on Banking77. Harrier-0.6B passes Jev in 0.31 GB at 13 ms.</span></li>
-        <li><span>³ multilingual-e5-small trained on jul decisions (ONNX, 8-bit, M4 Pro): 4 ms per text. <b>With a hybrid head (vectors + TF-IDF) it reaches 0.780</b>, above Jev. Its cross model takes yes/no from 0.579 to 0.726 on Kev's typed decisions. It fits in <a href="docs/aws-lambda.html">an AWS Lambda</a>: 17 ms, $0.59 per million.</span></li>
+        <li><span>With 1,000 labeled examples, <b>jul-decision-wemm-4b-4bit reaches 0.897</b> and 0.94 on Banking77. Harrier-0.6B reaches 0.814 in 0.31 GB at 13 ms.</span></li>
+        <li><span>³ multilingual-e5-small trained on jul decisions (ONNX, 8-bit, M4 Pro): 4 ms per text. <b>With a hybrid head (vectors + TF-IDF) it reaches 0.780</b>. Its cross model takes yes/no from 0.579 to 0.726 on Kev's typed decisions. It fits in <a href="docs/aws-lambda.html">an AWS Lambda</a>: 17 ms, $0.59 per million.</span></li>
         <li><span>100 rows per dataset: ±5 points per cell, ±3 on the mean. If a bag of words solves your task, use it: <a href="https://github.com/usejul/jul#the-baseline-worth-remembering">we measured that too</a>.</span></li>
       </ul>
     </div>
@@ -903,9 +934,8 @@ latency per decision, and the answer to the ticket.</pre>
     if (actions[k]) { e.preventDefault(); actions[k](); }
   });
 
-  // ── jul vs Jev: one model, three KPIs, Jev beside each ─────────────────
+  // ── one model, three KPIs ─────────────────────────────────────────
   // acc, ms, gb, where the latency was measured; tuned: acc, ms, where
-  const VS_JEV = { acc: .753, ms: 246 };
   const VS = {
     "wemm-4b-4bit": { zs: [.857, 55, 2.6, "M5 Max"], tuned: [.897, 59, 2.6, "M5 Max"], label: "WeMM-Embedding-4B",
                       slow: "about 145 ms on an M4 Pro" },
@@ -920,12 +950,11 @@ latency per decision, and the answer to the ticket.</pre>
   const vs = { model: "wemm-4b-4bit", mode: "zs" };
   const KB = 20;
   const kbar = (v, max) => { const n = Math.max(1, Math.round(Math.min(v, max) / max * KB)); return "█".repeat(n) + "░".repeat(KB - n); };
-  const setBars = (id, julTxt, jevTxt) => {
+  const setBars = (id, julTxt) => {
     const el = document.getElementById(id);
     el.innerHTML = "";
-    const a = document.createElement("div"); a.textContent = "jul " + julTxt;
-    const b = document.createElement("div"); b.className = "jev"; b.textContent = "Jev " + jevTxt;
-    el.append(a, b);
+    const a = document.createElement("div"); a.textContent = julTxt;
+    el.append(a);
   };
   const setDelta = (id, text, kind) => { const el = document.getElementById(id); el.textContent = text; el.className = "delta " + kind; };
   const tween = (id, to, digits) => {
@@ -946,20 +975,17 @@ latency per decision, and the answer to the ticket.</pre>
     tween("kpi-acc", acc * 100, 1);
     tween("kpi-ms", ms, 0);
     tween("kpi-gb", gb, gb < 1 ? 2 : 1);
-    const d = (acc - VS_JEV.acc) * 100;
-    setDelta("kpi-acc-d", (d >= 0 ? "▲ +" : "▼ −") + Math.abs(d).toFixed(1) + " pts vs Jev", d > 0 ? "win" : "lose");
-    setBars("kpi-acc-b", kbar(acc, 1) + " " + (acc * 100).toFixed(1) + "%", kbar(VS_JEV.acc, 1) + " " + (VS_JEV.acc * 100).toFixed(1) + "%");
-    const x = VS_JEV.ms / ms;
-    setDelta("kpi-ms-d", "▲ " + x.toFixed(1) + "× faster than Jev", "win");
-    setBars("kpi-ms-b", kbar(ms, 280) + " " + ms + " ms", kbar(VS_JEV.ms, 280) + " " + VS_JEV.ms + " ms");
+    setDelta("kpi-acc-d", vs.mode === "tuned" ? "with 1,000 labels per task" : "no example of the task", "even");
+    setBars("kpi-acc-b", kbar(acc, 1) + " " + (acc * 100).toFixed(1) + "%");
+    setDelta("kpi-ms-d", "0 tokens generated", "even");
+    setBars("kpi-ms-b", kbar(ms, 280) + " " + ms + " ms");
     setDelta("kpi-gb-d", "on your machine", "even");
     document.getElementById("kpi-gb-t").textContent = `MEMORY · ${m.bits || 4}-BIT`;
-    setBars("kpi-gb-b", kbar(gb, 10) + " " + (gb < 1 ? gb.toFixed(2) : gb.toFixed(1)) + " GB", "·".repeat(KB) + " hosted");
+    setBars("kpi-gb-b", kbar(gb, 10) + " " + (gb < 1 ? gb.toFixed(2) : gb.toFixed(1)) + " GB");
     document.getElementById("kpi-note").textContent =
-      `${m.label}${vs.mode === "tuned" ? " + autotune (1,000 labeled examples per task; Jev gets none)" : ", zero-shot"}. ` +
+      `${m.label}${vs.mode === "tuned" ? " + autotune (1,000 labeled examples per task)" : ", zero-shot"}. ` +
       `Latency on an ${hw}` + (m.slow ? `; ${m.slow}.` : ".") +
-      (vs.mode === "tuned" && m.extra ? m.extra : "") + (m.always || "") +
-      " Jev's latency includes the network; its memory is not published.";
+      (vs.mode === "tuned" && m.extra ? m.extra : "") + (m.always || "");
     document.querySelectorAll("[data-vs-model]").forEach(b => b.setAttribute("aria-pressed", b.dataset.vsModel === vs.model));
     document.querySelectorAll("[data-vs-mode]").forEach(b => b.setAttribute("aria-pressed", b.dataset.vsMode === vs.mode));
     document.getElementById("kpi-mode").textContent = vs.mode === "tuned" ? "+AUTOTUNE" : "ZERO-SHOT";
@@ -1010,23 +1036,21 @@ latency per decision, and the answer to the ticket.</pre>
     ["2b-decision",  .91, .79, .69, .796, .133, 217, 1.3,  null],
     ["harrier-0.6b", .72, .52, .76, .667, .144,  13, 0.31, [.91, .71, .83, .814, null,  13]],
     ["e5-decision",  .72, .59, .36, .557, .140,   4, 0.09, [.92, .88, .54, .780, .088,   4]],
-    [JEV,            .91, .87, .48, .753, .156, 246, null, "same"],
     ["minicpm5-2b",  .80, .59, .46, .617, .113,  64, 2.7,  [.92, .76, .59, .757, .102,  38]],
-    ["GLiNER2.5",    .70, .61, .44, .583, .101, 128, null, "same"],
   ];
   const FULL = { "wemm-4bit-dec": "jul-decision-wemm-4b-4bit (4-bit; wemm-4b is the full-precision model)", "e5-decision": "jul-decision-e5-small (hybrid head when tuned)",
                  "2b-decision": "minicpm5-2b-decision" };
   const chart = { metric: "acc", mode: "zs" };
   const rowsEl = document.getElementById("chart-rows"), infoEl = document.getElementById("chart-info");
   const TITLES = {
-    acc: { zs: "Ahead of Jev.", tuned: "Further ahead, with labels." },
+    acc: { zs: "Accuracy, zero-shot.", tuned: "Accuracy, with labels." },
     ms: { zs: "Faster than a round trip.", tuned: "Faster than a round trip." },
     gb: { zs: "Fits beside your 400 tabs.", tuned: "Fits beside your 400 tabs." },
   };
   const NOTES = {
-    acc: "Mean accuracy over AG News, Banking77 and Emotion, in points against Jev. Bars start at Jev's 0.753.",
-    ms: "p50 per decision. Embedding models on an M5 Max; minicpm5-2b, jul-decision-e5-small and minicpm5-2b-decision on an M4 Pro, where jul-decision-wemm-4b-4bit takes 146 ms. Jev is an API: its figure includes the network.",
-    gb: "Memory held by the model, 4-bit unless noted (jul-decision-e5-small: 8-bit ONNX). Jev and GLiNER: not measured here.",
+    acc: "Mean accuracy over AG News, Banking77 and Emotion.",
+    ms: "p50 per decision. Embedding models on an M5 Max; minicpm5-2b, jul-decision-e5-small and minicpm5-2b-decision on an M4 Pro, where jul-decision-wemm-4b-4bit takes 146 ms.",
+    gb: "Memory held by the model, 4-bit unless noted (jul-decision-e5-small: 8-bit ONNX).",
   };
   const view = () => BENCH.flatMap(([label, ag, b77, emo, mean, ece, ms, gb, t]) => {
     if (chart.mode === "tuned") {
@@ -1044,8 +1068,7 @@ latency per decision, and the answer to the ticket.</pre>
   const line = r => {
     const name = (r.label + (r.fixed ? "*" : "")).padEnd(13);
     if (chart.metric === "acc") {
-      const d = (r.mean - .753) * 100;
-      return name + diverge(d) + " " + (r.label === JEV ? " 0.753" : (d >= 0 ? "+" : "−") + Math.abs(d).toFixed(1));
+      return name + hbar(r.mean, 1) + " " + r.mean.toFixed(3);
     }
     if (chart.metric === "ms") return name + hbar(r.ms, 280) + String(r.ms).padStart(5) + " ms";
     return name + (r.gb == null ? "·".repeat(CW) : hbar(r.gb, 9.5)) + " " + fmtGb(r.gb);
@@ -1070,7 +1093,7 @@ latency per decision, and the answer to the ticket.</pre>
     const axis = document.createElement("div"); axis.className = "axis";
     const pad = " ".repeat(13);
     axis.textContent = chart.metric === "acc"
-      ? pad + "├────────┼────────┤\n" + pad + "−24".padEnd(8) + "Jev" + "+24".padStart(8) + " pts"
+      ? pad + "├────────┼───────┤\n" + pad + "0".padEnd(15) + "1.0"
       : pad + "├────────┼───────┤\n" + pad + "0".padEnd(15) + (chart.metric === "ms" ? "280 ms" : "9.5 GB");
     rowsEl.appendChild(axis);
     infoEl.textContent = info(rows[0]);
@@ -1079,7 +1102,7 @@ latency per decision, and the answer to the ticket.</pre>
     if (rowsEl.scrollWidth > rowsEl.clientWidth)
       rowsEl.style.fontSize = Math.max(9, Math.floor(base * rowsEl.clientWidth / rowsEl.scrollWidth * 10) / 10) + "px";
     document.getElementById("chart-title").textContent = TITLES[chart.metric][chart.mode];
-    document.getElementById("chart-note").textContent = NOTES[chart.metric] + (chart.mode === "tuned" ? " +autotune: 1,000 labeled examples per task; * Jev and GLiNER get no task data." : "");
+    document.getElementById("chart-note").textContent = NOTES[chart.metric] + (chart.mode === "tuned" ? " +autotune: 1,000 labeled examples per task." : "");
     document.querySelectorAll("[data-metric]").forEach(b => b.setAttribute("aria-pressed", b.dataset.metric === chart.metric));
     document.querySelectorAll("[data-mode]").forEach(b => b.setAttribute("aria-pressed", b.dataset.mode === chart.mode));
   };
