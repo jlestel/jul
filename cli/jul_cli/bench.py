@@ -500,7 +500,7 @@ def render(report: dict, ink: Ink | None = None) -> str:
                         f"{run['ci95'][0] * 100:4.0f}–{run['ci95'][1] * 100:3.0f}%     {run['latency_ms_p50']:>8.0f}")
                 lines.append(ink.inv(cell) if star and ink.on else (cell + "  ◄" if star else cell))
         if rec:
-            p, b = rec["pick"], rec["best"]
+            p = rec["pick"]
             lines.append("")
             if rec["candidates"] == 1:
                 lines.append(ink.ph(f"► {p['model']} ({p['setting']})"))
