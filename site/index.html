@@ -317,11 +317,10 @@ ul.dos b { font-weight: 400; background: var(--ph); color: var(--ink); text-shad
         <p class="eyebrow">JUST USE LESS · v0.4 · APACHE-2.0 · EVERY MODEL, ONE WAY TO DECIDE.</p>
         <h1>One JuL to<br>rule them all.</h1>
         <p class="tag">
-          Not a router for text: JuL turns <b>any model into a typed decider</b>. Ask Choice, Noul or Score
-          questions, get a calibrated probability per option, from a 4B model on your Mac, a 90 MB encoder in a
-          Lambda, Ollama, OpenAI or Mistral embeddings, or your own. Measure them on your data, keep the one that
-          wins, and escalate only the questions it is unsure about.
-          Same calls as Jev's SDK: change one import.
+          Not a router for text: JuL turns <b>any model into a typed decider</b>. Run Kev-format decision models,
+          embedding LLMs, a 90 MB encoder in a Lambda, Ollama, OpenAI or Mistral embeddings, or your own, behind
+          one API. Measure them on your data, keep the one that wins, and <b>route the unsure questions to Jev</b>,
+          a Kev server or any System One endpoint. Same calls as Jev's SDK: change one import.
         </p>
         <div class="cta">
           <a class="primary" href="#anymodel">[ TRY ANY MODEL ]</a>
@@ -364,6 +363,23 @@ C:\> jul ask choice "Which team?" -o billing -o tech \
     Choice and Noul mostly stay local (95% and 89%); Score questions mostly go up (93%).</p>
     <p class="note">Computed from the recorded predictions of both systems on the bench, not a live run; the share
     depends on your data and your bar. <a href="docs/serve.html#escalation-local-first-a-bigger-decider-when-unsure">How to set it up →</a></p>
+  </section>
+
+  <!-- ── WORKS WITH ─────────────────────────────────────────── -->
+  <section class="win c12" data-title="DRIVERS.SYS" id="drivers">
+    <p class="eyebrow">ONE API · EVERY DECIDER YOU ALREADY HEARD OF</p>
+    <h2 class="h">Run them, or route to them.</h2>
+<pre class="scroll">DEVICE              WHAT JUL DOES                          HOW
+Kev models          runs them locally (decision.json)      jul models add NAME --repo HF_REPO
+Kev server          routes unsure questions to it          jul serve --escalate-to https://...
+Jev (TypeSafe)      routes unsure questions to it          jul serve --escalate-to typesafe
+Clef · Nimble       routes unsure questions to them        --escalate-to cloudflare | ollama
+Embedding LLMs      runs them locally (MLX, PyTorch)       jul models add NAME --repo HF_REPO
+Encoders            runs them on CPU, in a Lambda (ONNX)   --backend onnx
+Embeddings APIs     reads them over HTTP                   --repo ollama:M | openai:M | mistral:M
+Your code           unchanged                              from jul import TypeSafeClient</pre>
+    <p class="note">Same <code>Choice</code> / <code>Noul</code> / <code>Score</code> calls and the same response
+    whichever runs. <a href="docs/hub.html">The hub, in detail →</a></p>
   </section>
 
   <section class="win c12" data-title="CHOOSE.EXE" id="vs">
