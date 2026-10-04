@@ -7,6 +7,15 @@ Versions come from git tags (see [publishing](docs/publishing.md)): a `v*` tag r
 
 ### Added
 
+- **`jul bench`: pick a model on your own data.** `jul bench test.jsonl --train train.jsonl --models
+  jul-decision-e5-small@onnx,minicpm5-2b@torch -O results.json` answers every test row with each model and
+  reports, per question, accuracy with its 95% interval, latency (p50/p95) and the model to pick: the fastest
+  whose interval reaches the best. Each row carries its question (`question, options, state, answer`), so one
+  file can mix questions and types. With `--train` (a separate file) each model is also autotuned and measured
+  again on the same test rows; train and test are checked for overlap first (exact duplicates after folding
+  case, punctuation and digits stop the bench, near duplicates are reported, `--drop-overlap` removes them).
+  `--method` / `--features` (or `auto`) compare the zero-shot readings and autotune heads of each model, one
+  row each. Tables in the site's amber on a terminal, `--json` or `-O file` for the full results.
 - **Embeddings APIs as a backend** (`--backend api`): the vector reading over any embeddings endpoint, local or
   hosted, without the model's weights. `jul models add NAME --repo ollama:qwen3-embedding:0.6b --backend api`
   (also `openai:`, `mistral:`, `voyage:`, or `http(s)://host/v1#model` for any OpenAI-compatible server) fits
