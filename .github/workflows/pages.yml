@@ -1,6 +1,6 @@
 name: Site
 
-# Publishes site/ to GitHub Pages: one static page, no build step.
+# Publishes site/ to GitHub Pages: the one page, plus the documentation built from docs/*.md.
 # Needs Settings > Pages > Source set to "GitHub Actions".
 
 on:
@@ -8,6 +8,10 @@ on:
     branches: [main]
     paths:
       - "site/**"
+      - "docs/**"
+      - "scripts/build_docs.py"
+      - "cli/**"
+      - "CHANGELOG.md"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -28,6 +32,11 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      # --check fails the deploy on a broken link between pages, rather than publishing it.
+      - run: pip install -e ".[docs]" && python scripts/build_docs.py --check
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:

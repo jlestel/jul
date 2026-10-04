@@ -21,3 +21,6 @@ __pycache__/
 
 # written by setuptools-scm at build/install
 lib/jul/_version.py
+
+# built by scripts/build_docs.py (and by .github/workflows/pages.yml on deploy)
+site/docs/
