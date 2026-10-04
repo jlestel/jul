@@ -39,15 +39,24 @@ level (its index or its text).
 ```bash
 jul bench test.jsonl --models jul-decision-e5-small@onnx,minicpm5-2b@torch      # zero-shot
 jul bench test.jsonl --train train.jsonl --models fast,accurate -O results.json   # + autotune
+jul bench test.jsonl --train train.jsonl --models minicpm5-2b@torch --method auto --features auto
 jul bench test.csv --json > results.json
 ```
 
 - **Per question**: accuracy, its 95% Wilson interval, p50/p95 latency (and the mean error for a score).
 - **The pick**: the fastest model whose interval still reaches the best accuracy. When several are within it,
   the report says they cannot be told apart on that many rows: that is the honest answer below ~50 rows.
+- **Readings**: by default each model answers the way it does in production. `--method vector,letters,cross`
+  (or `auto`) measures each zero-shot reading, `--features vector,lexical,hybrid` (or `auto`) each autotune
+  head, the same names as `jul ask --method` and `jul autotune --features`. Every reading gets its own row and
+  the pick is chosen among all of them, so the answer is "this model, read this way". A reading a model cannot
+  take (letters on an embeddings API, anything but its pointer head on a decision model, cross without a cross
+  model) is shown `n/a` with the reason. More readings cost more time, and the best of many on the same rows is
+  slightly optimistic: the report says so.
 - **Autotune** only with `--train`, a separate file you labeled: never a split of the test file. Each model is
   tuned in a throwaway context (nothing saved in `~/.jul`); a head that does not beat zero-shot on its own
-  folds is shown with `*` and not counted. Decision models (pointer) are measured zero-shot only.
+  folds is shown with `*` and not counted, and an autotuned row is only picked if it does better on the test
+  rows. Decision models (pointer) are measured zero-shot only.
 - **Overlap check**, before anything runs: a test text also in train (after folding case, accents,
   punctuation and turning every number into 0, so `van ABC-123 at 11pm` matches `van abc-987 at 10pm`) stops
   the bench; `--drop-overlap` removes those rows from test, `--allow-overlap` runs anyway. Near duplicates

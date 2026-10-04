@@ -14,7 +14,8 @@ Versions come from git tags (see [publishing](docs/publishing.md)): a `v*` tag r
   file can mix questions and types. With `--train` (a separate file) each model is also autotuned and measured
   again on the same test rows; train and test are checked for overlap first (exact duplicates after folding
   case, punctuation and digits stop the bench, near duplicates are reported, `--drop-overlap` removes them).
-  Tables in the site's amber on a terminal, `--json` or `-O file` for the full results.
+  `--method` / `--features` (or `auto`) compare the zero-shot readings and autotune heads of each model, one
+  row each. Tables in the site's amber on a terminal, `--json` or `-O file` for the full results.
 - **Embeddings APIs as a backend** (`--backend api`): the vector reading over any embeddings endpoint, local or
   hosted, without the model's weights. `jul models add NAME --repo ollama:qwen3-embedding:0.6b --backend api`
   (also `openai:`, `mistral:`, `voyage:`, or `http(s)://host/v1#model` for any OpenAI-compatible server) fits

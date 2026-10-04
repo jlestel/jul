@@ -599,6 +599,12 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--models", help="presets or aliases, comma-separated, each optionally @backend "
                                      "(e.g. jul-decision-e5-small@onnx,minicpm5-2b@torch); default: the default model")
     s.add_argument("--backend", **backend_kw)
+    s.add_argument("--method", metavar="M[,M]|auto",
+                   help="zero-shot readings to compare: vector, letters, cross, or auto for every one the model "
+                        "takes (default: the model's own reading)")
+    s.add_argument("--features", metavar="F[,F]|auto",
+                   help="with --train: what the autotune heads read, vector, lexical, hybrid, or auto "
+                        "(default: vector)")
     s.add_argument("--output", "-O", help="also write the full results as JSON to this file")
     s.add_argument("--json", action="store_true", help="print the JSON results instead of the tables")
     s.add_argument("--near", type=float, default=0.8,
