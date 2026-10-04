@@ -412,7 +412,11 @@ def cmd_models_add(a):
     try:
         preset = calibrate(a.name, repo=a.repo, backend=a.backend, data=a.data,
                            n_dev=a.n_dev, n_generic=a.n_generic)
-    except CalibrationError as exc:
+    except (CalibrationError, ValueError) as exc:
+        raise SystemExit(f"error: {exc}") from exc
+    except RuntimeError as exc:   # an embeddings API down or refusing (jul.backends.api.EmbeddingsError)
+        if type(exc).__name__ != "EmbeddingsError":
+            raise
         raise SystemExit(f"error: {exc}") from exc
     from jul import cross as cross_models
     found = a.cross or (None if a.no_cross or not a.repo else cross_models.find(a.repo))

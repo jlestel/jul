@@ -21,8 +21,9 @@ from pathlib import Path
 
 import numpy as np
 
-#: onnx is never picked by default: it reads a model exported for it (jul/backends/onnx_export.py).
-BACKENDS = ("mlx", "torch", "onnx")
+#: onnx and api are never picked by default: onnx reads a model exported for it (jul/backends/onnx_export.py),
+#: api an embeddings endpoint (jul/backends/api.py).
+BACKENDS = ("mlx", "torch", "onnx", "api")
 
 #: Preset name -> repo per backend. A name missing here is used as the repo itself.
 MODELS: dict[str, dict[str, str]] = {
@@ -94,6 +95,8 @@ class Backbone:
                 from .backends.mlx import MLXBackbone as cls
             elif backend == "onnx":
                 from .backends.onnx import ONNXBackbone as cls
+            elif backend == "api":
+                from .backends.api import APIBackbone as cls
             else:
                 from .backends.torch import torch_class
                 cls = torch_class(repo_for(name, "torch"))  # noqa: PLW0642
@@ -107,7 +110,7 @@ class Backbone:
     @property
     def templates(self) -> dict[str, str]:
         """The prompts `jul models add` fits and `formulations_for` picks from, by formulation name."""
-        if self.architecture == "encoder":
+        if self.architecture in ("encoder", "embedding"):
             from .encoder import templates
             return templates(self.text_prefix)
         from .presets import ONE_WORD, QUESTION, QUESTION_OPTIONS

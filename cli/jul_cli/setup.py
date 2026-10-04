@@ -26,7 +26,7 @@ from jul.presets import DEFAULT_MODEL
 
 #: Modules each backend imports; one missing means the extra is not installed.
 BACKEND_MODULES = {"mlx": ("mlx", "mlx_lm"), "torch": ("torch", "transformers", "accelerate"),
-                   "onnx": ("onnxruntime", "tokenizers", "jinja2")}
+                   "onnx": ("onnxruntime", "tokenizers", "jinja2"), "api": ()}
 #: The files a model load reads (the mlx_lm list, plus chat templates): no .bin / .gguf / .pth twins.
 WEIGHT_PATTERNS = ["*.json", "*.safetensors", "*.py", "tokenizer.model", "*.tiktoken", "*.txt", "*.jinja"]
 #: An onnx export (jul/backends/onnx_export.py) holds the graph and its weights instead of safetensors.
@@ -107,6 +107,9 @@ def ensure_preset(model: str, backend: str):
     except ValueError as exc:
         raise SystemExit(str(exc)) from exc
     repo = preset.repos.get(backend)
+    if not repo and backend == "api":
+        raise SystemExit(f"{preset.name!r} is not fitted on an embeddings API. Add one with: jul models add NAME "
+                         f"--repo ollama:qwen3-embedding:0.6b --backend api (or openai:MODEL ...)")
     if not repo:
         raise SystemExit(f"{preset.name!r} has no {backend} weights. "
                          f"Fit it for {backend} with: jul models add {preset.name} --backend {backend}")
@@ -118,6 +121,9 @@ def ensure_preset(model: str, backend: str):
 
 
 def ensure_weights(repo: str, backend: str | None = None) -> None:
+    if backend == "api":
+        _step("weights", f"{repo} (embeddings API, nothing to download)")
+        return
     patterns = weight_patterns(backend)
     if Path(repo).is_dir():
         if not weights_cached(repo, backend):
@@ -137,6 +143,8 @@ def ensure_weights(repo: str, backend: str | None = None) -> None:
 
 
 def weights_cached(repo: str, backend: str | None = None) -> bool:
+    if backend == "api":   # an embeddings endpoint: no weights to download
+        return True
     if Path(repo).is_dir():   # a local model directory (e.g. a decision model added with `jul models add`)
         return any(Path(repo).glob("*.onnx" if backend == "onnx" else "*.safetensors"))
     try:
