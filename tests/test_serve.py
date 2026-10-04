@@ -175,3 +175,54 @@ def test_a_single_option_choice_is_accepted(server):
     status, out = call(url + "/v1/systemone", body)
     assert status == 200 and out["answers"]["action"]["choice"] == "click"
     assert list(fake.calls[-1]["questions"]["action"].criteria) == ["click"]
+
+
+def test_escalation_trace_survives_the_latency(monkeypatch):
+    """With --escalate-to, the server's client is an Escalation; its trace stays next to the latency."""
+    from jul import Escalation
+
+    fake = Escalation([("local", FakeClient())], min_confidence=0.5)
+    monkeypatch.setattr(S, "_client", fake)
+    out = S.classify(JEV_REQUEST)
+    assert out["jul"]["escalation"]["queue"]["tier"] == "local" and "latency_ms" in out["jul"]
+
+
+def test_escalation_does_not_hold_the_lock_during_the_remote_call(monkeypatch):
+    """--escalate-to: the remote round trip runs outside the inference lock; a bad model is still a 400."""
+    from jul import Escalation
+
+    class Remote:
+        model = "remote"
+
+        def system_one(self, state, questions, **kw):
+            assert S._infer_lock.acquire(blocking=False), "remote call made under the inference lock"
+            S._infer_lock.release()
+            return FakeClient().system_one(state, questions)
+
+    class Unsure(FakeClient):
+        def system_one(self, state, questions, model=None, **extras):
+            r = super().system_one(state, questions, model=model, **extras)
+            r.answers = {n: (ScoreAnswer(1.0, {}, {}, 0.1) if isinstance(a, ScoreAnswer) else a)
+                         for n, a in r.answers.items()}
+            return r
+
+    monkeypatch.setattr(S, "_escalate", {"to": "x"})
+    monkeypatch.setattr(S, "_client", Escalation([("local", S._Locked(Unsure())), ("remote", Remote())],
+                                                 min_confidence=0.5))
+    out = S.classify(JEV_REQUEST)
+    assert out["jul"]["escalation"]["urgency"]["tier"] == "remote"
+    with pytest.raises(S.RequestError) as e:
+        S.classify({**JEV_REQUEST, "model": "nope"})
+    assert e.value.status == 400
+
+
+def test_escalate_to_wires_the_tiers(monkeypatch):
+    monkeypatch.setenv("TYPESAFE_API_KEY", "tk")
+    monkeypatch.setattr(S, "_client", None)
+    monkeypatch.setattr(S, "_escalate", {"to": "typesafe", "model": None, "key_env": None, "min_confidence": 0.7})
+    import jul
+    monkeypatch.setattr(jul, "TypeSafeClient", lambda **kw: FakeClient())
+    client = S.get_client()
+    (local_name, local), (remote_name, remote) = client.tiers
+    assert isinstance(local, S._Locked) and remote.url == "https://api.typesafe.ai/v1/systemone"
+    assert remote.api_key == "tk" and client.min_confidence == 0.7

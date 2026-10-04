@@ -447,7 +447,9 @@ def cmd_serve(a):
     """Serve the client over the Jev (System One) HTTP protocol, for non-Python callers."""
     from jul_cli.serve import serve
     serve(model=a.model, backend=a.backend, host=a.host, port=a.port,
-          warmup=not a.no_warmup, api_key=a.api_key)
+          warmup=not a.no_warmup, api_key=a.api_key, escalate_to=a.escalate_to,
+          escalate_model=a.escalate_model, escalate_key_env=a.escalate_key_env,
+          min_confidence=a.min_confidence)
 
 
 # --- parser -------------------------------------------------------------------------------------
@@ -570,6 +572,14 @@ def build_parser() -> argparse.ArgumentParser:
                    help="require this key, as Authorization: Bearer or x-api-key (else $JUL_API_KEY). "
                         "Recommended when binding beyond 127.0.0.1.")
     s.add_argument("--no-warmup", action="store_true", help="do not load the model before serving")
+    s.add_argument("--escalate-to", default=None, metavar="TARGET",
+                   help="send answers below --min-confidence elsewhere: typesafe (key in TYPESAFE_API_KEY), "
+                        "ollama[:model], or the URL of any /v1/systemone server. The state leaves the machine")
+    s.add_argument("--escalate-model", default=None, help="model asked there (default: the provider's)")
+    s.add_argument("--escalate-key-env", default=None, metavar="VAR",
+                   help="the environment variable holding that server's key, for a URL target")
+    s.add_argument("--min-confidence", type=float, default=0.8,
+                   help="the bar below which an answer escalates (default 0.8; a Noul counts max(p, 1-p))")
     s.set_defaults(fn=cmd_serve)
 
     s = sub.add_parser("lab", help="research commands")
