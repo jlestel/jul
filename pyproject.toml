@@ -35,6 +35,8 @@ torch = ["torch>=2.4", "transformers>=5.0", "accelerate"]
 onnx = ["onnxruntime>=1.18", "tokenizers>=0.20", "jinja2>=3.1"]
 onnx-export = ["jul[torch]", "onnx>=1.16", "onnxscript"]
 yaml = ["pyyaml>=6"]
+# Laya (convaiinnovations/laya) runs on its own package: `TypeSafeClient(model="laya")`, jul/laya_model.py.
+laya = ["laya>=0.3.27"]
 # Lexical and hybrid autotune heads train with scikit-learn (and run with numpy alone).
 tune = ["scikit-learn>=1.3", "scipy>=1.10"]
 # `jul models add` downloads its calibration data with `datasets`.

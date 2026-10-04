@@ -284,6 +284,33 @@ Two differences with the presets above: `autotune(...)` does not apply (its head
 vectors of the other method, and such a model needs a full fine-tune instead), and a state longer than
 the limit in its `decision.json` is truncated rather than stretched.
 
+## Laya
+
+[Laya](https://huggingface.co/convaiinnovations/laya) (ConvAI Innovations, Apache-2.0) is a decision model
+with its own format and its own runtime, the `laya` package (PyTorch). JuL does not read its weights: it
+hands the questions to Laya and returns its answers as JuL's, so Laya takes the same calls, the same
+response and the same commands as any other model (`jul ask`, `run`, `serve`, `bench`, an `Escalation` tier).
+
+```bash
+pip install "jul[laya]"            # or: jul setup --model laya
+jul ask choice "Which team should handle this ticket?" -o billing -o technical \
+    --state "I was charged twice" --model laya
+```
+
+| `--model` | Checkpoint |
+| --- | --- |
+| `laya` (or `laya:english`) | the repo root, English |
+| `laya:multilingual` | the `multilingual/` subfolder |
+| `laya:typed-decisions` | the `typed-decisions/` subfolder |
+| `laya:<hub repo or directory>` | any other Laya checkpoint |
+
+Laya picks the device (CUDA, MPS, then CPU) and pins the Hub revision it downloads; the first call
+downloads the checkpoint. What JuL adds on its own readings does not apply: no `method`, no heads or
+calibration from a context, no `autotune`, no `pack` (each raises a `ValueError` saying so), and
+`--backend` other than `torch` is refused. The answers are Laya's own: its Choice and Score `confidence`
+is calibrated by Laya, not the top probability JuL's readings report, so a bar set for one model in an
+`Escalation` does not carry over to the other.
+
 ## Contrastive heads (any backbone; CLM-8B)
 
 A contrastive preset reads a **frozen** backbone through two small projection heads: the state (with the

@@ -286,6 +286,13 @@ def readings(client, methods: list, features: list) -> tuple[list, list, dict]:
     embedding only; `cross` needs a preset with a cross model."""
     skipped: dict[str, str] = {}
     engine = None
+    if getattr(client, "_laya", None) is not None:
+        for m in methods:
+            if m:
+                skipped[f"zero-shot:{m}"] = "Laya: reads with its own runtime only"
+        for f in features:
+            skipped[f"autotune:{f}"] = "Laya: no autotune"
+        return [None], [], skipped
     if hasattr(client, "_engine_for"):
         engine = client._engine_for(None)            # loads the model, needed anyway
     if engine is not None and getattr(engine, "pointer", None) is not None:

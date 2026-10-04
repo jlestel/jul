@@ -6,6 +6,7 @@ Pick a backend: MLX on Apple Silicon, PyTorch (transformers) anywhere else — C
 pip install "jul[mlx]"        # Apple Silicon
 pip install "jul[torch]"      # Linux / Windows / any GPU
 pip install "jul[onnx]"       # CPU only, no torch: to deploy an exported model (AWS Lambda, containers)
+pip install "jul[laya]"       # Laya, on its own runtime (PyTorch): --model laya
 # add [yaml] for YAML question files, [tune] for lexical and hybrid autotune heads,
 # [onnx-export] to export a model for the onnx backend
 ```
