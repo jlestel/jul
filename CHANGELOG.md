@@ -7,6 +7,10 @@ Versions come from git tags (see [publishing](docs/publishing.md)): a `v*` tag r
 
 ### Added
 
+- **Embeddings APIs as a backend** (`--backend api`): the vector reading over any embeddings endpoint, local or
+  hosted, without the model's weights. `jul models add NAME --repo ollama:qwen3-embedding:0.6b --backend api`
+  (also `openai:`, `mistral:`, `voyage:`, or `http(s)://host/v1#model` for any OpenAI-compatible server) fits
+  the center and tau as for a local model. One layer, no logits (Noul and Score are read as vectors).
 - **Escalation on confidence**: `jul.Escalation` chains deciders (a local client, then `SystemOneHTTP` for
   any `/v1/systemone` server: Jev, Ollama's Nimble, Kev, another `jul serve`); only the questions answered
   below the bar go on to the next one, and the response says per question which tier answered.

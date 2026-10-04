@@ -55,6 +55,7 @@ class Preset:
     notes: str = ""
     torch_repo: str | None = None  # transformers repo; None: no torch backend for this preset
     onnx_repo: str | None = None   # directory written by jul.backends.onnx_export; None: no onnx
+    api_repo: str | None = None    # embeddings endpoint, provider:model (jul/backends/api.py); None: no api
     #: (layer, tau) of the single-formulation "one word" variant; None: see ONE_WORD_ONLY.
     one_word: tuple[int, float] | None = None
     #: The backend the numbers were fitted on; None for the built-in presets (MLX).
@@ -85,7 +86,8 @@ class Preset:
     def repos(self) -> dict[str, str]:
         return {**({"mlx": self.repo} if self.repo else {}),
                 **({"torch": self.torch_repo} if self.torch_repo else {}),
-                **({"onnx": self.onnx_repo} if self.onnx_repo else {})}
+                **({"onnx": self.onnx_repo} if self.onnx_repo else {}),
+                **({"api": self.api_repo} if self.api_repo else {})}
 
     def generic_center(self, formulation: Formulation, backend: str = "mlx") -> np.ndarray | None:
         """The asset fitted with this backend's weights, else the MLX one."""
@@ -113,7 +115,7 @@ class Preset:
     def from_json(cls, d: dict, asset_dir: Path) -> "Preset":
         repos = d["repos"]
         return cls(name=d["name"], repo=repos.get("mlx", ""), torch_repo=repos.get("torch"),
-                   onnx_repo=repos.get("onnx"),
+                   onnx_repo=repos.get("onnx"), api_repo=repos.get("api"),
                    formulations=tuple(Formulation(**f) for f in d["formulations"]),
                    tau=d["tau"], center=d["center"],
                    one_word=tuple(d["one_word"]) if d.get("one_word") else None,
@@ -153,7 +155,7 @@ def question_template(question_options: str) -> str:
 def repo_fields(backend: str, repo: str) -> dict:
     """The Preset fields that give `repo` to `backend` and no repo to the others."""
     return {"repo": repo if backend == "mlx" else "", "torch_repo": repo if backend == "torch" else None,
-            "onnx_repo": repo if backend == "onnx" else None}
+            "onnx_repo": repo if backend == "onnx" else None, "api_repo": repo if backend == "api" else None}
 
 
 def center_asset_name(name: str, backend: str, formulation: str) -> str:

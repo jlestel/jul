@@ -86,6 +86,32 @@ and 17 ms on a 1,769 MB AWS Lambda ($0.59 per million calls, cold start 2.4 s). 
 calibration dev sets, it scored 0.590 against 0.475 for Harrier 0.6B. The heads carry it: alone,
 zero-shot, a small encoder is no match for a 4B embedding model.
 
+## Embeddings APIs (`--backend api`)
+
+Any embeddings endpoint is read like an encoder: the state's vector is the embedding of the prompt that holds
+it, the options' are the embeddings of the options. Nothing is downloaded; `jul models add` fits the center
+and tau on the calibration sets, as for a local model.
+
+```bash
+jul models add qwen3-emb --repo ollama:qwen3-embedding:0.6b --backend api      # Ollama, no key
+OPENAI_API_KEY=... jul models add oai-small --repo openai:text-embedding-3-small --backend api
+jul models add my-emb --repo http://localhost:8000/v1#bge-m3 --backend api     # any OpenAI-compatible server
+jul ask "I was charged twice" --choice billing,technical --model qwen3-emb --backend api
+```
+
+| repo | endpoint | key |
+| --- | --- | --- |
+| `ollama:MODEL` | `$OLLAMA_HOST` or `http://localhost:11434`, `/v1/embeddings` | none |
+| `openai:MODEL` | `https://api.openai.com/v1/embeddings` | `OPENAI_API_KEY` |
+| `mistral:MODEL` | `https://api.mistral.ai/v1/embeddings` | `MISTRAL_API_KEY` |
+| `voyage:MODEL` | `https://api.voyageai.com/v1/embeddings` | `VOYAGE_API_KEY` |
+| `http(s)://host/v1#MODEL` | that server's `/embeddings` | none |
+
+Against a local model: one layer (the API's output), no prefix cache (each state is one call per formulation;
+the options are embedded once per question), no logits (Noul and Score are read as vectors, their default;
+letters and pointer need the weights), and `usage` counts characters. With a hosted provider the state leaves
+the machine.
+
 ## Cross models: reading the question and the text together
 
 The vector reading encodes the text and each option apart: the model never sees both at once. That is
