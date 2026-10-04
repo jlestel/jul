@@ -197,13 +197,37 @@ PROVIDERS = {
     "ollama": ("http://localhost:11434", "nimble", None),
 }
 
+#: Cloudflare Workers AI serves Clef at its own route, one per model, with the System One body.
+CLOUDFLARE_MODELS = ("clef", "clef-flash")
+CLOUDFLARE_URL = "https://api.cloudflare.com/client/v4/accounts/{account}/ai/run/@cf/cloudflare/{model}"
+
+
+def cloudflare_tier(model: str = "clef-flash", account_id: str | None = None, token: str | None = None,
+                    timeout: float = 30.0) -> SystemOneHTTP:
+    """Clef on Workers AI. The account comes from CLOUDFLARE_ACCOUNT_ID, the token from CLOUDFLARE_API_TOKEN
+    (or CLOUDFLARE_AUTH_TOKEN, the name Cloudflare's examples use)."""
+    import os
+    model = model.strip()
+    if model not in CLOUDFLARE_MODELS:
+        raise ValueError(f"Workers AI serves {CLOUDFLARE_MODELS} as decision models, not {model!r}")
+    account = account_id or os.environ.get("CLOUDFLARE_ACCOUNT_ID")
+    if not account:
+        raise ValueError("cloudflare needs an account id: set CLOUDFLARE_ACCOUNT_ID")
+    token = token or os.environ.get("CLOUDFLARE_API_TOKEN") or os.environ.get("CLOUDFLARE_AUTH_TOKEN")
+    return SystemOneHTTP(CLOUDFLARE_URL.format(account=account, model=model), model=model,
+                         api_key=token or None, timeout=timeout, exact_url=True)
+
 
 def remote_tier(target: str, model: str | None = None, key_env: str | None = None,
                 timeout: float = 30.0) -> SystemOneHTTP:
-    """A tier from `typesafe`, `ollama:nimble` or a URL. The key is read from the provider's own variable
-    (TYPESAFE_API_KEY for Jev), or from `key_env` for any other server; never passed as a value."""
+    """A tier from `typesafe`, `ollama:nimble`, `cloudflare:clef-flash` or a URL. The key is read from the
+    provider's own variable (TYPESAFE_API_KEY for Jev, CLOUDFLARE_API_TOKEN for Clef), or from `key_env` for
+    any other server; never passed as a value."""
     import os
     name, _, suffix = target.partition(":")
+    if name == "cloudflare" and not target.startswith(("http://", "https://")):
+        token = os.environ.get(key_env) if key_env else None
+        return cloudflare_tier(model or suffix or "clef-flash", token=token, timeout=timeout)
     if name in PROVIDERS and not target.startswith(("http://", "https://")):
         url, default_model, default_env = PROVIDERS[name]
         model = model or suffix or default_model
@@ -218,16 +242,17 @@ _ANSWER_TYPE = {Choice: ChoiceAnswer, Noul: NoulAnswer, Score: ScoreAnswer}
 
 
 class SystemOneHTTP:
-    """Any server speaking `POST /v1/systemone`: TypeSafe's Jev, Ollama (Nimble, Tev1), Kev, `jul serve`.
+    """Any server speaking the System One body: TypeSafe's Jev, Ollama (Nimble, Tev1, Clef), Kev, `jul serve`,
+    and Clef on Workers AI (`cloudflare_tier`, which posts to its own route and unwraps `result`).
 
     `base_url` is the server root, with or without `/v1` (`https://api.typesafe.ai`,
     `http://localhost:11434`). The state is sent to that server: a remote tier is a third party.
     """
 
     def __init__(self, base_url: str, model: str = "jev-latest", api_key: str | None = None,
-                 timeout: float = 30.0):
+                 timeout: float = 30.0, exact_url: bool = False):
         root = base_url.rstrip("/")
-        if root.endswith("/v1/systemone"):
+        if exact_url or root.endswith("/v1/systemone"):  # a provider with its own route (Workers AI)
             self.url = root
         else:
             self.url = (root[:-3] if root.endswith("/v1") else root) + "/v1/systemone"
@@ -254,6 +279,13 @@ class SystemOneHTTP:
             raise RemoteError(f"{self.url}: {type(e).__name__}: {e}") from e
         if not isinstance(data, dict):
             raise RemoteError(f"{self.url}: the response is not a JSON object")
+        if "answers" not in data and "result" in data:
+            # Cloudflare's REST envelope: {"result": {...}, "success": true, "errors": [], "messages": []}
+            if data.get("success") is False:
+                raise RemoteError(f"{self.url}: {json.dumps(data.get('errors'))[:200]}")
+            data = data["result"]
+            if not isinstance(data, dict):
+                raise RemoteError(f"{self.url}: the result is not a JSON object")
         answers = {}
         for name, a in (data.get("answers") or {}).items():
             if name not in questions:

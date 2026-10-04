@@ -263,3 +263,58 @@ def test_a_redirect_is_not_followed(raw_server):
     with pytest.raises(RemoteError, match="302"):
         SystemOneHTTP(url, api_key="SECRET").system_one("s", {"team": Q["team"]})
     assert len(seen) == 1
+
+
+# --- Clef on Cloudflare Workers AI ---------------------------------------------------------------------
+
+CLEF_RESULT = {"model": "clef-flash", "usage": {"input_tokens": 57, "output_tokens": 0},
+               "answers": {"team": {"type": "choice", "choice": "b", "probabilities": {"a": 0.2, "b": 0.8},
+                                    "confidence": 0.8},
+                           "urgent": {"type": "noul", "noul": 0.93}}}
+
+
+def test_cloudflare_tier_url_and_keys(monkeypatch):
+    from jul.escalate import remote_tier
+    monkeypatch.setenv("CLOUDFLARE_ACCOUNT_ID", "acc")
+    monkeypatch.setenv("CLOUDFLARE_API_TOKEN", "cft")
+    t = remote_tier("cloudflare:clef")
+    assert t.url == "https://api.cloudflare.com/client/v4/accounts/acc/ai/run/@cf/cloudflare/clef"
+    assert t.model == "clef" and t.api_key == "cft"
+    assert remote_tier("cloudflare").model == "clef-flash"
+
+
+def test_cloudflare_tier_refuses_unknown_models_and_a_missing_account(monkeypatch):
+    from jul.escalate import cloudflare_tier
+    monkeypatch.delenv("CLOUDFLARE_ACCOUNT_ID", raising=False)
+    with pytest.raises(ValueError, match="CLOUDFLARE_ACCOUNT_ID"):
+        cloudflare_tier("clef")
+    with pytest.raises(ValueError, match="decision models"):
+        cloudflare_tier("llama-3", account_id="acc")
+
+
+def test_cloudflare_envelope_is_unwrapped(raw_server):
+    url, replies, seen = raw_server
+    replies.append((200, json.dumps({"result": CLEF_RESULT, "success": True, "errors": [],
+                                     "messages": []}).encode(), {}))
+    route = url + "/client/v4/accounts/acc/ai/run/@cf/cloudflare/clef-flash"
+    r = SystemOneHTTP(route, model="clef-flash", api_key="cft", exact_url=True).system_one("s", Q)
+    assert seen[0] == ("/client/v4/accounts/acc/ai/run/@cf/cloudflare/clef-flash", "Bearer cft")
+    assert r.choices["team"].choice == "b" and r.nouls["urgent"].noul == 0.93
+    assert r.model == "clef-flash" and r.usage.input_tokens == 57
+
+
+def test_cloudflare_failure_is_a_remote_error(raw_server):
+    from jul.escalate import RemoteError
+    url, replies, _ = raw_server
+    replies.append((200, json.dumps({"result": None, "success": False,
+                                     "errors": [{"code": 5006, "message": "bad input"}]}).encode(), {}))
+    with pytest.raises(RemoteError, match="bad input"):
+        SystemOneHTTP(url + "/run", exact_url=True).system_one("s", Q)
+
+
+def test_cloudflare_as_an_escalation_tier(raw_server):
+    url, replies, _ = raw_server
+    replies.append((200, json.dumps({"result": CLEF_RESULT, "success": True}).encode(), {}))
+    clef = SystemOneHTTP(url + "/run", model="clef-flash", exact_url=True)
+    r = Escalation([("local", Fixed(0.5)), ("clef", clef)], min_confidence=0.8).system_one("s", Q)
+    assert r.escalation["team"]["tier"] == "clef" and r.escalation["team"]["met_bar"] is True

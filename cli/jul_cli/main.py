@@ -574,7 +574,8 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--no-warmup", action="store_true", help="do not load the model before serving")
     s.add_argument("--escalate-to", default=None, metavar="TARGET",
                    help="send answers below --min-confidence elsewhere: typesafe (key in TYPESAFE_API_KEY), "
-                        "ollama[:model], or the URL of any /v1/systemone server. The state leaves the machine")
+                        "ollama[:model], cloudflare[:clef|clef-flash] (CLOUDFLARE_ACCOUNT_ID, "
+                        "CLOUDFLARE_API_TOKEN), or the URL of any /v1/systemone server. The state leaves the machine")
     s.add_argument("--escalate-model", default=None, help="model asked there (default: the provider's)")
     s.add_argument("--escalate-key-env", default=None, metavar="VAR",
                    help="the environment variable holding that server's key, for a URL target")

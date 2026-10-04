@@ -327,7 +327,7 @@ def serve(model: str | None = None, backend: str | None = None,
           escalate_key_env: str | None = None, min_confidence: float = 0.8) -> None:
     """Run the server until interrupted. See the module docstring for the protocol.
 
-    `escalate_to` (`typesafe`, `ollama:nimble`, or a System One server URL) gets the answers below
+    `escalate_to` (`typesafe`, `ollama:nimble`, `cloudflare:clef-flash`, or a System One server URL) gets the answers below
     `min_confidence`. Its key comes from the provider's usual variable (TYPESAFE_API_KEY), or from the
     variable named by `escalate_key_env`; never from the command line.
     """

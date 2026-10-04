@@ -12,6 +12,8 @@ Versions come from git tags (see [publishing](docs/publishing.md)): a `v*` tag r
   below the bar go on to the next one, and the response says per question which tier answered.
   `jul serve --escalate-to typesafe|ollama[:model]|URL --min-confidence 0.8` does the same over HTTP, with each
   provider's usual key variable (`TYPESAFE_API_KEY`).
+- **Clef on Cloudflare Workers AI** as an escalation tier: `--escalate-to cloudflare:clef-flash` (or `:clef`),
+  `jul.escalate.cloudflare_tier()` in Python, with `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN`.
 - **`jul-decision-wemm-4b` is the default model** (alias `accurate`): `wemm-4b-4bit` plus LoRA adapters
   ([`usejul/jul-decision-wemm-4b`](https://huggingface.co/usejul/jul-decision-wemm-4b)) that read Noul,
   Score and Choice with the question and the text together. Decision bench (2,108 questions, PyTorch): 0.849,
