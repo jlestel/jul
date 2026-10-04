@@ -24,6 +24,7 @@ The heads only mean something on the backbone they were trained on. Two ways to 
 from __future__ import annotations
 
 import json
+import logging
 import math
 import random
 from collections import OrderedDict
@@ -34,6 +35,8 @@ from typing import Any
 import numpy as np
 
 from .types import NOUL_DEFAULTS, Option
+
+_log = logging.getLogger(__name__)
 
 SPEC_FILE = "contrastive.json"
 HEADS_FILE = "heads.npz"
@@ -259,7 +262,14 @@ class Embedder:
         """(len(texts), d) unit vectors, and the tokens run."""
         seqs = [self.tokens(t) for t in texts]
         if self.spec.layer == "final":
-            hs = [np.asarray(self.backbone.last_hidden(s), dtype=np.float32) for s in seqs]
+            try:
+                hs = [np.asarray(self.backbone.last_hidden(s), dtype=np.float32) for s in seqs]
+            except NotImplementedError as exc:
+                _log.error("%s: these heads read the final-norm hidden states (layer \"final\"), which the %s "
+                           "backend does not expose", self.spec.directory, getattr(self.backbone, "backend", "?"))
+                raise ValueError(f"{self.spec.directory}: layer \"final\" needs last_hidden, which the "
+                                 f"{getattr(self.backbone, 'backend', '?')} backend lacks ({exc}); use the backend "
+                                 "the heads were trained on") from exc
             vs = [h[-1] if self.spec.pooling == "last" else h.mean(0) for h in hs]
         else:
             import os
@@ -429,17 +439,42 @@ def rows_from_labeled(questions: dict, labeled: list) -> list[dict]:
     return rows
 
 
+def _has_last_hidden(backbone) -> bool:
+    """Whether `backbone.last_hidden` works, found by running it on one token rather than by looking at the
+    class: a backend may override it only to raise (onnx). Any other failure is logged, and read as no."""
+    from .backbone import Backbone
+    if type(backbone).last_hidden is Backbone.last_hidden:
+        return False
+    tok = getattr(backbone, "tokenizer", None)
+    probe = [getattr(tok, "eos_token_id", None) or 0]
+    try:
+        h = np.asarray(backbone.last_hidden(probe))
+    except NotImplementedError:
+        return False
+    except Exception as exc:  # noqa: BLE001 - a broken probe must not stop the training, but must be seen
+        _log.warning("%s: last_hidden failed on a one-token probe (%s: %s); reading a layer index instead",
+                     getattr(backbone, "repo", "?"), type(exc).__name__, exc)
+        return False
+    if h.ndim != 2 or h.shape[0] != 1 or not np.isfinite(h).all():
+        _log.warning("%s: last_hidden returned %s for one token, not (1, d) finite values; reading a layer "
+                     "index instead", getattr(backbone, "repo", "?"), h.shape)
+        return False
+    return True
+
+
 def default_reading(backbone, max_tokens: int = 512) -> dict:
     """How to read a backbone that has no heads yet: the final norm at the last token for a decoder on
     MLX/torch, the mean of the last layer for an encoder (with its input convention), the last layer's
     [last token] for a backend without `last_hidden` (onnx)."""
-    from .backbone import Backbone
     if getattr(backbone, "architecture", "decoder") == "encoder":
         layer, pooling = backbone.n_layers - 1, "mean"
-    elif type(backbone).last_hidden is Backbone.last_hidden or backbone.backend == "onnx":
-        layer, pooling = backbone.n_layers - 1, "last"
-    else:
+    elif _has_last_hidden(backbone):
         layer, pooling = "final", "last"
+    else:
+        layer, pooling = backbone.n_layers - 1, "last"
+        _log.warning("%s (%s) has no final-norm hidden states (last_hidden): its heads read layer %d at the last "
+                     "token instead, before the final norm. Heads trained this way only fit this reading.",
+                     getattr(backbone, "repo", "?"), getattr(backbone, "backend", "?"), layer)
     max_tokens = min(max_tokens, getattr(backbone, "max_tokens", None) or max_tokens)
     return {"layer": layer, "pooling": pooling, "max_tokens": max_tokens, "add_special_tokens": False,
             "render": "json", "noul": NOUL_TEMPLATES, "prefix": getattr(backbone, "text_prefix", "") or ""}

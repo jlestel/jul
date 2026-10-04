@@ -290,6 +290,18 @@ same embeddings (choice 0.218 / 0.151, noul 0.570 / 0.542, score 0.294 / 0.297),
 gain over the cosine but far below the fitted presets (`wemm-4b-4bit` 0.682): the mode works on any
 backbone, it has not yet been measured on an embedding model or with more data.
 
+Known limits:
+
+- **Reading without `last_hidden`**: `default_reading` probes `last_hidden` on one token. A backend that
+  does not expose the final-norm hidden states (onnx) or returns something unusable is read at its last
+  layer before the final norm, with a warning in the `jul.contrastive` log. Heads trained that way only fit
+  that reading; heads that need `"final"` on such a backend fail with an error naming the backend.
+- **In-batch negatives**: the other questions' options in a batch count as negatives with weight 0.5
+  (`train_heads(in_batch=...)`), CLM's choice. Equivalent texts across questions become false negatives;
+  the weight is not exposed in the CLI.
+- **`--train-heads` with `--cross`**: the cross model is not attached to the trained preset.
+- **Overwrite**: `~/.jul/heads/<name>` is replaced without warning when the same name is trained again.
+
 ### CLM-8B
 
 [CLM-8B](https://huggingface.co/Contrastive-LM/CLM-v0.1-8B) is not a model of its own: two small

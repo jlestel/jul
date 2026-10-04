@@ -197,6 +197,36 @@ def test_default_reading_follows_the_backbone():
     assert (r["layer"], r["pooling"], r["prefix"]) == (3, "mean", "query: ")
 
 
+def test_a_backend_without_last_hidden_is_detected_and_logged(tmp_path, caplog):
+    # a subclass that overrides last_hidden only to raise (onnx does) is caught by the probe, not the class
+    class NoFinal(FakeBackbone):
+        backend = "onnx"
+
+        def last_hidden(self, tokens, prefix=None):
+            raise NotImplementedError("no final norm in the export")
+
+    bb = NoFinal()
+    with caplog.at_level("WARNING", logger="jul.contrastive"):
+        r = default_reading(bb)
+    assert (r["layer"], r["pooling"]) == (3, "last")
+    assert any("no final-norm hidden states" in m for m in caplog.messages)
+
+    class Broken(FakeBackbone):
+        def last_hidden(self, tokens, prefix=None):
+            return np.full((len(tokens), 4), np.nan)
+
+    caplog.clear()
+    with caplog.at_level("WARNING", logger="jul.contrastive"):
+        assert default_reading(Broken())["layer"] == 3
+    assert any("not (1, d) finite" in m for m in caplog.messages)
+    # heads that need "final" on such a backend fail loudly, with the reason logged
+    caplog.clear()
+    reader = Embedder(bb, ContrastiveSpec.load(_heads_dir(tmp_path)))
+    with caplog.at_level("ERROR", logger="jul.contrastive"), pytest.raises(ValueError, match="needs last_hidden"):
+        reader(["x"])
+    assert any("does not expose" in m for m in caplog.messages)
+
+
 def test_typed_rows_from_the_dataset_and_from_autotune():
     # the decision dataset: noul [yes, no, unknown] by index, unknown skipped; score from its [0, 1] value
     k, q, opts, g = typed_row({"state": "s", "type": "noul", "question": "Late?", "options": ["yes", "no", "unknown"],
