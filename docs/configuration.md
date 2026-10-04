@@ -46,7 +46,9 @@ environment variable the code reads and every file it writes.
 | `CLOUDFLARE_ACCOUNT_ID` | — | 32 hex characters, for `--escalate-to cloudflare` |
 | `CLOUDFLARE_API_TOKEN` (or `CLOUDFLARE_AUTH_TOKEN`) | — | Workers AI token, for `--escalate-to cloudflare` |
 
-Keys are only ever read from the environment, never from a command line, and never logged.
+Escalation keys are read from the environment only (`--escalate-key-env` names the variable), and no key is
+ever logged. The server key can also be given with `--api-key`, but the environment keeps it out of `ps`
+and shell history.
 
 ### Tests only
 
@@ -54,6 +56,7 @@ Keys are only ever read from the environment, never from a command line, and nev
 | --- | --- |
 | `JUL_SLOW` | `1` runs the tests that load a real model (read by `tests/conftest.py`, never by the library) |
 | `JUL_TEST_TOKENIZER`, `JUL_TEST_ENCODER_TOKENIZER` | the tokenizers the tiny test models use |
+| `JUL_TEST_MODEL` | the model the backend tests load |
 
 ### From the Hugging Face libraries
 

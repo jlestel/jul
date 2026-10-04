@@ -11,6 +11,7 @@ on:
       - "docs/**"
       - "scripts/build_docs.py"
       - "cli/**"
+      - "lib/**"
       - "CHANGELOG.md"
       - ".github/workflows/pages.yml"
   workflow_dispatch:

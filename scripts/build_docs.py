@@ -286,7 +286,6 @@ def check_env(pages: dict[str, str]) -> list[str]:
     used = set()
     for path in list((ROOT / "lib").rglob("*.py")) + list((ROOT / "cli").rglob("*.py")):
         used |= set(re.findall(r"\bJUL_[A-Z_]+[A-Z]\b", path.read_text()))
-    used -= {"JUL_HOME_"}
     documented = pages.get("configuration", "")
     return [f"configuration.md does not document {v}" for v in sorted(used) if v not in documented]
 

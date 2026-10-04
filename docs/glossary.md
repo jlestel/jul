@@ -14,8 +14,8 @@ depend on the state precomputed. Holds no weights. [More](deployment.md).
 **Calibration.** Making probabilities mean what they say. JuL fits a temperature per model, and
 `autotune` a temperature and a bias per option on your labels.
 
-**Center.** The vector subtracted before comparing the state with the options: the mean of the options
-by default, the mean of a context's examples when it has some.
+**Center.** The vector subtracted before comparing the state with the options: set per preset (the mean of
+the options for most, a generic one for `minicpm5-2b`), the mean of a context's examples when it has some.
 
 **Choice.** A question that picks one option among several. Answers `choice`, `probabilities`, `confidence`.
 

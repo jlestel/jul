@@ -54,7 +54,8 @@ stays in memory; only one model is held at a time (asking another one drops the 
 | `route_above` | decision models only: above this many options, read as vectors; `0` disables it |
 | `response_model`, `retry`, `extra_body`, … | Jev's arguments: accepted and ignored |
 
-Raises `ValueError` for an empty `questions`, an unknown model or a `Score` with fewer than two levels,
+Raises `ValueError` for an empty `questions`, an unknown `model=` passed to the call (the constructor raises
+it for its own) or a `Score` with fewer than two levels,
 `TypeError` for a question that is not one of the three types.
 
 ## AsyncTypeSafeClient

@@ -124,8 +124,8 @@ for explicitly (an embeddings API backend, an escalation tier).
 
 ### Does my text leave the machine?
 
-Not with a local backend (mlx, torch, onnx): the text never leaves the process, and `jul serve` never logs
-it. It leaves only when you choose so: `--backend api` with a hosted provider, or an escalation tier.
+Not with a local backend (mlx, torch, onnx): the text never leaves the process, and `jul serve` does not log it
+(only its first 200 characters at DEBUG level, off by default).
 
 ### Can I use it commercially?
 

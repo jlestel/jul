@@ -122,7 +122,7 @@ and the texts one per line, as a string or `{"state": …, "id": …}`:
 jul run questions.yaml --input tickets.jsonl --output answers.jsonl
 ```
 
-`answers.jsonl` has one line per text, in the shape above, with the `id` copied over.
+`answers.jsonl` has one line per text, in the shape above without `latency_ms`, with the `id` copied over.
 
 ## 5. Where to go next
 
