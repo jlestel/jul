@@ -66,6 +66,16 @@ jobs:
       # Style (line length, import order) is deliberately NOT enforced.
       - run: ruff check . --isolated --select F,E9,B023,B904 --line-length 120 --output-format=github
 
+  docs:
+    name: docs build (no broken link between pages)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - run: pip install -e ".[docs]" && python scripts/build_docs.py --check
+
   # 2. The torch backend against a real model. Small on purpose (~1.2 GB) so this stays a free-tier
   #    job; the weights are cached between runs.
   torch-backend:

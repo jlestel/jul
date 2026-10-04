@@ -260,6 +260,7 @@ ul.dos b { font-weight: 400; background: var(--ph); color: var(--ink); text-shad
   Enter ........ fold / unfold the window
   M ............ maximize / restore the window
   I B H ........ Install · Bench · How
+  D ............ the documentation
   G ............ GitHub
   P ............ change phosphor
   R ............ run the demo again
@@ -293,6 +294,7 @@ ul.dos b { font-weight: 400; background: var(--ph); color: var(--ink); text-shad
   <a href="#install"><u>I</u>nstall</a>
   <a href="#bench"><u>B</u>ench</a>
   <a href="#how"><u>H</u>ow</a>
+  <a href="docs/"><u>D</u>ocs</a>
   <a href="https://github.com/usejul/jul"><u>G</u>itHub</a>
   <span class="spacer"></span>
   <button id="keys" type="button" title="Keyboard shortcuts" aria-haspopup="dialog">[?] Keys</button>
@@ -501,7 +503,7 @@ r.choices["team"].probabilities  <span class="dim"># {"billing": 0.88, ...}</spa
       <ul class="dos">
         <li><span>⁴ WeMM-Embedding-4B, 4-bit, with LoRA adapters for yes/no and scores, switched off for Choice: this benchmark asks only Choice questions, so these are its vectors' numbers. On Kev's typed decisions, never trained on, the adapters take <b>yes/no from 0.762 to 0.841</b>, one model in memory.</span></li>
         <li><span>With 1,000 labeled examples, <b>jul-decision-wemm-4b-4bit reaches 0.897</b> and 0.94 on Banking77. Harrier-0.6B passes Jev in 0.31 GB at 13 ms.</span></li>
-        <li><span>³ multilingual-e5-small trained on jul decisions (ONNX, 8-bit, M4 Pro): 4 ms per text. <b>With a hybrid head (vectors + TF-IDF) it reaches 0.780</b>, above Jev. Its cross model takes yes/no from 0.579 to 0.726 on Kev's typed decisions. It fits in <a href="https://github.com/usejul/jul/blob/main/docs/aws-lambda.md">an AWS Lambda</a>: 17 ms, $0.59 per million.</span></li>
+        <li><span>³ multilingual-e5-small trained on jul decisions (ONNX, 8-bit, M4 Pro): 4 ms per text. <b>With a hybrid head (vectors + TF-IDF) it reaches 0.780</b>, above Jev. Its cross model takes yes/no from 0.579 to 0.726 on Kev's typed decisions. It fits in <a href="docs/aws-lambda.html">an AWS Lambda</a>: 17 ms, $0.59 per million.</span></li>
         <li><span>100 rows per dataset: ±5 points per cell, ±3 on the mean. If a bag of words solves your task, use it: <a href="https://github.com/usejul/jul#the-baseline-worth-remembering">we measured that too</a>.</span></li>
       </ul>
     </div>
@@ -892,6 +894,7 @@ latency per decision, and the answer to the ticket.</pre>
       j: () => go(1), k: () => go(-1),
       i: () => jump("install"), b: () => jump("bench"), h: () => jump("how"),
       g: () => { location.href = "https://github.com/usejul/jul"; },
+      d: () => { location.href = "docs/"; },
       p: nextPh,
       r: () => { const t = document.getElementById("term").closest(".win"); t.focus({ preventScroll: true }); t.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "center" }); replayTerm(); },
       c: () => { jump("agent"); copyPrompt(); },
