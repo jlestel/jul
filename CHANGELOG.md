@@ -3,7 +3,7 @@
 Versions come from git tags (see [publishing](docs/publishing.md)): a `v*` tag releases to PyPI, every push to
 `main` publishes a dev build to TestPyPI.
 
-## Unreleased
+## 0.4.0 — 2026-10-05
 
 ### Added
 
