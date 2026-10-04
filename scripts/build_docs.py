@@ -229,7 +229,7 @@ def page_html(page: str, body: str, toc, prev, nxt) -> str:
 <body>
 <a class="skip" href="#doc">Skip to the page</a>
 <nav class="menubar" aria-label="Main">
-  <a class="brand" href="../index.html">▓ JuL-DOS 0.1</a>
+  <a class="brand" href="../index.html">▓ JuL-DOS 0.3</a>
   <a href="index.html"><u>D</u>ocs</a>
   <a href="quickstart.html" class="hide-sm"><u>Q</u>uickstart</a>
   <a href="python-api.html" class="hide-sm"><u>A</u>PI</a>

@@ -290,7 +290,7 @@ ul.dos b { font-weight: 400; background: var(--ph); color: var(--ink); text-shad
 </div>
 
 <nav class="menubar" aria-label="Main">
-  <span class="brand">▓ JuL-DOS 0.1</span>
+  <span class="brand">▓ JuL-DOS 0.3</span>
   <a href="#install"><u>I</u>nstall</a>
   <a href="#bench"><u>B</u>ench</a>
   <a href="#how"><u>H</u>ow</a>
@@ -953,7 +953,7 @@ latency per decision, and the answer to the ticket.</pre>
   const setBars = (id, julTxt) => {
     const el = document.getElementById(id);
     el.innerHTML = "";
-    const a = document.createElement("div"); a.textContent = "jul " + julTxt;
+    const a = document.createElement("div"); a.textContent = julTxt;
     el.append(a);
   };
   const setDelta = (id, text, kind) => { const el = document.getElementById(id); el.textContent = text; el.className = "delta " + kind; };
