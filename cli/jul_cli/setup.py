@@ -173,6 +173,11 @@ def setup_command(model: str | None, backend: str | None) -> str:
 def require_setup(model: str | None, backend: str | None) -> None:
     """Stops a command that loads a model when `jul setup` has not been run for it. Offline, no load."""
     from jul.backbone import resolve_backend
+    from jul.laya_model import is_laya
+    if is_laya(model):  # Laya's own package runs it, and downloads its checkpoint on first use
+        if importlib.util.find_spec("laya") is None:
+            raise SystemExit(f"{model} needs the laya package. Run: {setup_command(model, None)}")
+        return
     from jul.presets import resolve
     fix = setup_command(model, backend)
     try:
@@ -212,6 +217,9 @@ def check(model: str, backend: str) -> None:
 
 def run(model: str | None, backend: str | None, install: bool = True, skip_check: bool = False) -> None:
     model = model or DEFAULT_MODEL
+    from jul.laya_model import is_laya
+    if is_laya(model):
+        return setup_laya(model, install, skip_check)
     default = default_backend()
     backend = backend or default
     print(f"jul setup: {model} on {backend}")
@@ -224,3 +232,27 @@ def run(model: str | None, backend: str | None, install: bool = True, skip_check
           "-o billing:\"payments, invoices\" -o technical:\"bugs, errors\" --state \"I was charged twice\""
           + ("" if model == DEFAULT_MODEL else f" --model {model}")
           + ("" if backend == default else f" --backend {backend}"))
+
+
+def setup_laya(model: str, install: bool, skip_check: bool) -> None:
+    """Laya runs on its own package (jul/laya_model.py): install it, then check one decision."""
+    print(f"jul setup: {model} (Laya's own runtime)")
+    hint = "pip install 'jul[laya]'"
+    if importlib.util.find_spec("laya") is None:
+        if not install:
+            raise SystemExit(f"laya is not installed: {hint}")
+        try:
+            reqs = extra_requirements("laya")
+        except importlib.metadata.PackageNotFoundError:
+            reqs = []
+        if not reqs:
+            raise SystemExit(f"jul is not installed as a package, cannot read its [laya] extra: {hint}")
+        _step("runtime", "laya: installing ...")
+        if subprocess.run([sys.executable, "-m", "pip", "install", *reqs]).returncode != 0:
+            raise SystemExit(f"pip failed; install it yourself: {hint}")
+        importlib.invalidate_caches()
+    _step("runtime", "laya (installed)")
+    if not skip_check:
+        check(model, None)
+    print(f"\nReady. Try:\n  jul ask choice \"Which team should handle this ticket?\" "
+          f"-o billing:\"payments, invoices\" -o technical:\"bugs, errors\" --state \"I was charged twice\" --model {model}")

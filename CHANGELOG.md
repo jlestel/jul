@@ -7,6 +7,11 @@ Versions come from git tags (see [publishing](docs/publishing.md)): a `v*` tag r
 
 ### Added
 
+- **Laya** as a model: `TypeSafeClient(model="laya")`, `--model laya` (also `laya:multilingual`,
+  `laya:typed-decisions` or `laya:<hub repo or directory>`), with `pip install "jul[laya]"` or
+  `jul setup --model laya`. Laya runs on its own package; JuL hands it the questions and returns its answers
+  as JuL's, so `ask`, `run`, `serve`, `bench` and `Escalation` take it. JuL's readings, `autotune` and
+  `pack` do not apply to it. See [Models > Laya](docs/models.md#laya).
 - **`jul bench`: pick a model on your own data.** `jul bench test.jsonl --train train.jsonl --models
   jul-decision-e5-small@onnx,minicpm5-2b@torch -O results.json` answers every test row with each model and
   reports, per question, accuracy with its 95% interval, latency (p50/p95) and the model to pick: the fastest

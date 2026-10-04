@@ -22,7 +22,7 @@ TypeSafeClient(model=None, context=None, method=None, one_word_only=False, backe
 
 | Argument | Default | What it does |
 | --- | --- | --- |
-| `model` | `"jul-decision-wemm-4b"` | a preset name, an alias (`accurate`, `fast`) or a model added with `jul models add` |
+| `model` | `"jul-decision-wemm-4b"` | a preset name, an alias (`accurate`, `fast`), a model added with `jul models add`, or `"laya"` / `"laya:<checkpoint>"` ([Laya](models.md#laya)) |
 | `context` | `None` | a `Context`, or the name of a saved one, used by every call |
 | `method` | per question type | force a reading for every call: `"vector"`, `"cross"`, `"letters"` |
 | `one_word_only` | `False` | one prompt instead of two: faster, a little less accurate |

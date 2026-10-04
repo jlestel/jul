@@ -26,6 +26,7 @@ from .backbone import model_key, resolve_backend
 from .context import Context, question_digest, resolve_context
 from .engine import Engine, softmax
 from .decision import fallback_preset
+from .laya_model import LayaModel, is_laya
 from .presets import Preset, formulations_for, one_word_preset, resolve
 from .types import (Choice, ChoiceAnswer, Noul, NoulAnswer, Option, Question, Score, ScoreAnswer,
                     SystemOneResponse, Usage, options_of, serialize_state)
@@ -51,7 +52,9 @@ class TypeSafeClient:
         #: installed, nor load anything. `backend=` is remembered until then.
         self._requested_backend = backend
         self._backend: str | None = None
-        self._preset = self._resolve_preset(model)
+        #: `laya` / `laya:<checkpoint>`: answered by Laya's own runtime (jul/laya_model.py), no preset.
+        self._laya = LayaModel(model, backend) if is_laya(model) else None
+        self._preset = None if self._laya else self._resolve_preset(model)
         self._engine: Engine | None = None
         self._context_home = context_home
         self.context = resolve_context(context, context_home)
@@ -76,6 +79,9 @@ class TypeSafeClient:
                 else resolve(model, backend))
 
     def _engine_for(self, model: str | None) -> Engine:
+        if self._laya is not None:
+            raise ValueError(f"{self._laya.name!r} runs on Laya's own runtime: JuL's readings, autotune "
+                             "and pack do not apply to it")
         preset = self._resolve_preset(model) if model else self._preset
         if self._engine is None or self._engine.preset.name != preset.name:
             self._engine = None  # drop the previous model before loading another
@@ -86,11 +92,13 @@ class TypeSafeClient:
 
     @property
     def model(self) -> str:
-        return self._preset.name
+        return self._laya.name if self._laya else self._preset.name
 
     def close(self) -> None:
         """Release the model. The Jev SDK closes an HTTP session here."""
         self._engine = None
+        if self._laya is not None:
+            self._laya.close()
 
     def __enter__(self):
         return self
@@ -116,6 +124,10 @@ class TypeSafeClient:
         """
         if not questions:
             raise ValueError("system_one needs at least one question")
+        if self._laya is not None:
+            if model and model != self._laya.name:
+                raise ValueError(f"this client runs {self._laya.name!r}; create another one for {model!r}")
+            return self._laya.system_one(state, questions)
         ctx = resolve_context(context, self._context_home) if context is not None else self.context
         engine = self._engine_for(model)
         text = serialize_state(state)
