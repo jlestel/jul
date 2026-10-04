@@ -106,9 +106,8 @@ ul.tree a[aria-current] { background: var(--ph); color: var(--ink); text-shadow:
 .prose h2 code, .prose h3 code { font-family: inherit; background: none; padding: 0; }
 .prose p, .prose ul, .prose ol, .prose table, .prose pre { margin: 0 0 1em; }
 .prose ul { list-style: none; padding: 0; }
-.prose ul > li { display: grid; grid-template-columns: 3ch 1fr; margin-bottom: .35em; }
-.prose ul > li::before { content: "»"; }
-.prose ul > li > * { grid-column: 2; }
+.prose ul > li { position: relative; padding-left: 3ch; margin-bottom: .35em; }
+.prose ul > li::before { content: "»"; position: absolute; left: 0; }
 .prose ul > li > p { margin: 0; }
 .prose ol { padding-left: 3ch; }
 .prose ol > li { margin-bottom: .35em; }
