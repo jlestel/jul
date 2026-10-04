@@ -342,25 +342,26 @@ ul.dos b { font-weight: 400; background: var(--ph); color: var(--ink); text-shad
 <pre class="scroll">C:\> jul models add qwen3-emb \
        --repo ollama:qwen3-embedding:0.6b --backend api
 <span class="dim">qwen3-emb on api: center options, tau 0.05019
-  dev accuracy 0.635 ± 0.034 (n=200); ECE 0.172</span>
+  dev accuracy 0.635 ± 0.034 (n=200); ECE 0.172; 2237 ms per decision</span>
 C:\> jul ask choice "Which team?" -o billing -o tech \
-       --model qwen3-emb --backend api</pre>
+       --state "I was charged twice" --model qwen3-emb --backend api</pre>
     <p style="margin-top:1em">A model on the Hugging Face Hub, an embeddings API (Ollama, OpenAI, Mistral, Voyage, any
     OpenAI-compatible), your own fine-tune: <code>jul models add</code> fits it on development sets and tells you
     how good a decider it is. Then the same code uses it. Some models are weak zero-shot: <b>measure, keep the one
     that wins on your data</b>.</p>
-    <p class="note">Numbers above are from a real run (Ollama, CPU), output trimmed. <a href="docs/hub.html">Every model, backend and provider →</a></p>
+    <p class="note">Numbers above are from a real run (Ollama on a CPU, hence 2.2 s), output trimmed. <a href="docs/hub.html">Every model, backend and provider →</a></p>
   </section>
 
   <section class="win c6" data-title="ESCALATE.EXE" id="escalate">
     <p class="eyebrow">LOCAL FIRST · A BIGGER DECIDER WHEN UNSURE</p>
     <h2 class="h">Escalate only the hard ones.</h2>
-<pre class="scroll">question ──► local 4B (97 ms, $0)
+<pre class="scroll">question ──► local 4B (97 ms on an A10G, no API bill)
                ├─ confidence ≥ 0.8 ──► answer
                └─ unsure ──► Jev · Clef · Nimble · your server</pre>
     <p style="margin-top:1em">On the decision bench (2,108 Choice, Noul and Score questions), with
     <code>jul-decision-wemm-4b</code> local and Jev as the next tier at a 0.8 bar:
-    <b>80% of the questions stay local</b>, accuracy 0.866, against 0.849 local alone and 0.873 for Jev on everything.</p>
+    <b>80% of the questions stay local</b>, accuracy 0.866, against 0.849 local alone and 0.873 for Jev on everything.
+    Choice and Noul mostly stay local (95% and 89%); Score questions mostly go up (93%).</p>
     <p class="note">Computed from the recorded predictions of both systems on the bench, not a live run; the share
     depends on your data and your bar. <a href="docs/serve.html#escalation-local-first-a-bigger-decider-when-unsure">How to set it up →</a></p>
   </section>
