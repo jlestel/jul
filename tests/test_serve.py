@@ -219,10 +219,18 @@ def test_escalation_does_not_hold_the_lock_during_the_remote_call(monkeypatch):
 def test_escalate_to_wires_the_tiers(monkeypatch):
     monkeypatch.setenv("TYPESAFE_API_KEY", "tk")
     monkeypatch.setattr(S, "_client", None)
-    monkeypatch.setattr(S, "_escalate", {"to": "typesafe", "model": None, "key_env": None, "min_confidence": 0.7})
+    from jul.escalate import remote_tier
+    monkeypatch.setattr(S, "_escalate", {"remote": remote_tier("typesafe"), "min_confidence": 0.7})
     import jul
     monkeypatch.setattr(jul, "TypeSafeClient", lambda **kw: FakeClient())
     client = S.get_client()
     (local_name, local), (remote_name, remote) = client.tiers
     assert isinstance(local, S._Locked) and remote.url == "https://api.typesafe.ai/v1/systemone"
     assert remote.api_key == "tk" and client.min_confidence == 0.7
+
+
+def test_a_bad_escalation_target_stops_the_server_at_startup(monkeypatch):
+    monkeypatch.delenv("CLOUDFLARE_ACCOUNT_ID", raising=False)
+    monkeypatch.setattr(S, "make_server", lambda *a, **k: pytest.fail("the server must not start"))
+    with pytest.raises(SystemExit, match="CLOUDFLARE_ACCOUNT_ID"):
+        S.serve(warmup=False, escalate_to="cloudflare:clef")

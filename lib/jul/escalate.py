@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 import urllib.error
 import urllib.request
 import uuid
@@ -41,7 +42,8 @@ from typing import Any, Mapping, Sequence
 from .types import (Choice, ChoiceAnswer, Noul, NoulAnswer, NoulCriteria, Question, Score, ScoreAnswer,
                     SystemOneResponse, Usage, options_of, serialize_state)
 
-__all__ = ["Escalation", "EscalatedResponse", "RemoteError", "SystemOneHTTP", "certainty"]
+__all__ = ["Escalation", "EscalatedResponse", "RemoteError", "SystemOneHTTP", "certainty", "cloudflare_tier",
+           "remote_tier"]
 
 
 def certainty(answer: Any) -> float:
@@ -197,13 +199,47 @@ PROVIDERS = {
     "ollama": ("http://localhost:11434", "nimble", None),
 }
 
+#: Cloudflare Workers AI serves Clef at its own route, one per model, with the System One body.
+CLOUDFLARE_MODELS = ("clef", "clef-flash")
+CLOUDFLARE_URL = "https://api.cloudflare.com/client/v4/accounts/{account}/ai/run/@cf/cloudflare/{model}"
+
+
+def cloudflare_tier(model: str = "clef-flash", account_id: str | None = None, token: str | None = None,
+                    timeout: float = 30.0) -> SystemOneHTTP:
+    """Clef on Workers AI. The account comes from CLOUDFLARE_ACCOUNT_ID, the token from CLOUDFLARE_API_TOKEN
+    (or CLOUDFLARE_AUTH_TOKEN, the name Cloudflare's examples use)."""
+    import os
+    model = model.strip()
+    if model not in CLOUDFLARE_MODELS:
+        raise ValueError(f"Workers AI serves {CLOUDFLARE_MODELS} as decision models, not {model!r}")
+    account = (account_id or os.environ.get("CLOUDFLARE_ACCOUNT_ID") or "").strip()
+    if not account:
+        raise ValueError("cloudflare needs an account id: set CLOUDFLARE_ACCOUNT_ID")
+    if not re.fullmatch(r"[0-9a-fA-F]{32}", account):
+        raise ValueError("CLOUDFLARE_ACCOUNT_ID is not a Cloudflare account id (32 hexadecimal characters)")
+    token = token or os.environ.get("CLOUDFLARE_API_TOKEN") or os.environ.get("CLOUDFLARE_AUTH_TOKEN")
+    if not token:
+        raise ValueError("cloudflare needs a token: set CLOUDFLARE_API_TOKEN")
+    return SystemOneHTTP(CLOUDFLARE_URL.format(account=account, model=model), model=model,
+                         api_key=token or None, timeout=timeout, exact_url=True)
+
 
 def remote_tier(target: str, model: str | None = None, key_env: str | None = None,
                 timeout: float = 30.0) -> SystemOneHTTP:
-    """A tier from `typesafe`, `ollama:nimble` or a URL. The key is read from the provider's own variable
-    (TYPESAFE_API_KEY for Jev), or from `key_env` for any other server; never passed as a value."""
+    """A tier from `typesafe`, `ollama:nimble`, `cloudflare:clef-flash` or a URL. The key is read from the
+    provider's own variable (TYPESAFE_API_KEY for Jev, CLOUDFLARE_API_TOKEN for Clef), or from `key_env` for
+    any other server; never passed as a value."""
     import os
     name, _, suffix = target.partition(":")
+    if name == "cloudflare":
+        token = None
+        if key_env:  # an explicit variable is the only source: no silent fallback when it is unset
+            token = os.environ.get(key_env)
+            if not token:
+                raise ValueError(f"--escalate-key-env {key_env} is not set")
+        return cloudflare_tier(model or suffix or "clef-flash", token=token, timeout=timeout)
+    if target.startswith(("http://", "https://")) and "api.cloudflare.com" in target:
+        raise ValueError("for Workers AI, use --escalate-to cloudflare:clef or cloudflare:clef-flash")
     if name in PROVIDERS and not target.startswith(("http://", "https://")):
         url, default_model, default_env = PROVIDERS[name]
         model = model or suffix or default_model
@@ -218,19 +254,21 @@ _ANSWER_TYPE = {Choice: ChoiceAnswer, Noul: NoulAnswer, Score: ScoreAnswer}
 
 
 class SystemOneHTTP:
-    """Any server speaking `POST /v1/systemone`: TypeSafe's Jev, Ollama (Nimble, Tev1), Kev, `jul serve`.
+    """Any server speaking the System One body: TypeSafe's Jev, Ollama (Nimble, Tev1, Clef), Kev, `jul serve`,
+    and Clef on Workers AI (`cloudflare_tier`, which posts to its own route and unwraps `result`).
 
     `base_url` is the server root, with or without `/v1` (`https://api.typesafe.ai`,
     `http://localhost:11434`). The state is sent to that server: a remote tier is a third party.
     """
 
     def __init__(self, base_url: str, model: str = "jev-latest", api_key: str | None = None,
-                 timeout: float = 30.0):
+                 timeout: float = 30.0, exact_url: bool = False):
         root = base_url.rstrip("/")
-        if root.endswith("/v1/systemone"):
+        if exact_url or root.endswith("/v1/systemone"):  # a provider with its own route (Workers AI)
             self.url = root
         else:
             self.url = (root[:-3] if root.endswith("/v1") else root) + "/v1/systemone"
+        self.exact_url = exact_url
         self.model = model
         self.api_key = api_key
         self.timeout = timeout
@@ -254,6 +292,15 @@ class SystemOneHTTP:
             raise RemoteError(f"{self.url}: {type(e).__name__}: {e}") from e
         if not isinstance(data, dict):
             raise RemoteError(f"{self.url}: the response is not a JSON object")
+        if self.exact_url and "success" in data:
+            # Cloudflare's REST envelope: {"result": {...}, "success": true, "errors": [], "messages": []}
+            if data.get("success") is not True:
+                raise RemoteError(f"{self.url}: {json.dumps(data.get('errors'))[:200]}")
+            data = data.get("result")
+            if not isinstance(data, dict):
+                raise RemoteError(f"{self.url}: the result is missing or not a JSON object")
+        if "answers" not in data:
+            raise RemoteError(f"{self.url}: the response has no answers")
         answers = {}
         for name, a in (data.get("answers") or {}).items():
             if name not in questions:

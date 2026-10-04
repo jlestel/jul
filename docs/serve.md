@@ -74,12 +74,18 @@ and only those. Keys are read from the provider's usual variable, never from the
 | --- | --- | --- |
 | `typesafe` | Jev, `api.typesafe.ai` | `TYPESAFE_API_KEY` |
 | `ollama`, `ollama:clef-flash` | Ollama on localhost (Nimble by default) | none |
+| `cloudflare`, `cloudflare:clef` | Clef on Cloudflare Workers AI (`clef-flash` by default) | `CLOUDFLARE_API_TOKEN` (or `CLOUDFLARE_AUTH_TOKEN`), plus `CLOUDFLARE_ACCOUNT_ID` |
 | a URL | any `/v1/systemone` server: Kev, another `jul serve`... | the variable named by `--escalate-key-env` |
 
 ```bash
 TYPESAFE_API_KEY=... jul serve --escalate-to typesafe --min-confidence 0.8
 jul serve --escalate-to ollama:nimble
+CLOUDFLARE_ACCOUNT_ID=... CLOUDFLARE_API_TOKEN=... jul serve --escalate-to cloudflare:clef-flash
 ```
+
+Workers AI serves Clef at its own route (`/accounts/{id}/ai/run/@cf/cloudflare/clef-flash`) with the same
+body as Jev; JuL posts there and unwraps Cloudflare's `result` envelope. Clef's image input, a Clef
+extension to the protocol, is not sent. A missing account or token stops `jul serve` at startup.
 
 The response says, per question, which tier answered:
 
