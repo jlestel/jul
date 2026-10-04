@@ -359,7 +359,7 @@ def typed_row(row: dict) -> tuple[str, Any, list[Option], int] | None:
 
 def rows_from_labeled(questions: dict, labeled: list) -> list[dict]:
     """autotune's (questions, [(state, {name: answer})]) as typed rows for `train_heads`."""
-    from .types import Choice, Noul, NoulCriteria, Score
+    from .types import Noul, NoulCriteria, Score
     rows = []
     for state, answers in labeled:
         for name, q in questions.items():
