@@ -254,7 +254,43 @@ Two differences with the presets above: `autotune(...)` does not apply (its head
 vectors of the other method, and such a model needs a full fine-tune instead), and a state longer than
 the limit in its `decision.json` is truncated rather than stretched.
 
-## Contrastive models (CLM-8B)
+## Contrastive heads (any backbone; CLM-8B)
+
+A contrastive preset reads a **frozen** backbone through two small projection heads: the state (with the
+question's instructions after a blank line) goes through the state head, each option through the action
+head, the score is `scale * cosine` and a softmax gives the answer. It is a way of reading a model, not
+a model: the backbone is any repo jul loads (MLX, torch or onnx, decoders and encoders), and
+`contrastive.json` says how it is read:
+
+| Field | Values |
+| --- | --- |
+| `backbone` | repo per backend |
+| `layer` | `"final"` (last layer after the final norm, decoders on MLX/torch) or a layer index (any backend) |
+| `pooling` | `"last"` token or `"mean"` (an encoder is always read as its mean) |
+| `render` | `"fields"` (`key: value`, CLM's) or `"json"` (jul's) for a structured state |
+| `noul`, `prefix` | Noul texts when the question gives none; the model's input convention (`query: `) |
+| `max_tokens`, `scale` | tail kept; the learnt scale |
+
+The heads only mean something on the backbone they were trained on. Train them on any backbone from
+labeled rows (`{state, type, question, options, answer}`, or autotune's `{state, answers}` with
+`--questions`); the backbone stays frozen and torch is needed for the training only:
+
+```bash
+jul models add my-heads --repo Qwen/Qwen3-0.6B --backend torch --train-heads rows.jsonl
+python -m jul.contrastive train Qwen/Qwen3-0.6B rows.jsonl out/   # same, without a preset
+```
+
+The loss is CLM's InfoNCE (the question's own options, plus the batch's other options as negatives), the
+epoch kept is the best on held-out rows, and the plain cosine of the same embeddings is reported next to
+it (`training.json`).
+
+Measured once (decision-bench v1, 2,108 scored items, torch CPU): heads trained on a frozen Qwen3-0.6B from
+5,974 rows of the decision dataset's train split score 0.378, against 0.337 for the plain cosine of the
+same embeddings (choice 0.218 / 0.151, noul 0.570 / 0.542, score 0.294 / 0.297), 542 ms p50. That is a real
+gain over the cosine but far below the fitted presets (`wemm-4b-4bit` 0.682): the mode works on any
+backbone, it has not yet been measured on an embedding model or with more data.
+
+### CLM-8B
 
 [CLM-8B](https://huggingface.co/Contrastive-LM/CLM-v0.1-8B) is not a model of its own: two small
 projection heads (19 M parameters, 75 MB) trained with InfoNCE on top of a **frozen** Qwen3-8B, read at

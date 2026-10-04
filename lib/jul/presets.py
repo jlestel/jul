@@ -65,7 +65,7 @@ class Preset:
     calibration: dict | None = field(default=None, compare=False, hash=False)
     #: "vector" (formulations, layers, tau), "pointer": a decision model read with the format stored
     #: in its own decision.json (jul/decision.py), or "contrastive": projection heads on a frozen
-    #: encoder, CLM-8B's method (jul/contrastive.py). Formulations and tau are unused by the last two.
+    #: backbone (jul/contrastive.py). Formulations and tau are unused by the last two.
     method: str = "vector"
     #: On a pointer preset: the vector reading a long question falls back to, fitted by `jul models add`
     #: on these very weights (formulations, tau, center) plus `above_options`. None = no routing.
@@ -74,7 +74,7 @@ class Preset:
     #: {"repo": <directory or Hub repo, or {backend: repo}>, "subfolder": <optional>}. None = vectors only.
     cross: dict | None = field(default=None, compare=False, hash=False)
     #: On a "contrastive" preset (jul/contrastive.py): the directory holding contrastive.json and the
-    #: heads, written by `jul models add` from a CLM checkpoint. The repos are the frozen backbone's.
+    #: heads, trained or converted by `jul models add`. The repos are the frozen backbone's.
     heads: str | None = None
 
     @property
@@ -189,19 +189,20 @@ def pointer_preset(name: str, repo: str, backend: str) -> Preset:
 
 
 def contrastive_preset(name: str, heads_dir: str | Path, backend: str) -> Preset:
-    """A contrastive model's preset (CLM-8B): the backbone's repos and the directory of its heads.
+    """A contrastive preset: the frozen backbone's repos and the directory of its heads (trained by jul on
+    any backbone, or converted from a published checkpoint such as CLM-8B).
 
     Nothing is fitted: the scale comes with the heads. Every backend the heads name a backbone for is
-    listed, so one `jul models add` serves MLX and torch alike.
+    listed, so one `jul models add` serves each of them.
     """
     from .contrastive import ContrastiveSpec
     spec = ContrastiveSpec.load(heads_dir)
     if backend not in spec.backbone:
         raise ValueError(f"{heads_dir}: no {backend} backbone for these heads "
-                         f"(has {', '.join(spec.backbone)}); pass --backbone at conversion")
+                         f"(has {', '.join(spec.backbone)})")
     return Preset(name=name, repo=spec.backbone.get("mlx", ""), torch_repo=spec.backbone.get("torch"),
-                  backend=backend, formulations=(), tau=1.0, latency_ms="?",
-                  quality="contrastive heads on a frozen encoder (CLM method)", method="contrastive",
+                  onnx_repo=spec.backbone.get("onnx"), backend=backend, formulations=(), tau=1.0, latency_ms="?",
+                  quality="contrastive heads on a frozen backbone", method="contrastive",
                   heads=str(Path(heads_dir).resolve()),
                   notes=f"heads {spec.source}, scale {spec.scale:.2f}, backbone {spec.backbone.get(backend)}")
 

@@ -158,7 +158,7 @@ class TypeSafeClient:
                                      usage=Usage(input_tokens=tokens), request_id=str(uuid.uuid4()))
 
         if engine.contrastive is not None:
-            # Projection heads on a frozen encoder (CLM-8B): one embedding of state + instructions per
+            # Projection heads on a frozen backbone: one embedding of state + instructions per
             # question, the option embeddings cached. A head from `autotune` reads that same embedding.
             for name, question in questions.items():
                 kind, options = _kind_of(question), options_of(question)
@@ -273,7 +273,7 @@ class TypeSafeClient:
         features_mode = features
         if engine.contrastive is not None:
             if features != "vector" or formulations:
-                raise ValueError(f"{self._preset.name!r} is a contrastive model: its heads read the encoder "
+                raise ValueError(f"{self._preset.name!r} is a contrastive model: its heads read the backbone "
                                  "embedding only (features='vector', no formulations)")
             for name, question in questions.items():
                 reports[name] = self._autotune_contrastive(engine, ctx, name, question, labeled)
@@ -323,8 +323,8 @@ class TypeSafeClient:
 
     def _autotune_contrastive(self, engine: Engine, ctx: Context, name: str, question: Question,
                               labeled: list) -> tuning.TuningReport:
-        """autotune on a contrastive model: the head is trained on the encoder embedding of
-        state + instructions (what the state head reads), judged against the CLM heads' own answers."""
+        """autotune on a contrastive model: the head is trained on the backbone embedding of
+        state + instructions (what the state head reads), judged against the contrastive heads' own answers."""
         kind, options = _kind_of(question), options_of(question)
         index = {o.key: i for i, o in enumerate(options)}
         rows = [(s, _answer_index(kind, a[name], index)) for s, a in labeled if name in a]

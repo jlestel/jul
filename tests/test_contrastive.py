@@ -1,7 +1,8 @@
-"""The contrastive method (jul/contrastive.py): CLM-8B's projection heads on a frozen encoder.
+"""The contrastive reading (jul/contrastive.py): projection heads on any frozen backbone.
 
-The fast tests check the texts against CLM's own `schema.build_pairs` rules, the numpy heads against a
-torch reimplementation of CLM's `make_head`, and the client wiring with a fake backbone. The slow one
+The fast tests check the texts against CLM's own `schema.build_pairs` rules (the CLM profile), the numpy
+heads against a torch reimplementation of CLM's `make_head`, the reading at a layer and as a mean (any
+backend, encoders), the training of heads on a fake backbone, and the client wiring. The slow one
 reproduces the reference answers of CLM's README on the real backbone.
 """
 
@@ -12,8 +13,9 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from jul.contrastive import (ContrastiveReader, ContrastiveSpec, Head, load_heads, option_texts,
-                             state_text, to_text)
+from jul.contrastive import (ContrastiveReader, ContrastiveSpec, Embedder, Head, default_reading,
+                             load_heads, option_texts, rows_from_labeled, state_text, to_text, train_heads,
+                             typed_row)
 from jul.types import Choice, Noul, NoulCriteria, Score, options_of
 
 NOUL = {"true": "Yes. This is true: {instructions}", "false": "No. This is false: {instructions}"}
@@ -79,17 +81,21 @@ def test_numpy_head_matches_torch():
     assert np.abs(Head(a, "state_head", CFG)(x) - want).max() < 1e-5
 
 
-def _heads_dir(tmp_path: Path) -> Path:
+def _heads_dir(tmp_path: Path, **reading) -> Path:
     np.savez(tmp_path / "heads.npz", cfg=np.array(json.dumps(CFG)), **_arrays())
     (tmp_path / "contrastive.json").write_text(json.dumps({
         "method": "contrastive", "backbone": {"mlx": "fake/mlx", "torch": "fake/torch"}, "pooling": "last",
-        "max_tokens": 6, "scale": 20.0, "noul": NOUL, "heads": "heads.npz", "source": "test"}))
+        "max_tokens": 6, "scale": 20.0, "noul": NOUL, "heads": "heads.npz", "source": "test", **reading}))
     return tmp_path
 
 
 class FakeBackbone:
     """Hidden states from a fixed random table, so an embedding depends on the tokens only."""
     name = "fake"
+    repo = "fake/repo"
+    backend = "mlx"
+    architecture = "decoder"
+    n_layers = 4
 
     class tokenizer:
         eos_token_id = 0
@@ -105,6 +111,15 @@ class FakeBackbone:
     def last_hidden(self, tokens, prefix=None):
         self.calls.append(list(tokens))
         return np.cumsum(self.table[tokens], axis=0)
+
+    def forward_batch(self, queries, layers=(), pools=None, prefix=None):
+        """[last token ; mean] of layer l, here the running sum scaled by l + 1."""
+        out = []
+        for q in queries:
+            self.calls.append(list(q))
+            h = np.cumsum(self.table[q], axis=0)
+            out.append({l: np.concatenate([h[-1], h.mean(0)]) * (l + 1) for l in layers})
+        return out
 
 
 def test_reader_scores_scale_times_cosine_and_caches_options(tmp_path):
@@ -156,6 +171,71 @@ def test_client_answers_and_autotunes_through_the_contrastive_reader(tmp_path, m
     assert abs(sum(r2.choices["team"].probabilities.values()) - 1) < 1e-3
     with pytest.raises(ValueError, match="contrastive"):
         client.autotune(ctx, {"team": qs["team"]}, labeled, save=False, features="hybrid")
+
+
+def test_reading_at_a_layer_mean_pooled_with_a_prefix(tmp_path):
+    # any backend: a layer index read through forward_batch, the mean half, the spec's prefix first
+    spec = ContrastiveSpec.load(_heads_dir(tmp_path, layer=2, pooling="mean", prefix="q: ", max_tokens=50))
+    bb = FakeBackbone()
+    e, n = Embedder(bb, spec)(["hi there"])
+    toks = [ord(c) % 97 for c in "q: hi there"]
+    want = np.cumsum(bb.table[toks], 0).mean(0)
+    assert n == len(toks) and np.allclose(e[0], want / np.linalg.norm(want), atol=1e-6)
+    # an encoder is read as a mean at a layer, never at "final" or its last token
+    bb.architecture = "encoder"
+    with pytest.raises(ValueError, match="layer index"):
+        Embedder(bb, ContrastiveSpec.load(_heads_dir(tmp_path)))
+    with pytest.raises(ValueError, match="mean"):
+        Embedder(bb, ContrastiveSpec.load(_heads_dir(tmp_path, layer=1)))
+
+
+def test_default_reading_follows_the_backbone():
+    bb = FakeBackbone()
+    assert default_reading(bb)["layer"] == "final" and default_reading(bb)["pooling"] == "last"
+    bb.architecture, bb.text_prefix = "encoder", "query: "
+    r = default_reading(bb)
+    assert (r["layer"], r["pooling"], r["prefix"]) == (3, "mean", "query: ")
+
+
+def test_typed_rows_from_the_dataset_and_from_autotune():
+    # the decision dataset: noul [yes, no, unknown] by index, unknown skipped; score from its [0, 1] value
+    k, q, opts, g = typed_row({"state": "s", "type": "noul", "question": "Late?", "options": ["yes", "no", "unknown"],
+                               "answer": 0})
+    assert k == "noul" and opts[g].key == "true"
+    assert typed_row({"state": "s", "type": "noul", "question": "Late?", "answer": 2}) is None
+    _, _, opts, g = typed_row({"state": "s", "type": "score", "question": "How bad?",
+                               "options": ["a", "b", "c", "d", "e"], "answer": None, "score": 0.75})
+    assert g == 3
+    _, _, opts, g = typed_row({"state": "s", "type": "choice", "question": "T?", "options": ["x", "y"], "answer": 1})
+    assert opts[g].key == "y"
+    rows = rows_from_labeled({"team": Choice("Team?", {"a": "alpha", "b": "beta"}), "late": Noul("Late?")},
+                             [("hello", {"team": "b", "late": "yes"})])
+    assert [typed_row(r)[3] for r in rows] == [1, 0]   # "b"; Noul options are [true, false]
+
+
+def test_heads_trained_on_any_backbone_beat_the_plain_cosine(tmp_path):
+    pytest.importorskip("torch")
+    from jul.types import options_of
+    bb = FakeBackbone()
+    rng = np.random.RandomState(0)
+    words = {"alpha": "billing", "beta": "outage", "gamma": "refund"}
+    rows = []
+    for i in range(240):
+        w = list(words)[i % 3]
+        state = " ".join(rng.choice(list("xyzuvw"), 4)) + f" {w} " + " ".join(rng.choice(list("xyzuvw"), 2))
+        rows.append({"state": state, "type": "choice", "question": "Team?", "options": list(words.values()),
+                     "answer": i % 3})
+    out = tmp_path / "trained"
+    report = train_heads(bb, rows, out, {"mlx": "fake/repo"}, {**default_reading(bb), "max_tokens": 64},
+                         width=32, proj=16, epochs=60, batch=64, lr=3e-3, log=lambda *_: None)
+    assert report["heads_accuracy"] > report["cosine_accuracy"] + 0.2 and report["heads_accuracy"] > 0.8
+    spec = ContrastiveSpec.load(out)
+    assert spec.backbone == {"mlx": "fake/repo"} and spec.render == "json" and "trained by jul" in spec.source
+    reader = ContrastiveReader(bb, spec)
+    q = Choice("Team?", {k: "" for k in words.values()})
+    hits = sum(int(np.argmax(reader.read(r["state"], "choice", "Team?", options_of(q))[0]) == r["answer"])
+               for r in rows[:30])
+    assert hits >= 24
 
 
 def test_preset_round_trip_keeps_the_heads(tmp_path):

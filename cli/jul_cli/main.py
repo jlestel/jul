@@ -254,7 +254,7 @@ def cmd_models(a):
         if p.method == "pointer":
             print("  method: pointer (decision model; format, head and temperature in its decision.json)")
         elif p.method == "contrastive":
-            print(f"  method: contrastive (projection heads in {p.heads})")
+            print(f"  method: contrastive (projection heads on the frozen backbone, in {p.heads})")
         else:
             print("  formulations: " + ", ".join(f"{f.name}@layer{f.layer}" for f in p.formulations)
                   + f", tau={p.tau}, center={p.center}")
@@ -285,8 +285,9 @@ def _with_cross(preset, cross):
 
 
 def _add_contrastive(a):
-    """CLM-8B and its kind: projection heads on a frozen encoder. Nothing to fit; the checkpoint is
-    converted once into ~/.jul/heads/<name> (needs torch, to read the .pt) unless it already is."""
+    """Projection heads on a frozen backbone: trained here on any backbone (--train-heads), converted from
+    a published checkpoint (CLM-8B), or a directory that already holds them. Written to
+    ~/.jul/heads/<name>; training and conversion need torch, inference does not."""
     from pathlib import Path as _P
 
     from jul.backbone import resolve_backend
@@ -294,7 +295,21 @@ def _add_contrastive(a):
     from jul.home import JUL_HOME
     from jul.presets import contrastive_preset, save_preset
     backend = resolve_backend(a.backend)
-    if (_P(a.repo) / SPEC_FILE).exists():
+    if a.train_heads:
+        from jul.backbone import Backbone
+        from jul.contrastive import default_reading, read_rows, rows_from_labeled, train_heads
+        if a.questions:
+            questions = load_questions(a.questions)
+            rows = rows_from_labeled(questions, read_labeled(a.train_heads, questions))
+        else:
+            rows = read_rows(a.train_heads)
+        heads = JUL_HOME / "heads" / a.name
+        print(f"{a.name}: training contrastive heads on {a.repo} ({backend}) from {len(rows)} rows into {heads}")
+        bb = Backbone(a.repo, backend)
+        report = train_heads(bb, rows, heads, {backend: a.repo}, default_reading(bb), epochs=a.epochs)
+        print(f"  held-out accuracy {report['heads_accuracy']:.3f} against {report['cosine_accuracy']:.3f} for "
+              f"the plain cosine of the same embeddings ({report['held_out']} rows)")
+    elif (_P(a.repo) / SPEC_FILE).exists():
         heads = _P(a.repo)
     else:
         heads = JUL_HOME / "heads" / a.name
@@ -330,8 +345,12 @@ def cmd_models_add(a):
         path = save_preset(dataclasses.replace(_with_cross(preset, a.cross), backend=preset.backend or backend))
         print(f"{a.name} on {backend}: cross model attached -> {path}")
         return
-    from jul.contrastive import is_clm_repo
-    if a.repo and is_clm_repo(a.repo):
+    if a.train_heads:
+        if not a.repo:
+            raise SystemExit("--train-heads needs --repo, the backbone the heads are trained on")
+        return _add_contrastive(a)
+    from jul.contrastive import is_heads_source
+    if a.repo and is_heads_source(a.repo):
         return _add_contrastive(a)
     from jul.decision import spec_source
     source = spec_source(a.repo) if a.repo else None
@@ -534,6 +553,12 @@ def build_parser() -> argparse.ArgumentParser:
                                    "question types it declares; without --repo, attached to the fitted preset. "
                                    "A repo carrying one in cross/ gets it without this flag")
     s.add_argument("--no-cross", action="store_true", help="add: ignore the cross model the repo carries")
+    s.add_argument("--train-heads", type=Path, metavar="ROWS",
+                   help="add: train contrastive heads on the --repo backbone (kept frozen) from labeled rows, "
+                        "JSONL {state, type, question, options, answer} or parquet; with --questions, "
+                        "autotune's format {state, answers}. Needs torch for the training")
+    s.add_argument("--questions", type=Path, help="add --train-heads: the question file the rows answer")
+    s.add_argument("--epochs", type=int, default=40, help="add --train-heads: maximum epochs (default 40)")
     s.set_defaults(fn=cmd_models)
 
     s = sub.add_parser("serve", help="serve the Jev HTTP protocol (POST /v1/systemone) locally")
