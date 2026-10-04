@@ -247,8 +247,13 @@ class Embedder:
 
     def tokens(self, text: str) -> list[int]:
         tok = self.backbone.tokenizer
-        ids = tok.encode(self.spec.prefix + text, add_special_tokens=self.spec.add_special_tokens)
-        return list(ids[-self.spec.max_tokens:]) or [tok.eos_token_id or 0]
+        ids = list(tok.encode(self.spec.prefix + text, add_special_tokens=self.spec.add_special_tokens))
+        if len(ids) > self.spec.max_tokens and self.spec.prefix:
+            # the input convention is kept whole: the text's tail is what is cut
+            head = list(tok.encode(self.spec.prefix, add_special_tokens=self.spec.add_special_tokens))
+            keep = max(1, self.spec.max_tokens - len(head))
+            return head + ids[-keep:]
+        return ids[-self.spec.max_tokens:] or [tok.eos_token_id or 0]
 
     def __call__(self, texts: list[str]) -> tuple[np.ndarray, int]:
         """(len(texts), d) unit vectors, and the tokens run."""
@@ -257,14 +262,29 @@ class Embedder:
             hs = [np.asarray(self.backbone.last_hidden(s), dtype=np.float32) for s in seqs]
             vs = [h[-1] if self.spec.pooling == "last" else h.mean(0) for h in hs]
         else:
-            layer, vs = int(self.spec.layer), []
-            for i in range(0, len(seqs), self.batch):
-                chunk = seqs[i:i + self.batch]
-                for f in self.backbone.forward_batch(chunk, layers=[layer], pools=[(0, len(q)) for q in chunk]):
+            import os
+
+            from .backbone import BATCH_TOKENS
+            layer, vs = int(self.spec.layer), [None] * len(seqs)
+            budget = int(os.environ.get("JUL_BATCH_TOKENS") or BATCH_TOKENS)
+            # sorted by length, grouped under the same budget as PromptTemplate.run_batch (rows x longest)
+            order = sorted(range(len(seqs)), key=lambda i: len(seqs[i]))
+            groups, group = [], []
+            for i in order:
+                if group and ((len(group) + 1) * len(seqs[i]) > budget or len(group) >= self.batch):
+                    groups.append(group)
+                    group = []
+                group.append(i)
+            if group:
+                groups.append(group)
+            for group in groups:
+                chunk = [seqs[i] for i in group]
+                got = self.backbone.forward_batch(chunk, layers=[layer], pools=[(0, len(q)) for q in chunk])
+                for i, f in zip(group, got):
                     f = np.asarray(f[layer], dtype=np.float32)
                     d = f.shape[0] // 2
                     # decoder: [last token ; mean over the text]; encoder: [mean over the sequence ; ...]
-                    vs.append(f[:d] if self.encoder or self.spec.pooling == "last" else f[d:])
+                    vs[i] = f[:d] if self.encoder or self.spec.pooling == "last" else f[d:]
         e = np.stack(vs)
         return e / (np.linalg.norm(e, axis=-1, keepdims=True) + 1e-12), sum(map(len, seqs))
 
@@ -321,15 +341,24 @@ def typed_row(row: dict) -> tuple[str, Any, list[Option], int] | None:
     """(kind, question, options in jul's order, gold index) from one labeled row, None when unusable.
 
     A row: {"state", "type": choice|noul|score, "question" (the instructions), "options" (a list of
-    option names, or {key: description}), "answer"}. choice: the gold option's index or key. noul: a
-    bool, "yes"/"no"/"true"/"false" (or oui/non), or an index into options listed yes-first (the decision
-    dataset's [yes, no, unknown]: unknown is skipped). score: the level index, or "score" in [0, 1].
+    option names, or {key: description}), "answer"}. choice: the gold option's key, or its index when the
+    answer is an int that is not a key. noul: a bool, "yes"/"no"/"true"/"false" (or oui/non), or an index
+    into options listed yes-first (the decision dataset's [yes, no, unknown]: unknown is skipped);
+    {"true": ..., "false": ...} options are the Noul's criteria. score: the level index, or "score" in [0, 1].
+    A malformed row (unknown type, answer outside the options) is None, never an error.
     """
-    from .types import Choice, Noul, Score, options_of
+    try:
+        return _typed_row(row)
+    except (ValueError, KeyError, TypeError, IndexError):
+        return None
+
+
+def _typed_row(row: dict):
+    from .types import Choice, Noul, NoulCriteria, Score, options_of
     kind, question, opts, answer = row["type"], row.get("question") or "", row.get("options"), row.get("answer")
     if kind == "noul":
-        if isinstance(answer, bool):
-            yes = answer
+        if isinstance(answer, (bool, np.bool_)):
+            yes = bool(answer)
         elif isinstance(answer, str):
             a = answer.strip().lower()
             if a not in ("yes", "no", "true", "false", "oui", "non"):
@@ -339,7 +368,11 @@ def typed_row(row: dict) -> tuple[str, Any, list[Option], int] | None:
             yes = answer == 0
         else:
             return None
-        q = Noul(question)
+        if isinstance(opts, dict):
+            q = Noul(question, NoulCriteria(true=opts.get("true", opts.get("yes", "")) or "",
+                                            false=opts.get("false", opts.get("no", "")) or ""))
+        else:
+            q = Noul(question)
         options = options_of(q)
         return kind, q, options, [o.key for o in options].index("true" if yes else "false")
     if kind == "score":
@@ -349,17 +382,29 @@ def typed_row(row: dict) -> tuple[str, Any, list[Option], int] | None:
         n = len(opts)
         gold = (int(answer) if answer is not None and answer == answer
                 else int(round(float(row["score"]) * (n - 1))))
-        return kind, q, options_of(q), gold
-    q = Choice(question, dict(opts) if isinstance(opts, dict) else {str(o): "" for o in opts})
+    elif kind == "choice":
+        if not opts:
+            return None
+        q = Choice(question, dict(opts) if isinstance(opts, dict) else {str(o): "" for o in opts})
+        keys = [o.key for o in options_of(q)]
+        if str(answer) in keys:
+            gold = keys.index(str(answer))
+        elif isinstance(answer, (int, np.integer)) and not isinstance(answer, bool):
+            gold = int(answer)
+        else:
+            return None
+    else:
+        return None
     options = options_of(q)
-    keys = [o.key for o in options]
-    gold = keys.index(str(answer)) if str(answer) in keys and not isinstance(answer, int) else int(answer)
+    if not 0 <= gold < len(options):
+        return None
     return kind, q, options, gold
 
 
 def rows_from_labeled(questions: dict, labeled: list) -> list[dict]:
-    """autotune's (questions, [(state, {name: answer})]) as typed rows for `train_heads`."""
-    from .types import Noul, NoulCriteria, Score
+    """autotune's (questions, [(state, {name: answer})]) as typed rows for `train_heads`, written so that
+    `typed_row` rebuilds the very question the client reads at inference."""
+    from .types import Noul, NoulCriteria, Score, options_of
     rows = []
     for state, answers in labeled:
         for name, q in questions.items():
@@ -367,14 +412,13 @@ def rows_from_labeled(questions: dict, labeled: list) -> list[dict]:
                 continue
             a = answers[name]
             if isinstance(q, Noul):
+                row = {"state": state, "type": "noul", "question": q.instructions,
+                       "answer": a if isinstance(a, bool) else str(a).strip().lower() in ("true", "yes", "1")}
                 c = q.criteria
-                if isinstance(c, NoulCriteria) and (c.true or c.false):
-                    rows.append({"state": state, "type": "choice", "question": q.instructions,
-                                 "options": {"false": c.false or "No.", "true": c.true or "Yes."},
-                                 "answer": "true" if str(a).lower() in ("true", "yes", "1") else "false"})
-                    continue
-                rows.append({"state": state, "type": "noul", "question": q.instructions,
-                             "answer": str(a).lower() in ("true", "yes", "1")})
+                if c and not (isinstance(c, NoulCriteria) and not (c.true or c.false)):
+                    given = {o.key: o.description for o in options_of(q)}
+                    row["options"] = {"true": given["true"], "false": given["false"]}
+                rows.append(row)
             elif isinstance(q, Score):
                 rows.append({"state": state, "type": "score", "question": q.instructions,
                              "options": list(q.criteria), "answer": int(a)})
@@ -396,6 +440,7 @@ def default_reading(backbone, max_tokens: int = 512) -> dict:
         layer, pooling = backbone.n_layers - 1, "last"
     else:
         layer, pooling = "final", "last"
+    max_tokens = min(max_tokens, getattr(backbone, "max_tokens", None) or max_tokens)
     return {"layer": layer, "pooling": pooling, "max_tokens": max_tokens, "add_special_tokens": False,
             "render": "json", "noul": NOUL_TEMPLATES, "prefix": getattr(backbone, "text_prefix", "") or ""}
 
@@ -430,6 +475,7 @@ def train_heads(backbone, rows: list[dict], out: str | Path, backbone_repos: dic
     embed = Embedder(backbone, spec)
 
     items, state_ids, option_ids = [], {}, {}
+    groups, groups_of = [], {}   # the raw state of each item: held-out rows are whole states
     for row in rows:
         t = typed_row(row)
         if t is None:
@@ -439,6 +485,10 @@ def train_heads(backbone, rows: list[dict], out: str | Path, backbone_repos: dic
         st = state_text(row["state"], q.instructions, spec.render)
         cands = [option_ids.setdefault(x, len(option_ids)) for x in texts]
         items.append((state_ids.setdefault(st, len(state_ids)), cands, index.index(gold), kind))
+        groups.append(groups_of.setdefault(json.dumps(row["state"], sort_keys=True, default=str), len(groups_of)))
+    skipped = len(rows) - len(items)
+    if skipped:
+        log(f"{skipped} unusable rows skipped (unknown type, answer outside the options, unknown gold)")
     if len(items) < 20:
         raise ValueError(f"{len(items)} usable rows: training heads needs at least 20")
     log(f"embedding {len(state_ids)} states and {len(option_ids)} option texts")
@@ -448,10 +498,14 @@ def train_heads(backbone, rows: list[dict], out: str | Path, backbone_repos: dic
     width = width or min(1536, hidden)
 
     rng = random.Random(seed)
-    order = list(range(len(items)))
-    rng.shuffle(order)
-    n_val = max(1, int(len(items) * val_frac))
-    val, train = order[:n_val], order[n_val:]
+    # held out by state, not by row: a state answering several questions must not sit on both sides
+    states = list(range(len(groups_of)))
+    rng.shuffle(states)
+    held = set(states[:max(1, int(len(states) * val_frac))])
+    val = [i for i in range(len(items)) if groups[i] in held]
+    train = [i for i in range(len(items)) if groups[i] not in held]
+    if not val or not train:
+        raise ValueError("training heads needs at least two distinct states")
     torch.manual_seed(seed)
 
     def make():

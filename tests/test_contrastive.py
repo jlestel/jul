@@ -238,6 +238,72 @@ def test_heads_trained_on_any_backbone_beat_the_plain_cosine(tmp_path):
     assert hits >= 24
 
 
+def test_rows_from_autotune_train_on_the_texts_read_at_inference():
+    # the texts a head is trained on are the ones the client reads: Noul criteria included
+    qs = {"late": Noul("Late?", NoulCriteria(true="late", false="on time")), "urgent": Noul("Urgent?"),
+          "late2": Noul("Late?", {"yes": "late", "no": "on time"}),
+          "team": Choice("Team?", {"a": "alpha", "b": "beta"}), "anger": Score("Angry?", ["calm", "angry"])}
+    rows = rows_from_labeled(qs, [("s", {"late": "yes", "urgent": False, "late2": "no", "team": "b", "anger": 1})])
+    for row, (name, q) in zip(rows, qs.items()):
+        kind, tq, opts, gold = typed_row(row)
+        kind_inf = {"Noul": "noul", "Choice": "choice", "Score": "score"}[type(q).__name__]
+        assert kind == kind_inf, name
+        assert option_texts(kind, tq.instructions, opts, NOUL) == option_texts(kind_inf, q.instructions,
+                                                                                 options_of(q), NOUL), name
+    assert [opts[g].key for _, _, opts, g in map(typed_row, rows)] == ["true", "false", "false", "b", "1"]
+
+
+def test_malformed_rows_are_skipped_not_fatal():
+    bad = [{"state": "s", "type": "choice", "question": "T?", "options": ["x", "y"], "answer": "z"},
+           {"state": "s", "type": "choice", "question": "T?", "options": {"2": "a", "5": "b"}, "answer": 7},
+           {"state": "s", "type": "score", "question": "S?", "options": ["a", "b"], "answer": None},
+           {"state": "s", "type": "score", "question": "S?", "options": ["a", "b"], "answer": None, "score": float("nan")},
+           {"state": "s", "type": "foo", "question": "?", "options": ["a"], "answer": 0}]
+    assert [typed_row(r) for r in bad] == [None] * len(bad)
+    # a key that looks like an index is a key; a numpy bool is a bool, not the index 0/1
+    _, _, opts, g = typed_row({"state": "s", "type": "choice", "question": "T?", "options": {"2": "a", "5": "b"},
+                               "answer": 5})
+    assert opts[g].key == "5"
+    _, _, opts, g = typed_row({"state": "s", "type": "noul", "question": "L?", "answer": np.True_})
+    assert opts[g].key == "true"
+
+
+def test_the_prefix_survives_truncation(tmp_path):
+    spec = ContrastiveSpec.load(_heads_dir(tmp_path, prefix="q: ", max_tokens=6))
+    toks = Embedder(FakeBackbone(), spec).tokens("a long text")
+    assert toks == [ord(c) % 97 for c in "q: "] + [ord(c) % 97 for c in "a long text"][-3:]
+
+
+def test_an_encoder_is_read_as_its_sequence_mean(tmp_path):
+    spec = ContrastiveSpec.load(_heads_dir(tmp_path, layer=1, pooling="mean", max_tokens=50))
+    bb = FakeBackbone()
+    bb.architecture = "encoder"
+    e, _ = Embedder(bb, spec)(["abc", "de"])
+    for text, v in zip(["abc", "de"], e):
+        want = np.cumsum(bb.table[[ord(c) % 97 for c in text]], 0)[-1]   # the fake's first half
+        assert np.allclose(v, want / np.linalg.norm(want), atol=1e-6)
+
+
+def test_held_out_rows_are_split_by_state(tmp_path):
+    # each state answers 4 questions, all with the same random label: split by row, the held-out rows
+    # share their state with training rows and the "held-out" score leaks far above chance
+    pytest.importorskip("torch")
+    bb = FakeBackbone()
+    rng = np.random.RandomState(1)
+    rows = []
+    for i in range(80):
+        state = " ".join(rng.choice(list("abcdefghij"), 6))
+        label = int(rng.randint(2))
+        for q in range(4):
+            rows.append({"state": state, "type": "choice", "question": f"Q{q}?", "options": ["red", "blue"],
+                         "answer": label})
+    report = train_heads(bb, rows, tmp_path / "h", {"mlx": "fake"}, {**default_reading(bb), "max_tokens": 64},
+                         width=64, proj=16, epochs=60, batch=32, lr=5e-3, val_frac=0.25, patience=60,
+                         log=lambda *_: None)
+    assert report["held_out"] % 4 == 0           # whole states
+    assert report["heads_accuracy"] < 0.75       # no leak: random labels stay near chance
+
+
 def test_preset_round_trip_keeps_the_heads(tmp_path):
     from jul.presets import contrastive_preset, load_preset, save_preset
     heads = _heads_dir(tmp_path)

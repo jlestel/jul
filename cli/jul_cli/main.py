@@ -320,7 +320,7 @@ def _add_contrastive(a):
     except ValueError as exc:
         raise SystemExit(f"error: {exc}") from exc
     path = save_preset(preset)
-    print(f"{a.name}: contrastive heads on a frozen encoder, backbone {preset.repos[backend]} on {backend}"
+    print(f"{a.name}: contrastive heads on a frozen backbone, backbone {preset.repos[backend]} on {backend}"
           f" -> {path}")
     print(f"  {preset.notes}")
     print(f"\nUse it: jul ask ... --model {a.name} --backend {backend}"
