@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 import urllib.error
 import urllib.request
 import uuid
@@ -41,7 +42,8 @@ from typing import Any, Mapping, Sequence
 from .types import (Choice, ChoiceAnswer, Noul, NoulAnswer, NoulCriteria, Question, Score, ScoreAnswer,
                     SystemOneResponse, Usage, options_of, serialize_state)
 
-__all__ = ["Escalation", "EscalatedResponse", "RemoteError", "SystemOneHTTP", "certainty"]
+__all__ = ["Escalation", "EscalatedResponse", "RemoteError", "SystemOneHTTP", "certainty", "cloudflare_tier",
+           "remote_tier"]
 
 
 def certainty(answer: Any) -> float:
@@ -210,10 +212,14 @@ def cloudflare_tier(model: str = "clef-flash", account_id: str | None = None, to
     model = model.strip()
     if model not in CLOUDFLARE_MODELS:
         raise ValueError(f"Workers AI serves {CLOUDFLARE_MODELS} as decision models, not {model!r}")
-    account = account_id or os.environ.get("CLOUDFLARE_ACCOUNT_ID")
+    account = (account_id or os.environ.get("CLOUDFLARE_ACCOUNT_ID") or "").strip()
     if not account:
         raise ValueError("cloudflare needs an account id: set CLOUDFLARE_ACCOUNT_ID")
+    if not re.fullmatch(r"[0-9a-fA-F]{32}", account):
+        raise ValueError("CLOUDFLARE_ACCOUNT_ID is not a Cloudflare account id (32 hexadecimal characters)")
     token = token or os.environ.get("CLOUDFLARE_API_TOKEN") or os.environ.get("CLOUDFLARE_AUTH_TOKEN")
+    if not token:
+        raise ValueError("cloudflare needs a token: set CLOUDFLARE_API_TOKEN")
     return SystemOneHTTP(CLOUDFLARE_URL.format(account=account, model=model), model=model,
                          api_key=token or None, timeout=timeout, exact_url=True)
 
@@ -225,9 +231,15 @@ def remote_tier(target: str, model: str | None = None, key_env: str | None = Non
     any other server; never passed as a value."""
     import os
     name, _, suffix = target.partition(":")
-    if name == "cloudflare" and not target.startswith(("http://", "https://")):
-        token = os.environ.get(key_env) if key_env else None
+    if name == "cloudflare":
+        token = None
+        if key_env:  # an explicit variable is the only source: no silent fallback when it is unset
+            token = os.environ.get(key_env)
+            if not token:
+                raise ValueError(f"--escalate-key-env {key_env} is not set")
         return cloudflare_tier(model or suffix or "clef-flash", token=token, timeout=timeout)
+    if target.startswith(("http://", "https://")) and "api.cloudflare.com" in target:
+        raise ValueError("for Workers AI, use --escalate-to cloudflare:clef or cloudflare:clef-flash")
     if name in PROVIDERS and not target.startswith(("http://", "https://")):
         url, default_model, default_env = PROVIDERS[name]
         model = model or suffix or default_model
@@ -256,6 +268,7 @@ class SystemOneHTTP:
             self.url = root
         else:
             self.url = (root[:-3] if root.endswith("/v1") else root) + "/v1/systemone"
+        self.exact_url = exact_url
         self.model = model
         self.api_key = api_key
         self.timeout = timeout
@@ -279,13 +292,15 @@ class SystemOneHTTP:
             raise RemoteError(f"{self.url}: {type(e).__name__}: {e}") from e
         if not isinstance(data, dict):
             raise RemoteError(f"{self.url}: the response is not a JSON object")
-        if "answers" not in data and "result" in data:
+        if self.exact_url and "success" in data:
             # Cloudflare's REST envelope: {"result": {...}, "success": true, "errors": [], "messages": []}
-            if data.get("success") is False:
+            if data.get("success") is not True:
                 raise RemoteError(f"{self.url}: {json.dumps(data.get('errors'))[:200]}")
-            data = data["result"]
+            data = data.get("result")
             if not isinstance(data, dict):
-                raise RemoteError(f"{self.url}: the result is not a JSON object")
+                raise RemoteError(f"{self.url}: the result is missing or not a JSON object")
+        if "answers" not in data:
+            raise RemoteError(f"{self.url}: the response has no answers")
         answers = {}
         for name, a in (data.get("answers") or {}).items():
             if name not in questions:

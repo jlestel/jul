@@ -97,17 +97,14 @@ def get_client():
             client.system_one(state="warmup",
                               questions={"q": Choice(instructions="test?", criteria={"a": "a", "b": "b"})})
             if _escalate:
-                from jul.escalate import Escalation, remote_tier
-                remote = remote_tier(_escalate["to"], _escalate["model"], _escalate["key_env"])
+                from jul.escalate import Escalation
+                remote = _escalate["remote"]
                 # Only the local tier holds the inference lock: the remote round trip must not
                 # serialise every other request behind its latency.
                 client = Escalation([("local", _Locked(client)), ("remote", remote)],
                                     min_confidence=_escalate["min_confidence"])
                 logger.info("escalating answers below %.2f to %s (%s)", _escalate["min_confidence"],
                             remote.url, remote.model)
-                if remote.api_key is None and not remote.url.startswith(("http://127.", "http://localhost")):
-                    logger.warning("no API key found for %s: set the provider's variable "
-                                   "(TYPESAFE_API_KEY for Jev) or --escalate-key-env", remote.url)
             _client = client
             logger.info("JuL client ready in %.1fs", time.time() - start)
     return _client
@@ -333,8 +330,17 @@ def serve(model: str | None = None, backend: str | None = None,
     """
     global _default_model, _default_backend, _api_key, _escalate
     _default_model, _default_backend = model, backend
-    _escalate = ({"to": escalate_to, "model": escalate_model, "key_env": escalate_key_env,
-                  "min_confidence": min_confidence} if escalate_to else None)
+    _escalate = None
+    if escalate_to:
+        from jul.escalate import remote_tier
+        try:  # a bad target or a missing account/token stops the server here, not at the first request
+            remote = remote_tier(escalate_to, escalate_model, escalate_key_env)
+        except ValueError as e:
+            raise SystemExit(f"jul serve: --escalate-to {escalate_to}: {e}") from None
+        if remote.api_key is None and not remote.url.startswith(("http://127.", "http://localhost")):
+            logger.warning("no API key found for %s: set the provider's variable (TYPESAFE_API_KEY for Jev, "
+                           "CLOUDFLARE_API_TOKEN for Clef) or --escalate-key-env", remote.url)
+        _escalate = {"remote": remote, "min_confidence": min_confidence}
     _api_key = api_key or os.environ.get("JUL_API_KEY") or None
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
