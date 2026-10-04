@@ -107,6 +107,9 @@ def ensure_preset(model: str, backend: str):
     except ValueError as exc:
         raise SystemExit(str(exc)) from exc
     repo = preset.repos.get(backend)
+    if not repo and backend == "api":
+        raise SystemExit(f"{preset.name!r} is not fitted on an embeddings API. Add one with: jul models add NAME "
+                         f"--repo ollama:qwen3-embedding:0.6b --backend api (or openai:MODEL ...)")
     if not repo:
         raise SystemExit(f"{preset.name!r} has no {backend} weights. "
                          f"Fit it for {backend} with: jul models add {preset.name} --backend {backend}")

@@ -150,3 +150,40 @@ def test_long_inputs_are_sent_in_small_requests(server):
     out = Embeddings(f"{url}#m", batch=2)(["billing", "crash", "refund", "bug", "yes"])
     assert out.shape == (5, 8) and [len(b["input"]) for _, _, b in seen] == [2, 2, 1]
     assert out[2, 0] == 1 and out[3, 1] == 1
+
+
+# --- review fixes -----------------------------------------------------------------------------------------
+
+def test_rows_that_are_not_objects_are_an_embeddings_error(server):
+    url, _, replies = server
+    replies.append((200, b'{"data": [1]}'))
+    with pytest.raises(EmbeddingsError, match="not objects"):
+        Embeddings(f"{url}#m")(["x"])
+
+
+def test_an_echoed_key_is_masked(server, monkeypatch):
+    import jul.backends.api as api
+    url, _, replies = server
+    monkeypatch.setitem(api.PROVIDERS, "fake", (url, "FAKE_KEY"))
+    monkeypatch.setenv("FAKE_KEY", "sk-secret")
+    replies.append((401, b'{"error": "bad Authorization: Bearer sk-secret"}'))
+    with pytest.raises(EmbeddingsError) as e:
+        Embeddings("fake:m")(["x"])
+    assert "sk-secret" not in str(e.value) and "***" in str(e.value)
+
+
+def test_long_and_empty_texts_are_bounded(server):
+    url, seen, _ = server
+    emb = Embeddings(f"{url}#m")
+    emb.max_chars = 10
+    with pytest.warns(UserWarning, match="JUL_API_MAX_CHARS"):
+        emb(["x" * 50, ""])
+    assert seen[-1][2]["input"] == ["x" * 10, " "]
+
+
+def test_letters_say_why_they_cannot_run(server):
+    url, _, _ = server
+    bb = Backbone(f"{url}#m", "api")
+    from jul.backbone import PromptTemplate
+    with pytest.raises(NotImplementedError, match="letters reading"):
+        PromptTemplate.from_user_message(bb, "{input}")

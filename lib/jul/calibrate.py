@@ -180,7 +180,7 @@ def check(backbone: Backbone, layer: int) -> list[str]:
         raise CalibrationError("A call changes the next one: the prefix cache is not restored")
 
     warnings = []
-    if backbone.architecture == "decoder" and not getattr(backbone.tokenizer, "chat_template", None):
+    if backbone.architecture in ("decoder", "embedding") and not getattr(backbone.tokenizer, "chat_template", None):
         warnings.append("no chat template: the letters reading (Noul, Score) will not work")
     for markers, what in ((list(LETTERS), "letters"), ([str(i) for i in range(10)], "digits")):
         ids = [backbone.encode(m) for m in markers]

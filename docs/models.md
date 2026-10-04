@@ -96,7 +96,7 @@ and tau on the calibration sets, as for a local model.
 jul models add qwen3-emb --repo ollama:qwen3-embedding:0.6b --backend api      # Ollama, no key
 OPENAI_API_KEY=... jul models add oai-small --repo openai:text-embedding-3-small --backend api
 jul models add my-emb --repo http://localhost:8000/v1#bge-m3 --backend api     # any OpenAI-compatible server
-jul ask "I was charged twice" --choice billing,technical --model qwen3-emb --backend api
+jul ask choice "Which team?" -o billing -o technical --state "I was charged twice" --model qwen3-emb --backend api
 ```
 
 | repo | endpoint | key |
@@ -111,6 +111,10 @@ Against a local model: one layer (the API's output), no prefix cache (each state
 the options are embedded once per question), no logits (Noul and Score are read as vectors, their default;
 letters and pointer need the weights), and `usage` counts characters. With a hosted provider the state leaves
 the machine.
+
+Texts are sent in requests of `JUL_API_BATCH` (16), each cut to `JUL_API_MAX_CHARS` (8000) characters with a
+warning, with a timeout of `JUL_API_TIMEOUT` (300 s). Only Ollama has been run for real; OpenAI, Mistral and
+Voyage use the same OpenAI-format request (Voyage's `input_type` is not sent; Mistral caps a request's size).
 
 ## Cross models: reading the question and the text together
 

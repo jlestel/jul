@@ -7,7 +7,8 @@ centered cosine, with the layers, center and tau that `jul models add` fits for 
 
     jul models add qwen3-emb --repo ollama:qwen3-embedding:0.6b --backend api
     jul models add oai-small --repo openai:text-embedding-3-small --backend api
-    jul ask "I was charged twice" --choice billing,technical --model qwen3-emb --backend api
+    jul ask choice "Which team?" -o billing -o technical --state "I was charged twice" \
+        --model qwen3-emb --backend api
 
 The repo names the provider and its model, `provider:model`:
 
@@ -26,7 +27,9 @@ What changes against a model read locally:
   formulation (the option vectors are computed once per question, as on the other backends);
 - no logits: Noul and Score are read as vectors (their default), never with letters;
 - the token counts in `usage` are characters: the API's tokenizer is not known here;
-- the state leaves the machine for a hosted provider.
+- the state leaves the machine for a hosted provider;
+- texts go in requests of JUL_API_BATCH (16), each cut to JUL_API_MAX_CHARS (8000) characters, with a
+  timeout of JUL_API_TIMEOUT (300) seconds. Voyage's `input_type` is not sent.
 """
 
 from __future__ import annotations
@@ -35,10 +38,10 @@ import json
 import os
 import urllib.error
 import urllib.request
+import warnings
 
 import numpy as np
 
-from .. import encoder
 from ..backbone import Backbone
 
 #: provider -> (base URL, environment variable holding its key or None)
@@ -96,12 +99,28 @@ class Embeddings:
         # a local server on CPU can take minutes on a batch of long texts: generous defaults, small requests
         self.timeout = timeout or float(os.environ.get("JUL_API_TIMEOUT") or 300)
         self.batch = batch or int(os.environ.get("JUL_API_BATCH") or 16)
+        #: longest text sent, in characters (~2,000 tokens): the end of a longer state is cut, with a warning
+        self.max_chars = int(os.environ.get("JUL_API_MAX_CHARS") or 8000)
 
     def __call__(self, texts: list[str]) -> np.ndarray:
         """(len(texts), d), sent in requests of at most `batch` texts."""
+        texts = [self._fit(t) for t in texts]
         if len(texts) <= self.batch:
             return self._post(texts)
         return np.concatenate([self._post(texts[i:i + self.batch]) for i in range(0, len(texts), self.batch)])
+
+    def _fit(self, text: str) -> str:
+        if not text.strip():
+            return " "   # OpenAI rejects empty inputs; a blank reads as "no content" everywhere
+        if len(text) > self.max_chars:
+            warnings.warn(f"a text of {len(text)} characters is over JUL_API_MAX_CHARS={self.max_chars}: "
+                          "its end is cut", stacklevel=4)
+            return text[: self.max_chars]
+        return text
+
+    def _mask(self, text: str) -> str:
+        """A server may echo the Authorization header in its error: the key is never repeated."""
+        return text.replace(self.api_key, "***") if self.api_key else text
 
     def _post(self, texts: list[str]) -> np.ndarray:
         url = self.base + "/embeddings"
@@ -113,7 +132,7 @@ class Embeddings:
             with _opener.open(urllib.request.Request(url, body, headers), timeout=self.timeout) as r:
                 data = json.loads(r.read())
         except urllib.error.HTTPError as e:
-            detail = e.read()[:300].decode("utf-8", "replace")
+            detail = self._mask(e.read()[:300].decode("utf-8", "replace"))
             raise EmbeddingsError(f"{url}: HTTP {e.code} {detail}") from None
         except (urllib.error.URLError, TimeoutError, OSError) as e:
             raise EmbeddingsError(f"{url}: {getattr(e, 'reason', e)}") from None
@@ -122,7 +141,9 @@ class Embeddings:
         rows = data.get("data") if isinstance(data, dict) else None
         if not isinstance(rows, list) or len(rows) != len(texts):
             raise EmbeddingsError(f"{url}: expected {len(texts)} embeddings, got {str(data)[:200]}")
-        rows = sorted(rows, key=lambda r: r.get("index", 0))
+        if not all(isinstance(r, dict) for r in rows):
+            raise EmbeddingsError(f"{url}: the embeddings are not objects")
+        rows = sorted(rows, key=lambda r: r.get("index", 0) if isinstance(r.get("index", 0), int) else 0)
         try:
             out = np.asarray([r["embedding"] for r in rows], dtype=np.float32)
         except (KeyError, TypeError, ValueError):
@@ -146,6 +167,10 @@ class _Chars:
     def decode(self, ids, skip_special_tokens: bool = False) -> str:
         return "".join(map(chr, ids))
 
+    def apply_chat_template(self, *args, **kwargs):
+        raise NotImplementedError("An embeddings API has no chat template nor logits: the letters reading "
+                                  "needs the mlx or torch backend (Noul and Score are read as vectors by default)")
+
 
 class APIBackbone(Backbone):
     backend = "api"
@@ -157,10 +182,6 @@ class APIBackbone(Backbone):
         self.embed = embed or Embeddings(self.repo)
         self.tokenizer = _Chars()
         self.text_prefix = ""
-
-    @property
-    def templates(self) -> dict[str, str]:
-        return encoder.templates(self.text_prefix)
 
     def layer_indices(self, fractions=()) -> list[int]:
         return [0]
