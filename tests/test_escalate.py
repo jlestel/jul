@@ -165,3 +165,101 @@ def test_local_then_http(jev_server):
     url, _ = jev_server
     r = Escalation([("local", Fixed(0.5)), ("jev", SystemOneHTTP(url))]).system_one("s", {"team": Q["team"]})
     assert r.choices["team"].choice == "b" and r.escalation["team"]["tier"] == "jev"
+
+
+# --- review fixes ------------------------------------------------------------------------------------
+
+class Refuses(Fixed):
+    def system_one(self, state, questions, **kwargs):
+        raise ValueError("Unknown model 'nope'")
+
+
+def test_a_malformed_request_is_raised_not_escalated():
+    remote = Fixed(0.9)
+    with pytest.raises(ValueError, match="nope"):
+        Escalation([("local", Refuses(0)), ("remote", remote)]).system_one("s", Q)
+    assert remote.asked == []
+
+
+def test_nan_is_unsure_and_the_trace_stays_json():
+    r = Escalation([("local", Fixed(float("nan"))), ("remote", Fixed(0.9))]).system_one("s", {"team": Q["team"]})
+    assert r.escalation["team"]["tier"] == "remote"
+    json.loads(json.dumps(r.as_dict(), allow_nan=False))
+
+
+def test_met_bar_uses_the_raw_confidence():
+    r = Escalation([("local", Fixed(0.79996))], min_confidence=0.8).system_one("s", {"team": Q["team"]})
+    assert r.escalation["team"]["met_bar"] is False
+
+
+def test_url_forms():
+    for u in ("http://h", "http://h/", "http://h/v1", "http://h/v1/systemone"):
+        assert SystemOneHTTP(u).url == "http://h/v1/systemone"
+
+
+def test_provider_shorthands(monkeypatch):
+    from jul.escalate import remote_tier
+    monkeypatch.setenv("TYPESAFE_API_KEY", "tk")
+    t = remote_tier("typesafe")
+    assert t.url == "https://api.typesafe.ai/v1/systemone" and t.model == "jev-latest" and t.api_key == "tk"
+    o = remote_tier("ollama:clef-flash")
+    assert o.url == "http://localhost:11434/v1/systemone" and o.model == "clef-flash" and o.api_key is None
+    monkeypatch.setenv("KEV_KEY", "kk")
+    k = remote_tier("http://kev:8009", "kev-latest", key_env="KEV_KEY")
+    assert k.model == "kev-latest" and k.api_key == "kk"
+
+
+@pytest.fixture
+def raw_server():
+    """Answers each POST with the (status, body, headers) queued in `replies`."""
+    replies, seen = [], []
+
+    class H(BaseHTTPRequestHandler):
+        def log_message(self, *a):
+            pass
+
+        def _reply(self):
+            seen.append((self.path, self.headers.get("Authorization")))
+            status, body, headers = replies.pop(0)
+            self.send_response(status)
+            for k, v in headers.items():
+                self.send_header(k, v)
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def do_POST(self):
+            self.rfile.read(int(self.headers.get("Content-Length", 0)))
+            self._reply()
+
+        do_GET = _reply
+
+    srv = ThreadingHTTPServer(("127.0.0.1", 0), H)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    yield f"http://127.0.0.1:{srv.server_address[1]}", replies, seen
+    srv.shutdown()
+    srv.server_close()
+
+
+@pytest.mark.parametrize("status,body,match", [
+    (401, b'{"error": "bad key"}', "401.*bad key"),
+    (200, b"not json", "JSONDecodeError"),
+    (200, b"[1, 2]", "not a JSON object"),
+    (200, b'{"answers": {"team": {"type": "choice"}}}', "malformed answer"),
+    (200, b'{"answers": {"team": {"type": "noul", "noul": 0.5}}}', "wrong type"),
+])
+def test_http_failures_are_remote_errors(raw_server, status, body, match):
+    from jul.escalate import RemoteError
+    url, replies, _ = raw_server
+    replies.append((status, body, {}))
+    with pytest.raises(RemoteError, match=match):
+        SystemOneHTTP(url, api_key="SECRET").system_one("s", {"team": Q["team"]})
+
+
+def test_a_redirect_is_not_followed(raw_server):
+    from jul.escalate import RemoteError
+    url, replies, seen = raw_server
+    replies.append((302, b"", {"Location": url + "/elsewhere"}))
+    with pytest.raises(RemoteError, match="302"):
+        SystemOneHTTP(url, api_key="SECRET").system_one("s", {"team": Q["team"]})
+    assert len(seen) == 1

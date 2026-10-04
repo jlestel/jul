@@ -32,22 +32,23 @@ lets through on labeled examples of your own before relying on it.
 from __future__ import annotations
 
 import json
+import math
 import urllib.error
 import urllib.request
 import uuid
 from typing import Any, Mapping, Sequence
 
 from .types import (Choice, ChoiceAnswer, Noul, NoulAnswer, NoulCriteria, Question, Score, ScoreAnswer,
-                    SystemOneResponse, Usage, options_of)
+                    SystemOneResponse, Usage, options_of, serialize_state)
 
-__all__ = ["Escalation", "EscalatedResponse", "SystemOneHTTP", "certainty"]
+__all__ = ["Escalation", "EscalatedResponse", "RemoteError", "SystemOneHTTP", "certainty"]
 
 
 def certainty(answer: Any) -> float:
     """How sure an answer is, in [0, 1]: `confidence`, or the likelier side of a Noul."""
-    if isinstance(answer, NoulAnswer):
-        return max(answer.noul, 1.0 - answer.noul)
-    return float(answer.confidence)
+    value = (max(answer.noul, 1.0 - answer.noul) if isinstance(answer, NoulAnswer)
+             else float(answer.confidence))
+    return value if math.isfinite(value) else 0.0  # a NaN is unsure, never a pass
 
 
 class EscalatedResponse(SystemOneResponse):
@@ -92,6 +93,7 @@ class Escalation:
         pending = dict(questions)
         answers: dict[str, Any] = {}
         trace: dict[str, dict] = {n: {"tried": []} for n in questions}
+        raw: dict[str, float] = {}
         tokens = 0
         errors: list[str] = []
         last = len(self.tiers) - 1
@@ -103,6 +105,10 @@ class Escalation:
                 # Options such as `method` or `context` mean something to a local client only.
                 extra = kwargs if i == 0 else {}
                 response = decider.system_one(state=state, questions=pending, **extra)
+            except (ValueError, TypeError):
+                # A malformed request (unknown model, a Score with one level...) is the caller's error:
+                # raise it rather than ship the state to the next tier.
+                raise
             except Exception as e:  # noqa: BLE001 - a failing tier is skipped, never fatal by itself
                 errors.append(f"{tier}: {type(e).__name__}: {e}")
                 for name in pending:
@@ -121,6 +127,7 @@ class Escalation:
                 # The later tier's answer wins: confidences from different models are not comparable,
                 # and a tier is escalated to because it is trusted more. A tier that fails keeps the last.
                 answers[name] = answer
+                raw[name] = sure
                 trace[name].update(tier=tier, confidence=round(sure, 4))
                 if sure < self.bar(name) and i < last:
                     still[name] = question
@@ -130,7 +137,7 @@ class Escalation:
         if missing:
             raise RuntimeError(f"no tier answered {missing}: " + "; ".join(errors))
         for name in questions:
-            trace[name]["met_bar"] = trace[name]["confidence"] >= self.bar(name)
+            trace[name]["met_bar"] = raw[name] >= self.bar(name)
         return EscalatedResponse(answers={n: answers[n] for n in questions}, model=self.model,
                                  usage=Usage(input_tokens=tokens), request_id=str(uuid.uuid4()),
                                  escalation=trace)
@@ -155,6 +162,20 @@ def _question_payload(question: Question) -> dict:
     raise TypeError(f"Questions must be Choice, Noul or Score (got {type(question).__name__})")
 
 
+class RemoteError(RuntimeError):
+    """A remote tier failed: network, HTTP status, or a response that is not a System One answer."""
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    """Never follow a redirect: it would carry the Authorization header to another host."""
+
+    def redirect_request(self, *args, **kwargs):
+        return None
+
+
+_opener = urllib.request.build_opener(_NoRedirect)
+
+
 def _answer(data: Mapping) -> Any:
     kind = data.get("type")
     if kind == "noul":
@@ -170,6 +191,32 @@ def _answer(data: Mapping) -> Any:
     raise ValueError(f"unknown answer type {kind!r}")
 
 
+#: `--escalate-to` shorthands: the server, its default model, and the variable its key is usually in.
+PROVIDERS = {
+    "typesafe": ("https://api.typesafe.ai", "jev-latest", "TYPESAFE_API_KEY"),
+    "ollama": ("http://localhost:11434", "nimble", None),
+}
+
+
+def remote_tier(target: str, model: str | None = None, key_env: str | None = None,
+                timeout: float = 30.0) -> SystemOneHTTP:
+    """A tier from `typesafe`, `ollama:nimble` or a URL. The key is read from the provider's own variable
+    (TYPESAFE_API_KEY for Jev), or from `key_env` for any other server; never passed as a value."""
+    import os
+    name, _, suffix = target.partition(":")
+    if name in PROVIDERS and not target.startswith(("http://", "https://")):
+        url, default_model, default_env = PROVIDERS[name]
+        model = model or suffix or default_model
+        key_env = key_env or default_env
+    else:
+        url, model = target, model or "jev-latest"
+    key = os.environ.get(key_env) if key_env else None
+    return SystemOneHTTP(url, model=model, api_key=key or None, timeout=timeout)
+
+
+_ANSWER_TYPE = {Choice: ChoiceAnswer, Noul: NoulAnswer, Score: ScoreAnswer}
+
+
 class SystemOneHTTP:
     """Any server speaking `POST /v1/systemone`: TypeSafe's Jev, Ollama (Nimble, Tev1), Kev, `jul serve`.
 
@@ -180,12 +227,17 @@ class SystemOneHTTP:
     def __init__(self, base_url: str, model: str = "jev-latest", api_key: str | None = None,
                  timeout: float = 30.0):
         root = base_url.rstrip("/")
-        self.url = (root[:-3] if root.endswith("/v1") else root) + "/v1/systemone"
+        if root.endswith("/v1/systemone"):
+            self.url = root
+        else:
+            self.url = (root[:-3] if root.endswith("/v1") else root) + "/v1/systemone"
         self.model = model
         self.api_key = api_key
         self.timeout = timeout
 
     def system_one(self, state: Any, questions: Mapping[str, Question], **_ignored: Any) -> SystemOneResponse:
+        if not isinstance(state, (str, dict, list)):
+            state = serialize_state(state)  # the text the local tier read, not a repr
         body = {"model": self.model, "state": state,
                 "questions": {n: _question_payload(q) for n, q in questions.items()}}
         headers = {"Content-Type": "application/json"}
@@ -193,11 +245,26 @@ class SystemOneHTTP:
             headers["Authorization"] = f"Bearer {self.api_key}"
         request = urllib.request.Request(self.url, data=json.dumps(body, default=str).encode(), headers=headers)
         try:
-            with urllib.request.urlopen(request, timeout=self.timeout) as r:
+            with _opener.open(request, timeout=self.timeout) as r:
                 data = json.loads(r.read())
         except urllib.error.HTTPError as e:
-            raise RuntimeError(f"{self.url} answered HTTP {e.code}") from e
-        answers = {n: _answer(a) for n, a in (data.get("answers") or {}).items() if n in questions}
+            detail = e.read()[:200].decode("utf-8", "replace")
+            raise RemoteError(f"{self.url} answered HTTP {e.code}: {detail}") from e
+        except (OSError, ValueError) as e:  # network, timeout, a body that is not JSON
+            raise RemoteError(f"{self.url}: {type(e).__name__}: {e}") from e
+        if not isinstance(data, dict):
+            raise RemoteError(f"{self.url}: the response is not a JSON object")
+        answers = {}
+        for name, a in (data.get("answers") or {}).items():
+            if name not in questions:
+                continue
+            try:
+                answer = _answer(a)
+            except (KeyError, TypeError, ValueError) as e:
+                raise RemoteError(f"{self.url}: malformed answer for {name!r}: {e}") from e
+            if _ANSWER_TYPE[type(questions[name])] is not type(answer):
+                raise RemoteError(f"{self.url}: {name!r} was answered with the wrong type")
+            answers[name] = answer
         usage = data.get("usage") or {}
         return SystemOneResponse(answers=answers, model=str(data.get("model") or self.model),
                                  usage=Usage(input_tokens=int(usage.get("input_tokens") or 0)),

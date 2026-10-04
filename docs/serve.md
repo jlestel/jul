@@ -67,12 +67,18 @@ All optional, and ignored by a Jev client:
 
 ## Escalation: local first, a bigger decider when unsure
 
-`--escalate-to` hands the questions answered below `--min-confidence` to another System One server
-(Jev, Ollama with Nimble or Tev1, Kev, another `jul serve`), and only those. Its key is read from
-`$JUL_ESCALATE_API_KEY`, never from the command line.
+`--escalate-to` hands the questions answered below `--min-confidence` to another System One server,
+and only those. Keys are read from the provider's usual variable, never from the command line:
+
+| `--escalate-to` | Server | Key |
+| --- | --- | --- |
+| `typesafe` | Jev, `api.typesafe.ai` | `TYPESAFE_API_KEY` |
+| `ollama`, `ollama:clef-flash` | Ollama on localhost (Nimble by default) | none |
+| a URL | any `/v1/systemone` server: Kev, another `jul serve`... | the variable named by `--escalate-key-env` |
 
 ```bash
-JUL_ESCALATE_API_KEY=... jul serve --escalate-to https://api.typesafe.ai --min-confidence 0.8
+TYPESAFE_API_KEY=... jul serve --escalate-to typesafe --min-confidence 0.8
+jul serve --escalate-to ollama:nimble
 ```
 
 The response says, per question, which tier answered:
@@ -83,7 +89,9 @@ The response says, per question, which tier answered:
 
 A Choice or Score counts its `confidence`, a Noul `max(noul, 1 - noul)`. The tier escalated to keeps
 the question even when it is less sure (two models' confidences are not comparable); `met_bar` says
-whether the kept answer cleared the bar. A tier that fails is skipped and its error recorded. In
+whether the kept answer cleared the bar. A tier that fails is skipped and its error recorded; a
+malformed request (an unknown model, a Score with one level) is refused with a 400, never escalated.
+Redirects are not followed, so a key never reaches another host. In
 Python, `jul.Escalation` chains any number of tiers, with a bar per question if needed.
 
 The state of an escalated question leaves the machine. The bar is a policy, not a measurement: check
