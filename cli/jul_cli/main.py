@@ -9,6 +9,7 @@
   jul context create tickets --description "Support tickets of an online bank" --examples sample.txt
   jul synth questions.yaml --seeds sample.jsonl --per-option 30 --output synth.jsonl
   jul autotune tickets --questions questions.yaml --labeled labeled.jsonl
+  jul bench test.jsonl --train train.jsonl --models fast,accurate --output bench.json
   jul models
 
 Every command prints the same JSON shape as the Jev API response.
@@ -436,6 +437,11 @@ def cmd_models_add(a):
     print(f"\nUse it: jul ask ... --model {preset.name} --backend {c['backend']}")
 
 
+def cmd_bench(a):
+    from jul_cli.bench import run
+    run(a)
+
+
 def cmd_setup(a):
     from jul_cli.setup import run
     run(a.model, a.backend, install=not a.no_install, skip_check=a.no_check)
@@ -587,6 +593,22 @@ def build_parser() -> argparse.ArgumentParser:
                    help="the bar below which an answer escalates (default 0.8; a Noul counts max(p, 1-p))")
     s.set_defaults(fn=cmd_serve)
 
+    s = sub.add_parser("bench", help="which model for your questions: accuracy, latency, autotune, on your data")
+    s.add_argument("test", help="JSONL or CSV, one row per answer: question, state, options, answer (type optional)")
+    s.add_argument("--train", help="same format: rows to autotune on; without it, zero-shot only")
+    s.add_argument("--models", help="presets or aliases, comma-separated, each optionally @backend "
+                                     "(e.g. jul-decision-e5-small@onnx,minicpm5-2b@torch); default: the default model")
+    s.add_argument("--backend", **backend_kw)
+    s.add_argument("--output", "-O", help="also write the full results as JSON to this file")
+    s.add_argument("--json", action="store_true", help="print the JSON results instead of the tables")
+    s.add_argument("--near", type=float, default=0.8,
+                   help="similarity (character 5-grams) from which a test row counts as a near duplicate of "
+                        "a train row (default 0.8)")
+    s.add_argument("--drop-overlap", action="store_true", help="drop test rows found in train (exact or near)")
+    s.add_argument("--allow-overlap", action="store_true", help="run even with exact duplicates train/test")
+    s.add_argument("--quiet", "-q", action="store_true", help="no progress on stderr")
+    s.set_defaults(fn=cmd_bench)
+
     s = sub.add_parser("lab", help="research commands")
     s.add_argument("rest", nargs=argparse.REMAINDER,
                    help="passed through: extract, evaluate, bench, summary, ask, decide")
@@ -598,6 +620,11 @@ def main(argv=None) -> None:
     a = build_parser().parse_args(argv)
     if a.command == "context" and a.action != "list" and not a.name:
         raise SystemExit(f"context {a.action} needs a name")
+    if a.command == "bench":
+        from jul_cli.setup import require_setup
+        for model in (a.models or "").split(",") if a.models else [None]:
+            name, _, backend = (model or "").strip().partition("@")
+            require_setup(name or None, backend or a.backend)
     if a.command in {"ask", "run", "autotune", "pack"} or (
             a.command == "context" and a.action == "create" and a.examples and not a.lazy):
         from jul_cli.setup import require_setup

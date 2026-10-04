@@ -20,6 +20,40 @@ jul setup --model minicpm5-2b-decision    # backend, weights and one timed decis
 jul serve --model minicpm5-2b --port 8577   # the Jev HTTP protocol on 127.0.0.1, see serve.md
 ```
 
+## Bench on your own data
+
+`jul bench` answers the question you will ask in production with every model you name, on rows you have
+labeled, and says which one to use. One row per answer, JSONL or CSV, carrying its own question so a file can
+mix several:
+
+```json
+{"type": "choice", "question": "Which team should handle this ticket?",
+ "options": {"billing": "payments, invoices", "technical": "bugs, errors"},
+ "state": "I was charged twice", "answer": "billing"}
+```
+
+In CSV the options are `key:description|key:description` (or `key|key`). `type` is `choice` by default; a
+`noul` answers `true`/`false` and needs no options; a `score` lists its levels lowest first and answers the
+level (its index or its text).
+
+```bash
+jul bench test.jsonl --models jul-decision-e5-small@onnx,minicpm5-2b@torch      # zero-shot
+jul bench test.jsonl --train train.jsonl --models fast,accurate -O results.json   # + autotune
+jul bench test.csv --json > results.json
+```
+
+- **Per question**: accuracy, its 95% Wilson interval, p50/p95 latency (and the mean error for a score).
+- **The pick**: the fastest model whose interval still reaches the best accuracy. When several are within it,
+  the report says they cannot be told apart on that many rows: that is the honest answer below ~50 rows.
+- **Autotune** only with `--train`, a separate file you labeled: never a split of the test file. Each model is
+  tuned in a throwaway context (nothing saved in `~/.jul`); a head that does not beat zero-shot on its own
+  folds is shown with `*` and not counted. Decision models (pointer) are measured zero-shot only.
+- **Overlap check**, before anything runs: a test text also in train (after folding case, accents,
+  punctuation and turning every number into 0, so `van ABC-123 at 11pm` matches `van abc-987 at 10pm`) stops
+  the bench; `--drop-overlap` removes those rows from test, `--allow-overlap` runs anyway. Near duplicates
+  (character 5-gram similarity above `--near`, 0.8 by default) and duplicates inside test are reported. What
+  cannot be checked: a model that saw public data during its pretraining.
+
 ## File formats
 
 **Questions** (`questions.yaml`, for `run`, `synth`, `autotune`, `pack`): YAML or JSON, one entry per
