@@ -37,7 +37,9 @@ network at all.
   task embedding models haven't trained on, the default gets 0.90, `wemm-4b` 0.95 and Jev 0.91.
 - Close to Jev on typed decisions: `jul-decision-wemm-4b`, the default model on PyTorch, answers 0.849 of
   2,108 Choice, Noul and Score questions over 12 task families, Jev 0.873, at 97 ms per decision on one A10G
-  GPU ([per family](#decision-bench-against-jev)).
+  GPU ([per family](#decision-bench-against-jev)). On a bench of 300 typed questions written from scratch
+  (sentiment, finance, support, agent routing, moderation) it answers 0.677, and `jul-decision-minicpm5-2b`
+  (alias `fast`), half its size, 0.680 at 85 ms.
 - Many options: option vectors are computed once and cached, so adding options barely changes the cost
   of a call. On Banking77's 72 intents the default model gets 0.87, on a task its training data
   (MTEB) contains.
@@ -209,10 +211,10 @@ so update both together.
 
 | Preset | Size | Jev bench, zero-shot | + autotune, 1000 labels | Notes |
 | --- | ---: | ---: | ---: | --- |
-| `jul-decision-wemm-4b` (default, alias `accurate`) | 10.3 GB bf16 + 0.07 GB adapters (PyTorch); 2.6 GB (MLX) | 0.857 ² | 0.897 ² | built in; WeMM-Embedding-4B with [LoRA adapters](https://huggingface.co/usejul/jul-decision-wemm-4b) that read Noul, Score and Choice with the question and the text together: [0.849 on the decision bench](#decision-bench-against-jev), Jev 0.873; attached on PyTorch, MLX reads it as `wemm-4b-4bit` for now |
+| `jul-decision-wemm-4b` (default, alias `accurate`) | 10.3 GB bf16 + 0.07 GB adapters (PyTorch); 2.6 GB (MLX) | 0.857 ² | 0.897 ² | built in; WeMM-Embedding-4B with [LoRA adapters](https://huggingface.co/usejul/jul-decision-wemm-4b) that read Noul and Choice with the question and the text together (Score on the vectors): [0.849 on the decision bench](#decision-bench-against-jev), Jev 0.873; attached on PyTorch, MLX reads it as `wemm-4b-4bit` for now |
 | `wemm-4b-4bit` | 2.6 GB | 0.857 | 0.897 | built in, vectors only |
-| `minicpm5-2b` (alias `fast`) | 2.7 GB | 0.617 | 0.757 | built in, 64 ms on an M4 Pro |
-| `minicpm5-2b-decision` | 1.3 GB | see [benchmarks](https://github.com/usejul/jul/blob/main/docs/benchmarks.md) | — | trained decision model, `jul models add` |
+| `minicpm5-2b` | 2.7 GB | 0.617 | 0.757 | built in, 64 ms on an M4 Pro |
+| `jul-decision-minicpm5-2b` (alias `fast`) | 5.0 GB bf16 (PyTorch); 1.4 GB (MLX) | — | — | built in; MiniCPM5-2B trained to answer typed questions: a pointer head for Choice and Noul, Score on its own vectors; 0.680 on our hand-written bench (the default: 0.677) at 85 ms; no `autotune` ([decision models](https://github.com/usejul/jul/blob/main/docs/models.md#decision-models)) |
 | `e5-small` (ONNX, 8-bit) | 0.09 GB | 0.543 | 0.713 (0.790 hybrid head) | encoder, 6 ms per text on an M4 Pro; needs an ONNX export first, see [models](https://github.com/usejul/jul/blob/main/docs/models.md#micro-models-encoders) |
 | `jul-decision-wemm-4b-4bit` (MLX, 4-bit) | 2.6 GB (+0.07 GB adapters) | 0.857 ¹ | 0.897 ¹ | the default model with a [LoRA cross model](https://github.com/usejul/jul/blob/main/docs/models.md#a-cross-model-on-the-presets-own-weights-lora) on the same weights for Noul and Score (yes/no 0.841 on Kev's typed decisions, against 0.762 with vectors; ~115 ms per yes/no on an M4 Pro); one model in memory, `jul models add` |
 | `jul-decision-e5-small` (ONNX, 8-bit) | 0.09 GB (+0.09 GB cross model) | 0.557 | 0.723 (0.780 hybrid head) | e5-small trained on jul decisions, with a [cross model](https://github.com/usejul/jul/blob/main/docs/models.md#cross-models-reading-the-question-and-the-text-together) for Noul and Score (yes/no 0.726 on Kev's typed decisions, against 0.579 with vectors); runs in [AWS Lambda](https://github.com/usejul/jul/blob/main/docs/aws-lambda.md), `jul models add` |
@@ -261,7 +263,7 @@ model, about 30 s). Tune on the dev datasets and run the benchmark once at the e
 
 Apache 2.0, see [LICENSE](https://github.com/usejul/jul/blob/main/LICENSE) and
 [NOTICE](https://github.com/usejul/jul/blob/main/NOTICE). The decision-model format comes from
-[Kev](https://github.com/jaredpalmer/kev) (Jared Palmer, Apache 2.0) and `minicpm5-2b-decision` is
+[Kev](https://github.com/jaredpalmer/kev) (Jared Palmer, Apache 2.0) and `jul-decision-minicpm5-2b` is
 [MiniCPM5-2B](https://huggingface.co/openbmb/MiniCPM5-2B) (OpenBMB, Apache 2.0) trained with Kev's
 code. JuL follows TypeSafe's public System One API and uses no TypeSafe or Jev code, weights or
 outputs.

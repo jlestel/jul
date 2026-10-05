@@ -19,14 +19,29 @@ Versions come from git tags (see [publishing](docs/publishing.md)): a `v*` tag r
   `decision.json` sends those questions to the vectors fitted by `jul models add` on the same weights, at any
   option count. For pointer heads that read Score worse than the vectors do.
 
+### Changed
+
+- **The alias `fast` is now `jul-decision-minicpm5-2b`**, built in (it was `minicpm5-2b`, read with vectors):
+  0.680 against 0.630 on the bench below, at the same speed. Its Score reading is shipped fitted per backend
+  (`assets/presets/jul-decision-minicpm5-2b@{mlx,torch}.json`). A decision model: `autotune` does not support
+  it yet and says so, naming `minicpm5-2b` (the same base read with vectors) and the default as what to tune
+  meanwhile; `one_word_only=True` leaves it as it is (it already reads in one pass). On MLX, Choice questions
+  above 20 options go to the vectors (4 to 8x faster, a few points less accurate, see the preset's notes);
+  `route_above=0` keeps the pointer head.
+- **`jul-decision-wemm-4b` reads Score with the vectors.** Its adapters ([`usejul/jul-decision-wemm-4b`](https://huggingface.co/usejul/jul-decision-wemm-4b)
+  `1525e34`) keep Noul and Choice; their Score reading was worse than the vector reading of the same weights.
+  On a bench of 300 typed questions written from scratch for it (sentiment, finance, support, agent routing,
+  moderation): 0.627 → 0.677 (Score 0.27 → 0.41). It is a change of the adapters' `cross.json`, so jul 0.4.0
+  gets it too.
+- **`minicpm5-2b-decision` is now [`usejul/jul-decision-minicpm5-2b`](https://huggingface.co/usejul/jul-decision-minicpm5-2b)**
+  (and `-mlx-4bit`), the old names redirect. **v2**: trained on human-written typed decisions, Score routed to its
+  vector reading; 0.680 on that bench at 85 ms, against 0.637 for v1.1 (`revision="v1.1"`).
+
 ### Fixed
 
 - A decision model's questions routed to its vector fallback were read at the pointer preset's temperature
   (1.0) instead of the fallback's own tau, which flattened their probabilities to near uniform (same answer,
   wrong confidence; a Score's expected level collapsed to the middle).
-
-### Fixed
-
 - **EmbeddingGemma read as an encoder.** A model whose config sets `use_bidirectional_attention`
   (`google/embeddinggemma-300m`, a bidirectional `gemma3_text`) is now read like the encoders: mean over the
   text, its declared `query` prompt, no prefix cache. It was read as a decoder (last token, cached prefix):

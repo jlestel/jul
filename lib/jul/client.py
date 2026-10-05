@@ -27,7 +27,7 @@ from .context import Context, question_digest, resolve_context
 from .engine import Engine, softmax
 from .decision import fallback_preset
 from .laya_model import LayaModel, is_laya
-from .presets import Preset, formulations_for, one_word_preset, resolve
+from .presets import DEFAULT_MODEL, TUNE_INSTEAD, Preset, formulations_for, one_word_preset, resolve
 from .types import (Choice, ChoiceAnswer, Noul, NoulAnswer, Option, Question, Score, ScoreAnswer,
                     SystemOneResponse, Usage, options_of, serialize_state)
 
@@ -289,8 +289,12 @@ class TypeSafeClient:
             ctx.name = context
         engine = self._engine_for(model)
         if engine.pointer is not None:
-            raise ValueError(f"{self._preset.name!r} is a decision model (pointer method): autotune trains "
-                             "heads on vector features and does not apply to it yet")
+            twin = TUNE_INSTEAD.get(self._preset.name)
+            raise ValueError(
+                f"{self._preset.name!r} is a decision model (pointer method): autotune does not support it yet "
+                "(it trains heads on vector features; support for decision models is coming). Meanwhile, tune "
+                + (f"{twin!r}, the same base model read with vectors, or " if twin else "")
+                + f"the default model, {DEFAULT_MODEL!r}: autotune(..., model=...).")
         states = [serialize_state(s) for s, _ in labeled]
         reports: dict[str, tuning.TuningReport] = {}
         features_mode = features

@@ -245,7 +245,7 @@ PRESETS: dict[str, Preset] = {
         center="options",
         notes="An embedding model read like any LLM. Banking77 and Emotion are in MTEB, which it trained "
               "on; on AG News, which it did not, it scores 0.90 against Jev's 0.91. It sorts one text "
-              "into labels; on questions that read two texts together, prefer minicpm5-2b-decision.",
+              "into labels; on questions that read two texts together, prefer jul-decision-minicpm5-2b.",
     ),
     # Layer 39 / 40 and both temperatures fitted on the dev sets (the combination
     # is stable over layers 38-41, 0.565-0.578). Fitting the combination's own tau lowered mean dev
@@ -282,10 +282,34 @@ PRESETS["jul-decision-wemm-4b"] = dataclasses.replace(
     cross={"repo": {"torch": "usejul/jul-decision-wemm-4b"}},
 )
 
+# MiniCPM5-2B with a merged LoRA and a pointer head trained on human-written typed decisions
+# (usejul/jul-decision-minicpm5-2b v2). Its decision.json carries the format, the temperature and
+# "routing": {"types": ["score"]}; the vector reading Score goes to is fitted per backend, shipped as
+# assets/presets/jul-decision-minicpm5-2b@{mlx,torch}.json (picked first when the backend is known). This
+# entry, the torch fit, is the fallback before a backend is. 300 hand-written typed questions, PyTorch on an
+# A10G: 0.680 (Choice 0.87, Noul 0.76, Score 0.41) at 85 ms; jul-decision-wemm-4b 0.677.
+PRESETS["jul-decision-minicpm5-2b"] = Preset(
+    name="jul-decision-minicpm5-2b",
+    repo="usejul/jul-decision-minicpm5-2b-mlx-4bit",
+    torch_repo="usejul/jul-decision-minicpm5-2b",
+    formulations=(),
+    tau=1.0,
+    latency_ms="~85",
+    quality="0.680 on a 300-question hand-written bench (PyTorch); jul-decision-wemm-4b 0.677",
+    notes="A decision model: pointer head for Choice and Noul, Score read by the vectors of the same weights.",
+    method="pointer",
+    routing={"above_options": 0,
+             "formulations": [{"name": "one_word", "template": ONE_WORD, "layer": 34},
+                              {"name": "question_options", "template": QUESTION_OPTIONS, "layer": 39}],
+             "tau": 0.06336, "center": "options", "fitted": "2026-10-05", "dev_accuracy": 0.65},
+)
+
 #: Single-formulation variants, kept because they are what the 'one word' rows of the bench measured.
 ONE_WORD_ONLY: dict[str, tuple[int, float]] = {"minicpm5-2b": (39, 0.04554)}
 
-ALIASES = {"fast": "minicpm5-2b", "accurate": "jul-decision-wemm-4b"}
+ALIASES = {"fast": "jul-decision-minicpm5-2b", "accurate": "jul-decision-wemm-4b"}
+#: What to autotune instead of a decision model, until autotune supports them: the same base read with vectors.
+TUNE_INSTEAD = {"jul-decision-minicpm5-2b": "minicpm5-2b"}
 DEFAULT_MODEL = "jul-decision-wemm-4b"
 
 
@@ -311,8 +335,13 @@ def resolve(name: str | None, backend: str | None = None, home: Path | None = No
 
 
 def one_word_preset(name: str | None = None, backend: str | None = None, home: Path | None = None) -> Preset:
-    """The cheaper single-pass variant of a preset: one formulation, its own temperature."""
+    """The cheaper single-pass variant of a preset: one formulation, its own temperature.
+
+    A decision model reads every question in one pass of its own format already, so it comes back as it is
+    (`one_word_only=True` with `fast` kept working when `fast` became one)."""
     p = resolve(name, backend, home)
+    if p.method == "pointer":
+        return p
     one_word = p.one_word or ONE_WORD_ONLY.get(p.name)
     if one_word is None:
         raise ValueError(f"{p.name!r} has no fitted one-word variant")

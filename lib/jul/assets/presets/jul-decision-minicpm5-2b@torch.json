@@ -1,0 +1,35 @@
+{
+  "name": "jul-decision-minicpm5-2b",
+  "repos": {
+    "torch": "usejul/jul-decision-minicpm5-2b"
+  },
+  "backend": "torch",
+  "formulations": [],
+  "tau": 1.0,
+  "center": "options",
+  "one_word": null,
+  "latency_ms": "~85 (A10G)",
+  "quality": "0.680 on a 300-question hand-written bench (PyTorch); pointer head for Choice and Noul, Score on the vectors",
+  "notes": "Pointer format and temperature (1.260) from the repo's decision.json, which routes Score to the vectors. Vector fallback fitted by `jul models add` on the bf16 weights on an A10G on 2026-10-05: layers 34 / 39, center options, tau 0.06336, dev accuracy 0.650; never 3x faster than the pointer head there, so no routing by option count.",
+  "calibration": null,
+  "method": "pointer",
+  "routing": {
+    "above_options": 0,
+    "formulations": [
+      {
+        "name": "one_word",
+        "template": "This text: \"{state}\" means in one word: \"",
+        "layer": 34
+      },
+      {
+        "name": "question_options",
+        "template": "{instructions}\nPossible answers: {options}.\nText: \"{state}\"\nIn one word, the answer is: \"",
+        "layer": 39
+      }
+    ],
+    "tau": 0.06336,
+    "center": "options",
+    "fitted": "2026-10-05",
+    "dev_accuracy": 0.65
+  }
+}

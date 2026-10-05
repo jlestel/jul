@@ -1,6 +1,7 @@
 """Engine pieces that need no model."""
 
 import numpy as np
+import pytest
 
 from jul.engine import normalize, short_names, softmax
 from jul.presets import PRESETS, one_word_preset, resolve
@@ -30,7 +31,7 @@ def test_normalize_gives_unit_vectors():
 
 
 def test_presets_are_aliased_and_unknown_names_are_refused():
-    assert resolve("fast").name == "minicpm5-2b"
+    assert resolve("fast").name == "jul-decision-minicpm5-2b"
     assert resolve("accurate").name == "jul-decision-wemm-4b"
     assert resolve(None).name == "jul-decision-wemm-4b"
     try:
@@ -44,8 +45,41 @@ def test_presets_are_aliased_and_unknown_names_are_refused():
 def test_every_preset_carries_a_layer_and_a_temperature():
     for preset in PRESETS.values():
         assert preset.tau > 0
-        assert preset.formulations and all(f.layer > 0 for f in preset.formulations)
         assert preset.center in {"generic", "options", "none"}
+        if preset.method == "pointer":      # a decision model: its own format, a fitted vector fallback
+            reading = preset.routing
+            assert reading["tau"] > 0 and all(f["layer"] > 0 for f in reading["formulations"])
+        else:
+            assert preset.formulations and all(f.layer > 0 for f in preset.formulations)
+
+
+def test_the_shipped_decision_presets_route_score_to_their_own_fallback():
+    for backend in ("mlx", "torch"):
+        preset = resolve("jul-decision-minicpm5-2b", backend)
+        assert preset.method == "pointer" and preset.backend == backend
+        assert preset.routing["formulations"] and preset.routing["tau"] > 0
+        if preset.routing["center"] == "generic":   # the fallback finds its center next to the preset
+            from jul.presets import center_asset_name
+            assert (preset.asset_dir / center_asset_name(preset.name, backend, "one_word")).exists()
+
+
+def test_one_word_only_keeps_a_decision_model_as_it_is():
+    """`fast` became a decision model; TypeSafeClient(model="fast", one_word_only=True) must not break."""
+    for backend in (None, "mlx", "torch"):
+        assert one_word_preset("fast", backend).name == "jul-decision-minicpm5-2b"
+
+
+def test_autotune_on_a_decision_model_says_what_to_tune_instead():
+    from types import SimpleNamespace
+
+    from jul.client import TypeSafeClient
+    from jul.context import Context
+    client = TypeSafeClient.__new__(TypeSafeClient)
+    client._context_home = None
+    client._preset = resolve("fast")
+    client._engine_for = lambda model: SimpleNamespace(pointer=object())
+    with pytest.raises(ValueError, match="not support it yet.*'minicpm5-2b'.*'jul-decision-wemm-4b'"):
+        client.autotune(Context(name="t"), {}, [])
 
 
 def test_the_one_word_variant_keeps_a_single_formulation():

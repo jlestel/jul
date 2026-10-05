@@ -91,7 +91,7 @@ on the first call.
 | `jul-decision-wemm-4b` (default) | [`usejul/WeMM-Embedding-4B-mlx-4bit`](https://huggingface.co/usejul/WeMM-Embedding-4B-mlx-4bit) | 2.6 GB | [`tencent/WeMM-Embedding-4B`](https://huggingface.co/tencent/WeMM-Embedding-4B) (10.3 GB) + [`usejul/jul-decision-wemm-4b`](https://huggingface.co/usejul/jul-decision-wemm-4b) (adapters, 0.07 GB) |
 | `wemm-4b-4bit` | [`usejul/WeMM-Embedding-4B-mlx-4bit`](https://huggingface.co/usejul/WeMM-Embedding-4B-mlx-4bit) | 2.6 GB | [`tencent/WeMM-Embedding-4B`](https://huggingface.co/tencent/WeMM-Embedding-4B) |
 | `minicpm5-2b` | [`openbmb/MiniCPM5-2B-MLX`](https://huggingface.co/openbmb/MiniCPM5-2B-MLX)             |  2.7 GB | [`openbmb/MiniCPM5-2B`](https://huggingface.co/openbmb/MiniCPM5-2B) |
-| `minicpm5-2b-decision` ¹ | [`usejul/minicpm5-2b-decision-mlx-4bit`](https://huggingface.co/usejul/minicpm5-2b-decision-mlx-4bit) | 1.3 GB | [`usejul/minicpm5-2b-decision`](https://huggingface.co/usejul/minicpm5-2b-decision) |
+| `jul-decision-minicpm5-2b` ¹ | [`usejul/jul-decision-minicpm5-2b-mlx-4bit`](https://huggingface.co/usejul/jul-decision-minicpm5-2b-mlx-4bit) | 1.4 GB | [`usejul/jul-decision-minicpm5-2b`](https://huggingface.co/usejul/jul-decision-minicpm5-2b) |
 
 ¹ A decision model, read differently from the presets: see [Decision models](models.md#decision-models). It
 is not built in; add it once with `jul models add` (below).
