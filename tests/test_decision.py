@@ -139,3 +139,39 @@ def test_a_fitted_fallback_survives_the_preset_round_trip(tmp_path):
     assert back.method == "vector" and back.layers == [29] and back.tau == 0.048
     # the name and directory are the ones the centers were fitted under, or "generic" finds no asset
     assert back.name == "m" and back.asset_dir == tmp_path
+
+
+def test_a_model_can_route_question_types_to_its_vectors(tmp_path):
+    """A pointer head that reads Score worse than its own vectors sends Score there, whatever the option count."""
+    d = json.loads((FIXTURES / "decision_minicpm5-2b.json").read_text())
+    (tmp_path / "decision.json").write_text(json.dumps({**d, "routing": {"types": ["score"]}}))
+    spec = DecisionSpec.load(tmp_path)
+    assert spec.route_types == ("score",) and spec.route_above is None
+
+
+def test_routing_by_count_and_by_type_are_independent():
+    from jul.client import routed_questions
+    qs = {"team": Choice(instructions="Which team?", criteria=[f"t{i}" for i in range(12)]),
+          "urgent": Noul(instructions="Urgent?"),
+          "level": Score(instructions="How bad?", criteria=["low", "medium", "high"])}
+    assert set(routed_questions(qs, 10, ())) == {"team"}
+    assert set(routed_questions(qs, 10, ("score",))) == {"team", "level"}
+    assert set(routed_questions(qs, 0, ("score",))) == {"level"}   # route_above=0 keeps the type routing
+    assert routed_questions(qs, None, None) == {}
+
+
+def test_a_routed_question_is_read_at_the_fallback_tau():
+    """The fallback swaps engine.preset; reading it at the pointer preset's tau (1.0) made every answer uniform."""
+    from types import SimpleNamespace
+
+    from jul.client import TypeSafeClient
+    client = TypeSafeClient.__new__(TypeSafeClient)
+    client._preset = SimpleNamespace(tau=1.0)                       # the pointer preset
+    cos = np.array([0.30, 0.20, 0.10])
+    engine = SimpleNamespace(preset=SimpleNamespace(tau=0.05),       # the vector fallback swapped in
+                             compile=lambda *a: None, read=lambda compiled, text, shared: (cos, None, 7))
+    client._head = lambda *a: None
+    client._head_formulations = lambda head: None
+    q = Score(instructions="How bad?", criteria=["low", "medium", "high"])
+    p, tokens = client._answer_probabilities(engine, "score", "vector", q, options_of(q), "text", None, {})
+    assert tokens == 7 and p[0] > 0.85                               # softmax(cos / 0.05), not softmax(cos / 1.0)

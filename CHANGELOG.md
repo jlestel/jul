@@ -15,6 +15,15 @@ Versions come from git tags (see [publishing](docs/publishing.md)): a `v*` tag r
   the answers below `--min-confidence`, as `jul serve --escalate-to`): the accuracy of the pair and the share of
   rows sent to the server, also on the verdict line when the cascade is picked. The server's failures are
   counted on the row, and a server that failed on every escalated row (a rejected key) makes the row `n/a`.
+- A decision model can **route question types to its vector reading**: `"routing": {"types": ["score"]}` in its
+  `decision.json` sends those questions to the vectors fitted by `jul models add` on the same weights, at any
+  option count. For pointer heads that read Score worse than the vectors do.
+
+### Fixed
+
+- A decision model's questions routed to its vector fallback were read at the pointer preset's temperature
+  (1.0) instead of the fallback's own tau, which flattened their probabilities to near uniform (same answer,
+  wrong confidence; a Score's expected level collapsed to the middle).
 
 ### Fixed
 

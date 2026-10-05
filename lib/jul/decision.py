@@ -68,8 +68,9 @@ class DecisionSpec:
     max_state_tokens: int
     max_branch_tokens: int
     directory: Path
-    #: Optional: above `above_options` options the pointer head stops earning its latency, so the call
-    #: falls back to the vector reading described here. None = never route. See `route_above`.
+    #: Optional: above `above_options` options the pointer head stops earning its latency, and the question
+    #: `types` it reads worse than the vectors (e.g. ["score"]); both fall back to the vector reading.
+    #: None = never route. See `route_above` and `route_types`.
     routing: dict[str, Any] | None
 
     @classmethod
@@ -96,7 +97,14 @@ class DecisionSpec:
     @property
     def route_above(self) -> int | None:
         """Option count above which the vector reading answers instead; None when the model routes nowhere."""
-        return int(self.routing["above_options"]) if self.routing else None
+        above = (self.routing or {}).get("above_options")
+        return int(above) if above is not None else None
+
+    @property
+    def route_types(self) -> tuple[str, ...]:
+        """Question types the vector reading answers whatever their option count (a model whose pointer head
+        reads e.g. Score worse than its own vectors says so here)."""
+        return tuple((self.routing or {}).get("types") or ())
 
 
 def fallback_preset(name: str, backend: str | None, fitted: dict, asset_dir: Path):

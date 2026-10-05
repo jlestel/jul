@@ -40,6 +40,14 @@ DEFAULT_METHOD = {"choice": "vector", "noul": "vector", "score": "vector"}
 _KIND = {Choice: "choice", Noul: "noul", Score: "score"}
 
 
+def routed_questions(questions: dict, above: int | None, types) -> dict:
+    """The questions a decision model hands to its vector reading: more than `above` options (latency), or a
+    type its pointer head reads worse than the vectors (quality). `above` 0 or None turns the first off."""
+    types = set(types or ())
+    return {n: q for n, q in questions.items()
+            if (above and len(options_of(q)) > above) or _kind_of(q) in types}
+
+
 class TypeSafeClient:
     """Local, typed decisions. Accepts the Jev SDK's constructor arguments and ignores the remote ones."""
 
@@ -117,7 +125,8 @@ class TypeSafeClient:
         ("vector", "cross") forces one reading for every question of the call.
 
         `route_above` overrides, for this call, the option count above which a decision model hands a
-        question to its vector reading (its decision.json sets the default; 0 disables the routing).
+        question to its vector reading (its decision.json sets the default; 0 disables that routing). The
+        question types its decision.json routes (`routing.types`) go to the vector reading in any case.
 
         `_ignored` swallows the Jev arguments that mean nothing locally (`response_model`, `retry`,
         `extra_body`, ...) so existing code keeps running.
@@ -144,8 +153,8 @@ class TypeSafeClient:
             fitted = engine.preset.routing or spec_routing.get("vector")
             above = (route_above if route_above is not None else
                      (engine.preset.routing or {}).get("above_options") or engine.pointer.spec.route_above)
-            routed = ({n: q for n, q in questions.items() if len(options_of(q)) > above}
-                      if above and fitted else {})
+            types = (engine.preset.routing or {}).get("types") or engine.pointer.spec.route_types
+            routed = routed_questions(questions, above, types) if fitted else {}
             direct = {n: q for n, q in questions.items() if n not in routed}
             if direct:
                 items = [(_kind_of(q), q.instructions, options_of(q)) for q in direct.values()]
@@ -233,7 +242,9 @@ class TypeSafeClient:
         scores, features, tokens = engine.read(compiled, text, shared)
         if head is not None:
             return tuning.apply(head, features, text), tokens
-        return self._calibrated(ctx, kind, question, options, scores / self._preset.tau), tokens
+        # engine.preset, not self._preset: a decision model routes questions to its vector fallback by swapping
+        # engine.preset, and its own preset's tau (1.0) would flatten every routed answer to near uniform.
+        return self._calibrated(ctx, kind, question, options, scores / engine.preset.tau), tokens
 
     def _digest(self, kind: str, question: Question, options: list[Option]) -> str:
         return question_digest(model_key(self._preset.name, self.backend), kind, question.instructions, options)
