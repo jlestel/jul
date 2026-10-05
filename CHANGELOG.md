@@ -13,7 +13,8 @@ Versions come from git tags (see [publishing](docs/publishing.md)): a `v*` tag r
   rows were sent there; a missing key fails that target alone, before anything is sent.
 - **`jul bench --escalate-to TARGET`** measures each local model as a cascade (itself, then the remote server for
   the answers below `--min-confidence`, as `jul serve --escalate-to`): the accuracy of the pair and the share of
-  rows sent to the server.
+  rows sent to the server, also on the verdict line when the cascade is picked. The server's failures are
+  counted on the row, and a server that failed on every escalated row (a rejected key) makes the row `n/a`.
 
 ## 0.4.0 — 2026-10-05
 

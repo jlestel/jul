@@ -78,8 +78,12 @@ jul bench test.csv --json > results.json
   ```
 - **Cascade**, `--escalate-to TARGET [--min-confidence 0.8]`: each local model is also measured the way
   `jul serve --escalate-to` answers, itself first and the remote server only for the answers below the bar.
-  Its row (`cascade>typesafe@0.8`) gives the accuracy of the pair and the share of rows sent to the server,
-  which is what it costs. Remote models in `--models` are not cascaded.
+  Its row (`cascade@0.8`) gives the accuracy of the pair and the share of rows sent to the server, which is
+  what it costs; when the cascade is the pick, the verdict line repeats that share. Same targets and keys as
+  remote `--models`; `--min-confidence` is between 0 and 1. Remote models in `--models` are not cascaded.
+  The server's failures are never hidden: a row that failed there is counted on the cascade row
+  (`2 failed there`), a server that failed on every escalated row (a rejected key, say) turns the row into
+  `n/a` with its error, and so does a local model that cannot read the way asked.
 
   ```bash
   jul bench test.jsonl --models accurate,fast --escalate-to typesafe --min-confidence 0.8

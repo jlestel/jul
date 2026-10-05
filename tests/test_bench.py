@@ -399,7 +399,7 @@ def test_the_cascade_reports_accuracy_and_the_share_sent(tmp_path, monkeypatch):
     report = bench.run(args(test, escalate_to="typesafe", min_confidence=0.8), make_client=lambda *a: UnsureClient())
     zs, casc = report["results"][0]["questions"][Q]
     assert zs["setting"] == "zero-shot" and zs["accuracy"] == 0.5 and "escalated" not in zs
-    assert casc["setting"] == "cascade>typesafe@0.8"
+    assert casc["setting"] == "cascade@0.8" and casc["escalate_to"] == "typesafe"
     assert casc["accuracy"] == 0.75                   # "bug charge" is answered billing, sure: never sent
     assert casc["escalated"] == 2 and casc["escalated_share"] == 0.5
     assert sorted(sent) == ["crash", "froze"]
@@ -430,3 +430,68 @@ def test_a_remote_model_is_not_cascaded(tmp_path, monkeypatch):
 def test_the_parser_knows_the_cascade():
     a = build_parser().parse_args(["bench", "t.jsonl", "--escalate-to", "typesafe", "--min-confidence", "0.7"])
     assert a.escalate_to == "typesafe" and a.min_confidence == 0.7
+
+
+def test_a_rejected_remote_key_is_reported_not_hidden_in_the_cascade(tmp_path, monkeypatch):
+    from jul.escalate import RemoteError, SystemOneHTTP
+
+    def rejected(self, state, questions, **_):
+        raise RemoteError(f"{self.url} answered HTTP 401: bad key")
+    monkeypatch.setattr(SystemOneHTTP, "system_one", rejected)
+    monkeypatch.setenv("TYPESAFE_API_KEY", "wrong")
+    test = write(tmp_path / "t.jsonl", rows(("charge", "billing"), ("crash", "tech"), ("froze", "tech")))
+    report = bench.run(args(test, escalate_to="typesafe", min_confidence=0.8), make_client=lambda *a: UnsureClient())
+    zs, casc = report["results"][0]["questions"][Q]
+    assert "accuracy" not in casc and casc["skipped"].startswith("typesafe answered HTTP 401")
+    assert "every escalated row" in casc["skipped"] and "api.typesafe.ai" not in casc["skipped"]
+    assert report["recommendation"][Q]["pick"]["setting"] == "zero-shot"
+
+
+def test_some_remote_failures_are_counted_on_the_row(tmp_path, monkeypatch):
+    from jul.escalate import RemoteError, SystemOneHTTP
+
+    def flaky(self, state, questions, **_):
+        if state == "crash":
+            raise RemoteError("timeout")
+        return SystemOneResponse(answers={"q": ChoiceAnswer(choice="tech", probabilities={}, confidence=1.0)},
+                                 model="jev", usage=Usage(), request_id="r")
+    monkeypatch.setattr(SystemOneHTTP, "system_one", flaky)
+    monkeypatch.setenv("TYPESAFE_API_KEY", "k")
+    test = write(tmp_path / "t.jsonl", rows(("charge", "billing"), ("crash", "tech"), ("froze", "tech")))
+    report = bench.run(args(test, escalate_to="typesafe", min_confidence=0.8), make_client=lambda *a: UnsureClient())
+    casc = report["results"][0]["questions"][Q][1]
+    assert casc["escalated"] == 2 and casc["remote_errors"] == 1 and "timeout" in casc["remote_error"]
+    assert "1 failed there" in bench.render(report, bench.Ink(open(tmp_path / "o", "w")))
+
+
+def test_a_local_model_failing_inside_the_cascade_is_not_shown_as_all_remote(tmp_path, monkeypatch):
+    _fake_remote(monkeypatch, [])
+    monkeypatch.setenv("TYPESAFE_API_KEY", "k")
+    test = write(tmp_path / "t.jsonl", rows(("charge", "billing"), ("crash", "tech")))
+    report = bench.run(args(test, method="letters", escalate_to="typesafe", min_confidence=0.8),
+                       make_client=FakeClient)
+    zs, casc = report["results"][0]["questions"][Q]
+    assert "no logits" in zs["skipped"] and "local model failed" in casc["skipped"]
+
+
+def test_the_pick_line_shows_what_the_cascade_costs(tmp_path, monkeypatch):
+    from jul.escalate import SystemOneHTTP
+    gold = {"charge again": "billing", "crash": "tech", "froze": "billing"}
+
+    def remote(self, state, questions, **_):
+        return SystemOneResponse(answers={"q": ChoiceAnswer(choice=gold[state], probabilities={}, confidence=1.0)},
+                                 model="jev", usage=Usage(), request_id="r")
+    monkeypatch.setattr(SystemOneHTTP, "system_one", remote)
+    monkeypatch.setenv("TYPESAFE_API_KEY", "k")
+    test = write(tmp_path / "t.jsonl", rows(*gold.items()))
+    report = bench.run(args(test, escalate_to="typesafe", min_confidence=0.8), make_client=lambda *a: UnsureClient())
+    pick = report["recommendation"][Q]["pick"]
+    assert pick["setting"] == "cascade@0.8" and pick["escalated_share"] == round(2 / 3, 4)
+    assert "67% of rows sent to typesafe" in bench.render(report, bench.Ink(open(tmp_path / "o", "w")))
+
+
+def test_min_confidence_must_be_a_confidence(tmp_path):
+    test = write(tmp_path / "t.jsonl", rows(("charge", "billing")))
+    for bad in (1.5, -0.1):
+        with pytest.raises(SystemExit, match="between 0 and 1"):
+            bench.run(args(test, escalate_to="typesafe", min_confidence=bad), make_client=FakeClient)
