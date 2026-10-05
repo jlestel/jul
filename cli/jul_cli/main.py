@@ -604,6 +604,12 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--remote-key-env", default=None, metavar="VAR",
                    help="the environment variable holding the key of the URL targets in --models "
                         "(providers use their own: TYPESAFE_API_KEY, CLOUDFLARE_API_TOKEN)")
+    s.add_argument("--escalate-to", default=None, metavar="TARGET",
+                   help="also measure each local model as a cascade: itself first, then this remote server "
+                        "(same targets as --models) for the answers below --min-confidence; reports the accuracy "
+                        "and the share of rows sent there")
+    s.add_argument("--min-confidence", type=float, default=0.8,
+                   help="the cascade's bar (default 0.8, as jul serve; a Noul counts max(p, 1-p))")
     s.add_argument("--backend", **backend_kw)
     s.add_argument("--method", metavar="M[,M]|auto",
                    help="zero-shot readings to compare: vector, letters, cross, or auto for every one the model "

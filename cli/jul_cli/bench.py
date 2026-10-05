@@ -22,6 +22,10 @@ rows: `typesafe` (Jev, key in TYPESAFE_API_KEY), `ollama[:model]` (Nimble), `clo
 (CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN), or the URL of any /v1/systemone server, `URL#model` (Kev,
 llama.cpp, a hosted Laya, another `jul serve`). The test rows are sent to that server; it is measured
 zero-shot only, and its latency includes the network.
+
+`--escalate-to TARGET` (a remote target as above) also measures each local model as a cascade, the way
+`jul serve --escalate-to` answers: the local model first, the remote server only for the answers below
+`--min-confidence`. Its row says the accuracy of the cascade and the share of rows sent to the server.
 """
 
 from __future__ import annotations
@@ -306,7 +310,7 @@ def predicted(kind: str, answer) -> str:
 
 def evaluate(client, task: Task, context=None, method=None) -> dict:
     question = task.question()
-    hits, errors, times = 0, [], []
+    hits, errors, times, sent = 0, [], [], 0
     for state, gold in task.test:
         t = time.perf_counter()
         response = client.system_one(state=state, questions={"q": question}, context=context,
@@ -314,6 +318,9 @@ def evaluate(client, task: Task, context=None, method=None) -> dict:
         times.append((time.perf_counter() - t) * 1000)
         got = predicted(task.kind, response.answers["q"])
         hits += got == gold
+        trace = getattr(response, "escalation", None)
+        if trace and len(trace["q"]["tried"]) > 1:      # reached the next tier (even if it failed there)
+            sent += 1
         if task.kind == "score":
             errors.append(abs(response.answers["q"].score - int(gold)))
     n = len(task.test)
@@ -323,6 +330,9 @@ def evaluate(client, task: Task, context=None, method=None) -> dict:
            "latency_ms_p95": round(_pct(times, 95), 1)}
     if errors:
         out["mae"] = round(sum(errors) / len(errors), 4)
+    if getattr(client, "tiers", None):
+        out["escalated"] = sent
+        out["escalated_share"] = round(sent / n, 4) if n else None
     return out
 
 
@@ -380,7 +390,7 @@ def readings(client, methods: list, features: list) -> tuple[list, list, dict]:
 
 def bench_model(model: str, tasks: list[Task], backend=None, make_client=None, log=print,
                 methods: list | None = None, features: list | None = None,
-                remote_key_env: str | None = None) -> dict:
+                remote_key_env: str | None = None, escalate: dict | None = None) -> dict:
     """Every zero-shot method asked, then (tasks with train rows) every autotune features asked, each head
     in a throwaway context. `methods=[None]` is the model's default reading."""
     from jul import Context
@@ -413,6 +423,8 @@ def bench_model(model: str, tasks: list[Task], backend=None, make_client=None, l
                     runs.append({"setting": label, "method": m or "default", **evaluate(client, task, method=m)})
                 except (ValueError, NotImplementedError) as exc:     # e.g. letters on an embeddings API
                     runs.append({"setting": label, "skipped": str(exc)})
+            if escalate and not _is_http(client):
+                runs += _cascade_runs(client, task, model, escalate, ok_methods, log)
             for f in ok_features if task.train else []:
                 label = "autotune" + (f":{f}" if len(ok_features) > 1 or f != "vector" else "")
                 ctx = Context(name="bench")
@@ -440,6 +452,53 @@ def bench_model(model: str, tasks: list[Task], backend=None, make_client=None, l
             pass
         shutil.rmtree(home, ignore_errors=True)
     return result
+
+
+def _cascade_runs(client, task: Task, model: str, escalate: dict, methods: list, log) -> list[dict]:
+    """The local model, then the remote server for the answers below the bar, as `jul serve --escalate-to`.
+    The local model reads with its default reading (or the only one asked)."""
+    from jul.escalate import Escalation
+    remote, bar = escalate["remote"], escalate["min_confidence"]
+    label = f"cascade@{bar:g}"
+    base = {"setting": label, "escalate_to": _shown(escalate["target"])}
+    if remote is None:
+        return [{**base, "skipped": escalate["error"]}]
+    method = methods[0] if len(methods) == 1 else None
+    # Escalation skips a failing tier and keeps going: record the failures here, or a rejected key would
+    # look like a cascade that does not help.
+    local, far = _Recorder(client), _Recorder(remote, hide=(f"RemoteError: {remote.url} ", ""))
+    cascade = Escalation([("local", local), ("remote", far)], min_confidence=bar)
+    log(f"  {_shown(model)} · {task.name} · {label} ({len(task.test)})")
+    try:
+        run = {**base, "method": method or "default", **evaluate(cascade, task, method=method)}
+    except (ValueError, NotImplementedError) as exc:
+        return [{**base, "skipped": str(exc)}]
+    if local.errors:
+        return [{**base, "skipped": f"the local model failed on {len(local.errors)} row(s): {local.errors[0]}"}]
+    if far.errors:
+        run["remote_errors"] = len(far.errors)
+        run["remote_error"] = far.errors[0]
+        if len(far.errors) >= run["escalated"]:      # nothing ever came back: not a cascade
+            return [{**base, "skipped": f"{_shown(escalate['target'])} {far.errors[0]} "
+                                        f"(every escalated row, {len(far.errors)})"}]
+    return [run]
+
+
+class _Recorder:
+    """A tier that remembers why it failed (message without credentials), then fails as before."""
+
+    def __init__(self, decider, hide: tuple[str, str] | None = None):
+        self.decider, self.hide, self.errors = decider, hide, []
+
+    def system_one(self, *args, **kwargs):
+        try:
+            return self.decider.system_one(*args, **kwargs)
+        except Exception as exc:
+            msg = f"{type(exc).__name__}: {exc}"
+            if self.hide:
+                msg = msg.replace(*self.hide)
+            self.errors.append(msg[:200])
+            raise
 
 
 def _label(kind: str, key: str):
@@ -471,7 +530,9 @@ def recommend(results: list[dict], tasks: list[Task]) -> dict:
         out[task.name] = {
             "best": {"model": top[0], "setting": top[1], "accuracy": top[2]["accuracy"]},
             "pick": {"model": fast[0], "setting": fast[1], "accuracy": fast[2]["accuracy"],
-                     "latency_ms_p50": fast[2]["latency_ms_p50"]},
+                     "latency_ms_p50": fast[2]["latency_ms_p50"],
+                     **({"escalated_share": fast[2]["escalated_share"], "escalate_to": fast[2]["escalate_to"]}
+                        if "escalated_share" in fast[2] else {})},
             "separable": len(tied) == 1,
             "candidates": len(cands),
             "tied": sorted(f"{c[0]} ({c[1]})" for c in tied),
@@ -567,22 +628,27 @@ def render(report: dict, ink: Ink | None = None) -> str:
                 lead = f"{name:<26}" + ("\n  " + " " * 26 if len(name) > 25 else "")
                 how = run["setting"] + ("*" if run.get("activated") is False else "")
                 if "skipped" in run:
-                    lines.append(lead + ink.dim(f"{how:<20}n/a: {run['skipped'][:60]}"))
+                    lines.append(lead + ink.dim(f"{how[:19]:<20}n/a: {run['skipped'][:60]}"))
                     continue
                 star = pick.get("model") == r["model"] and run["setting"] == pick.get("setting")
                 acc = f"{run['accuracy'] * 100:5.1f}% " + bar(run["accuracy"], *run["ci95"], width=14)
-                cell = (lead + f"{how:<20}{acc:<23}"
+                cell = (lead + f"{how[:19]:<20}{acc:<23}"
                         f"{run['ci95'][0] * 100:4.0f}–{run['ci95'][1] * 100:3.0f}%     {run['latency_ms_p50']:>8.0f}")
+                if "escalated" in run:
+                    cell += ink.dim(f"  {run['escalated_share'] * 100:.0f}% sent ({run['escalated']}/{run['n']})"
+                                    + (f", {run['remote_errors']} failed there" if run.get("remote_errors") else ""))
                 lines.append(ink.inv(cell) if star and ink.on else (cell + "  ◄" if star else cell))
         if rec:
             p = rec["pick"]
             lines.append("")
+            cost = (f" · {p['escalated_share'] * 100:.0f}% of rows sent to {p['escalate_to']}"
+                    if "escalated_share" in p else "")
             if rec["candidates"] == 1:
-                lines.append(ink.ph(f"► {p['model']} ({p['setting']})"))
+                lines.append(ink.ph(f"► {p['model']} ({p['setting']}){cost}"))
             elif rec["separable"]:
-                lines.append(ink.ph(f"► {p['model']} ({p['setting']}): clearly ahead"))
+                lines.append(ink.ph(f"► {p['model']} ({p['setting']}){cost}: clearly ahead"))
             else:
-                lines.append(ink.ph(f"► {p['model']} ({p['setting']}): fastest within the interval of the best")
+                lines.append(ink.ph(f"► {p['model']} ({p['setting']}){cost}: fastest within the interval of the best")
                              )
                 lines.append(ink.dim(f"  not separable on {q['n_test']} rows: " + ", ".join(rec["tied"])))
         out += window(q["name"], lines, ink, width)
@@ -597,6 +663,10 @@ def render(report: dict, ink: Ink | None = None) -> str:
         notes.append(f"under 50 test rows ({', '.join(small)[:40]}): intervals are wide, prefer ~50+ per question")
     if any(c.get("candidates", 0) > len(report["models"]) for c in report["recommendation"].values()):
         notes.append("several readings per model: the best of many on the same test rows is slightly optimistic")
+    if report.get("escalate"):
+        e = report["escalate"]
+        notes.append(f"cascade: local first, {e['target']} for answers below {e['min_confidence']:g}; "
+                     "'% sent' is the share of rows that reached it (its cost)")
     remote = [r["model"] for r in report["results"] if r.get("remote")]
     if remote:
         notes.append(f"remote ({', '.join(remote)[:50]}): the test rows were sent there; latency includes the network")
@@ -644,12 +714,26 @@ def run(a, make_client=None, stream=sys.stdout) -> dict:
         overlap["within_test"] = find_overlap(tasks, a.near)["within_test"]
     tasks = [t for t in tasks if t.test]
 
+    escalate = None
+    if getattr(a, "escalate_to", None):
+        target = a.escalate_to.strip()
+        if not is_remote(target):
+            raise SystemExit(f"--escalate-to {target}: not a remote server (typesafe, ollama[:model], "
+                             "cloudflare:clef|clef-flash, or a URL)")
+        if not 0.0 <= a.min_confidence <= 1.0:
+            raise SystemExit(f"--min-confidence {a.min_confidence}: a confidence, between 0 and 1")
+        escalate = {"target": target, "min_confidence": a.min_confidence, "remote": None, "error": None}
+        try:
+            escalate["remote"] = remote_client(target, getattr(a, "remote_key_env", None))
+        except ValueError as exc:
+            escalate["error"] = str(exc)
+
     results = []
     for m in models:
         name, _, backend = (m, "", "") if is_remote(m) else m.partition("@")
         shown = _shown(m)
         r = bench_model(name, tasks, backend or a.backend, make_client, log, methods, features,
-                        getattr(a, "remote_key_env", None))
+                        getattr(a, "remote_key_env", None), escalate)
         r["model"] = shown
         results.append(r)
     report = {
@@ -660,6 +744,10 @@ def run(a, make_client=None, stream=sys.stdout) -> dict:
         "questions": [{"name": t.name, "type": t.kind, "instructions": t.instructions, "options": t.options,
                        "n_test": len(t.test), "n_train": len(t.train)} for t in tasks],
         "overlap": overlap,
+        "escalate": ({"target": _shown(escalate["target"]), "min_confidence": escalate["min_confidence"],
+                      "url": _public_url(escalate["remote"].url) if escalate["remote"] else None,
+                      "error": escalate["error"]}
+                     if escalate else None),
         "results": results,
         "recommendation": recommend(results, tasks),
     }

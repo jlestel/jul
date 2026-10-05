@@ -362,7 +362,8 @@ C:\> jul ask choice "Which team?" -o billing -o tech \
     <b>80% of the questions stay local</b>, and accuracy goes from 0.849 (local alone) to 0.866.
     Choice and Noul mostly stay local (95% and 89%); Score questions mostly go up (93%).</p>
     <p class="note">Computed from the recorded predictions of both systems on the bench, not a live run; the share
-    depends on your data and your bar. <a href="docs/serve.html#escalation-local-first-a-bigger-decider-when-unsure">How to set it up →</a></p>
+    depends on your data and your bar: measure yours with
+    <code>jul bench test.jsonl --models accurate --escalate-to typesafe</code>. <a href="docs/serve.html#escalation-local-first-a-bigger-decider-when-unsure">How to set it up →</a></p>
   </section>
 
   <!-- ── WORKS WITH ─────────────────────────────────────────── -->
