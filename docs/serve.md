@@ -93,6 +93,10 @@ The response says, per question, which tier answered:
 "jul": {"escalation": {"team": {"tried": ["local", "remote"], "tier": "remote", "confidence": 0.91, "met_bar": true}}}
 ```
 
+To choose the server and the bar before serving, measure the pair on your own labeled rows:
+`jul bench test.jsonl --models accurate --escalate-to typesafe --min-confidence 0.8` gives the accuracy of
+the cascade and the share of rows that would go to Jev (see [Bench on your own data](cli.md#bench-on-your-own-data)).
+
 A Choice or Score counts its `confidence`, a Noul `max(noul, 1 - noul)`. The tier escalated to keeps
 the question even when it is less sure (two models' confidences are not comparable); `met_bar` says
 whether the kept answer cleared the bar. A tier that fails is skipped and its error recorded; a

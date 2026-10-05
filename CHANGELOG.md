@@ -7,6 +7,14 @@ Versions come from git tags (see [publishing](docs/publishing.md)): a `v*` tag r
 
 ### Added
 
+- **`jul bench` compares JuL with remote servers**: `--models` also takes `typesafe` (Jev), `ollama[:model]`,
+  `cloudflare:clef|clef-flash` and any `/v1/systemone` URL as `URL#model` (Kev, a hosted Laya…), each with the
+  user's own key (`--remote-key-env` for a URL). Zero-shot only, network latency included, the report says the
+  rows were sent there; a missing key fails that target alone, before anything is sent.
+- **`jul bench --escalate-to TARGET`** measures each local model as a cascade (itself, then the remote server for
+  the answers below `--min-confidence`, as `jul serve --escalate-to`): the accuracy of the pair and the share of
+  rows sent to the server, also on the verdict line when the cascade is picked. The server's failures are
+  counted on the row, and a server that failed on every escalated row (a rejected key) makes the row `n/a`.
 - A decision model can **route question types to its vector reading**: `"routing": {"types": ["score"]}` in its
   `decision.json` sends those questions to the vectors fitted by `jul models add` on the same weights, at any
   option count. For pointer heads that read Score worse than the vectors do.

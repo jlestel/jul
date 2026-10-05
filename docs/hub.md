@@ -110,6 +110,9 @@ locally, and send only the questions answered below a confidence bar to the next
 | Clef on Cloudflare Workers AI | `cloudflare`, `cloudflare:clef` | `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` |
 | Kev, another `jul serve`, any server | its URL | `--escalate-key-env VAR` |
 
+The same targets go in `jul bench --models` (a URL as `URL#model`, its key in `--remote-key-env`), to measure
+them against JuL's models on your own rows before choosing: see [Bench on your own data](cli.md#bench-on-your-own-data).
+
 ```python
 from jul import TypeSafeClient, Escalation, SystemOneHTTP
 

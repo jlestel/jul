@@ -276,3 +276,222 @@ def test_overlap_scales(tmp_path):
     t = time.perf_counter()
     bench.find_overlap(tasks)
     assert time.perf_counter() - t < 20
+
+
+# --- remote System One servers ------------------------------------------------------------------
+
+def _fake_remote(monkeypatch, sent):
+    from jul.escalate import SystemOneHTTP
+
+    def answer(self, state, questions, **_):
+        sent.append((self.url, self.model, self.api_key, state))
+        return FakeClient().system_one(state, questions)
+    monkeypatch.setattr(SystemOneHTTP, "system_one", answer)
+
+
+def test_remote_targets_are_recognised():
+    for m in ("typesafe", "ollama", "ollama:nimble", "cloudflare:clef", "https://kev.example#kev-4b",
+              "http://localhost:8577"):
+        assert bench.is_remote(m), m
+    for m in ("fast", "jul-decision-e5-small", "minicpm5-2b", "laya", "laya:multilingual"):
+        assert not bench.is_remote(m), m
+
+
+def test_a_remote_server_is_benched_zero_shot_with_the_users_key(tmp_path, monkeypatch):
+    sent = []
+    _fake_remote(monkeypatch, sent)
+    monkeypatch.setenv("TYPESAFE_API_KEY", "k-ts")
+    monkeypatch.setenv("KEV_KEY", "k-kev")
+    test = write(tmp_path / "test.jsonl", rows(("charge again", "billing"), ("crash", "tech")))
+    train = write(tmp_path / "train.jsonl", rows(("invoice wrong", "billing"), ("it froze", "tech")))
+    report = bench.run(args(test, train, models="fake,typesafe,https://kev.example/v1#kev-4b",
+                            remote_key_env="KEV_KEY", features="auto"),
+                       make_client=_fake_with_gold(test))
+    fake, jev, kev = report["results"]
+    assert [r["setting"] for r in fake["questions"][Q]][:2] == ["zero-shot", "autotune:vector"]
+    assert jev["remote"] == "https://api.typesafe.ai/v1/systemone"
+    assert kev["remote"] == "https://kev.example/v1/systemone"
+    for r in (jev, kev):
+        runs = r["questions"][Q]
+        assert runs[0]["setting"] == "zero-shot" and runs[0]["accuracy"] == 1.0
+        assert all("remote server" in x["skipped"] for x in runs[1:]) and len(runs) == 4
+    assert {(u, m, k) for u, m, k, _ in sent} == {
+        ("https://api.typesafe.ai/v1/systemone", "jev-latest", "k-ts"),
+        ("https://kev.example/v1/systemone", "kev-4b", "k-kev")}
+    assert "the test rows were sent there" in bench.render(report, bench.Ink(open(tmp_path / "o", "w")))
+
+
+def test_a_remote_server_without_its_key_fails_alone_and_sends_nothing(tmp_path, monkeypatch):
+    sent = []
+    _fake_remote(monkeypatch, sent)
+    monkeypatch.delenv("TYPESAFE_API_KEY", raising=False)
+    monkeypatch.delenv("CLOUDFLARE_ACCOUNT_ID", raising=False)
+    test = write(tmp_path / "t.jsonl", rows(("charge", "billing"), ("crash", "tech")))
+    report = bench.run(args(test, models="typesafe,cloudflare:clef,fake"), make_client=FakeClient)
+    jev, clef, fake = report["results"]
+    assert "TYPESAFE_API_KEY is not set" in jev["error"]
+    assert "CLOUDFLARE_ACCOUNT_ID" in clef["error"]
+    assert fake["questions"][Q][0]["n"] == 2 and sent == []
+
+
+def test_bench_does_not_ask_setup_for_a_remote_target(monkeypatch, tmp_path):
+    import importlib
+    m = importlib.import_module("jul_cli.main")
+    seen = []
+    monkeypatch.setattr("jul_cli.setup.require_setup", lambda name, backend: seen.append(name))
+    monkeypatch.setattr("jul_cli.bench.run", lambda a: None)
+    test = write(tmp_path / "t.jsonl", rows(("charge", "billing")))
+    m.main(["bench", str(test), "--models", "fake,typesafe,https://x.example#kev"])
+    assert seen == ["fake"]
+
+
+def test_url_credentials_never_reach_the_report_or_the_log(tmp_path, monkeypatch, capsys):
+    _fake_remote(monkeypatch, [])
+    test = write(tmp_path / "t.jsonl", rows(("charge", "billing"), ("crash", "tech")))
+    report = bench.run(args(test, models="https://u:sekret-pw@kev.example:8443#kev-4b", quiet=False),
+                       make_client=FakeClient)
+    r = report["results"][0]
+    assert r["remote"] == "https://kev.example:8443/v1/systemone"
+    assert r["model"] == "https://kev.example:8443#kev-4b"
+    out = capsys.readouterr()
+    assert "sekret" not in json.dumps(report) + out.out + out.err
+
+
+def test_a_missing_url_key_does_not_echo_url_credentials(tmp_path, monkeypatch):
+    monkeypatch.delenv("NOPE_KEY", raising=False)
+    test = write(tmp_path / "t.jsonl", rows(("charge", "billing"), ("crash", "tech")))
+    report = bench.run(args(test, models="https://u:sekret-pw@kev.example#kev", remote_key_env="NOPE_KEY"),
+                       make_client=FakeClient)
+    assert "NOPE_KEY is not set" in report["results"][0]["error"] and "sekret" not in json.dumps(report)
+
+
+def test_cloudflare_honours_remote_key_env_like_serve(monkeypatch):
+    monkeypatch.setenv("CLOUDFLARE_ACCOUNT_ID", "a" * 32)
+    monkeypatch.setenv("CLOUDFLARE_API_TOKEN", "default-token")
+    monkeypatch.setenv("MY_CF", "mine")
+    assert bench.remote_client("cloudflare:clef", "MY_CF").api_key == "mine"
+    assert bench.remote_client("cloudflare:clef").api_key == "default-token"
+# --- cascade: local first, a remote server for the unsure answers ---------------------------------
+
+class UnsureClient(FakeClient):
+    """Sure only of `billing`; unsure of everything else."""
+
+    def system_one(self, state, questions, context=None, method=None):
+        r = super().system_one(state, questions, context, method)
+        a = r.answers["q"]
+        if isinstance(a, ChoiceAnswer) and a.choice != "billing":
+            r.answers["q"] = ChoiceAnswer(choice=a.choice, probabilities={}, confidence=0.3)
+        return r
+
+
+def test_the_cascade_reports_accuracy_and_the_share_sent(tmp_path, monkeypatch):
+    from jul.escalate import SystemOneHTTP
+    sent = []
+
+    def remote(self, state, questions, **_):      # the remote server knows the gold
+        sent.append(state)
+        return SystemOneResponse(answers={"q": ChoiceAnswer(choice=gold[state], probabilities={}, confidence=1.0)},
+                                 model="jev", usage=Usage(), request_id="r")
+    monkeypatch.setattr(SystemOneHTTP, "system_one", remote)
+    monkeypatch.setenv("TYPESAFE_API_KEY", "k")
+    gold = {"charge again": "billing", "crash": "tech", "bug charge": "tech", "froze": "billing"}
+    test = write(tmp_path / "t.jsonl", rows(*gold.items()))
+    report = bench.run(args(test, escalate_to="typesafe", min_confidence=0.8), make_client=lambda *a: UnsureClient())
+    zs, casc = report["results"][0]["questions"][Q]
+    assert zs["setting"] == "zero-shot" and zs["accuracy"] == 0.5 and "escalated" not in zs
+    assert casc["setting"] == "cascade@0.8" and casc["escalate_to"] == "typesafe"
+    assert casc["accuracy"] == 0.75                   # "bug charge" is answered billing, sure: never sent
+    assert casc["escalated"] == 2 and casc["escalated_share"] == 0.5
+    assert sorted(sent) == ["crash", "froze"]
+    assert report["escalate"]["url"] == "https://api.typesafe.ai/v1/systemone"
+    text = bench.render(report, bench.Ink(open(tmp_path / "o", "w")))
+    assert "50% sent (2/4)" in text and "cascade: local first" in text
+
+
+def test_the_cascade_needs_a_remote_target_and_its_key(tmp_path, monkeypatch):
+    test = write(tmp_path / "t.jsonl", rows(("charge", "billing"), ("crash", "tech")))
+    with pytest.raises(SystemExit, match="not a remote server"):
+        bench.run(args(test, escalate_to="fast", min_confidence=0.8), make_client=FakeClient)
+    monkeypatch.delenv("TYPESAFE_API_KEY", raising=False)
+    report = bench.run(args(test, escalate_to="typesafe", min_confidence=0.8), make_client=FakeClient)
+    zs, casc = report["results"][0]["questions"][Q]
+    assert zs["accuracy"] == 1.0 and "TYPESAFE_API_KEY is not set" in casc["skipped"]
+
+
+def test_a_remote_model_is_not_cascaded(tmp_path, monkeypatch):
+    _fake_remote(monkeypatch, [])
+    monkeypatch.setenv("TYPESAFE_API_KEY", "k")
+    test = write(tmp_path / "t.jsonl", rows(("charge", "billing"), ("crash", "tech")))
+    report = bench.run(args(test, models="typesafe", escalate_to="typesafe", min_confidence=0.8),
+                       make_client=FakeClient)
+    assert [r["setting"] for r in report["results"][0]["questions"][Q]] == ["zero-shot"]
+
+
+def test_the_parser_knows_the_cascade():
+    a = build_parser().parse_args(["bench", "t.jsonl", "--escalate-to", "typesafe", "--min-confidence", "0.7"])
+    assert a.escalate_to == "typesafe" and a.min_confidence == 0.7
+
+
+def test_a_rejected_remote_key_is_reported_not_hidden_in_the_cascade(tmp_path, monkeypatch):
+    from jul.escalate import RemoteError, SystemOneHTTP
+
+    def rejected(self, state, questions, **_):
+        raise RemoteError(f"{self.url} answered HTTP 401: bad key")
+    monkeypatch.setattr(SystemOneHTTP, "system_one", rejected)
+    monkeypatch.setenv("TYPESAFE_API_KEY", "wrong")
+    test = write(tmp_path / "t.jsonl", rows(("charge", "billing"), ("crash", "tech"), ("froze", "tech")))
+    report = bench.run(args(test, escalate_to="typesafe", min_confidence=0.8), make_client=lambda *a: UnsureClient())
+    zs, casc = report["results"][0]["questions"][Q]
+    assert "accuracy" not in casc and casc["skipped"].startswith("typesafe answered HTTP 401")
+    assert "every escalated row" in casc["skipped"] and "api.typesafe.ai" not in casc["skipped"]
+    assert report["recommendation"][Q]["pick"]["setting"] == "zero-shot"
+
+
+def test_some_remote_failures_are_counted_on_the_row(tmp_path, monkeypatch):
+    from jul.escalate import RemoteError, SystemOneHTTP
+
+    def flaky(self, state, questions, **_):
+        if state == "crash":
+            raise RemoteError("timeout")
+        return SystemOneResponse(answers={"q": ChoiceAnswer(choice="tech", probabilities={}, confidence=1.0)},
+                                 model="jev", usage=Usage(), request_id="r")
+    monkeypatch.setattr(SystemOneHTTP, "system_one", flaky)
+    monkeypatch.setenv("TYPESAFE_API_KEY", "k")
+    test = write(tmp_path / "t.jsonl", rows(("charge", "billing"), ("crash", "tech"), ("froze", "tech")))
+    report = bench.run(args(test, escalate_to="typesafe", min_confidence=0.8), make_client=lambda *a: UnsureClient())
+    casc = report["results"][0]["questions"][Q][1]
+    assert casc["escalated"] == 2 and casc["remote_errors"] == 1 and "timeout" in casc["remote_error"]
+    assert "1 failed there" in bench.render(report, bench.Ink(open(tmp_path / "o", "w")))
+
+
+def test_a_local_model_failing_inside_the_cascade_is_not_shown_as_all_remote(tmp_path, monkeypatch):
+    _fake_remote(monkeypatch, [])
+    monkeypatch.setenv("TYPESAFE_API_KEY", "k")
+    test = write(tmp_path / "t.jsonl", rows(("charge", "billing"), ("crash", "tech")))
+    report = bench.run(args(test, method="letters", escalate_to="typesafe", min_confidence=0.8),
+                       make_client=FakeClient)
+    zs, casc = report["results"][0]["questions"][Q]
+    assert "no logits" in zs["skipped"] and "local model failed" in casc["skipped"]
+
+
+def test_the_pick_line_shows_what_the_cascade_costs(tmp_path, monkeypatch):
+    from jul.escalate import SystemOneHTTP
+    gold = {"charge again": "billing", "crash": "tech", "froze": "billing"}
+
+    def remote(self, state, questions, **_):
+        return SystemOneResponse(answers={"q": ChoiceAnswer(choice=gold[state], probabilities={}, confidence=1.0)},
+                                 model="jev", usage=Usage(), request_id="r")
+    monkeypatch.setattr(SystemOneHTTP, "system_one", remote)
+    monkeypatch.setenv("TYPESAFE_API_KEY", "k")
+    test = write(tmp_path / "t.jsonl", rows(*gold.items()))
+    report = bench.run(args(test, escalate_to="typesafe", min_confidence=0.8), make_client=lambda *a: UnsureClient())
+    pick = report["recommendation"][Q]["pick"]
+    assert pick["setting"] == "cascade@0.8" and pick["escalated_share"] == round(2 / 3, 4)
+    assert "67% of rows sent to typesafe" in bench.render(report, bench.Ink(open(tmp_path / "o", "w")))
+
+
+def test_min_confidence_must_be_a_confidence(tmp_path):
+    test = write(tmp_path / "t.jsonl", rows(("charge", "billing")))
+    for bad in (1.5, -0.1):
+        with pytest.raises(SystemExit, match="between 0 and 1"):
+            bench.run(args(test, escalate_to="typesafe", min_confidence=bad), make_client=FakeClient)
