@@ -343,3 +343,31 @@ def test_bench_does_not_ask_setup_for_a_remote_target(monkeypatch, tmp_path):
     test = write(tmp_path / "t.jsonl", rows(("charge", "billing")))
     m.main(["bench", str(test), "--models", "fake,typesafe,https://x.example#kev"])
     assert seen == ["fake"]
+
+
+def test_url_credentials_never_reach_the_report_or_the_log(tmp_path, monkeypatch, capsys):
+    _fake_remote(monkeypatch, [])
+    test = write(tmp_path / "t.jsonl", rows(("charge", "billing"), ("crash", "tech")))
+    report = bench.run(args(test, models="https://u:sekret-pw@kev.example:8443#kev-4b", quiet=False),
+                       make_client=FakeClient)
+    r = report["results"][0]
+    assert r["remote"] == "https://kev.example:8443/v1/systemone"
+    assert r["model"] == "https://kev.example:8443#kev-4b"
+    out = capsys.readouterr()
+    assert "sekret" not in json.dumps(report) + out.out + out.err
+
+
+def test_a_missing_url_key_does_not_echo_url_credentials(tmp_path, monkeypatch):
+    monkeypatch.delenv("NOPE_KEY", raising=False)
+    test = write(tmp_path / "t.jsonl", rows(("charge", "billing"), ("crash", "tech")))
+    report = bench.run(args(test, models="https://u:sekret-pw@kev.example#kev", remote_key_env="NOPE_KEY"),
+                       make_client=FakeClient)
+    assert "NOPE_KEY is not set" in report["results"][0]["error"] and "sekret" not in json.dumps(report)
+
+
+def test_cloudflare_honours_remote_key_env_like_serve(monkeypatch):
+    monkeypatch.setenv("CLOUDFLARE_ACCOUNT_ID", "a" * 32)
+    monkeypatch.setenv("CLOUDFLARE_API_TOKEN", "default-token")
+    monkeypatch.setenv("MY_CF", "mine")
+    assert bench.remote_client("cloudflare:clef", "MY_CF").api_key == "mine"
+    assert bench.remote_client("cloudflare:clef").api_key == "default-token"

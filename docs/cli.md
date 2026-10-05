@@ -67,7 +67,10 @@ jul bench test.csv --json > results.json
   the URL of any `/v1/systemone` server as `URL#model` with its key in `--remote-key-env VAR` (Kev, llama.cpp,
   a hosted Laya, another `jul serve`). Each is asked with your own key, zero-shot only, and its latency
   includes the network. **The test rows are sent to that server.** A target whose key is missing is shown
-  failed, before anything is sent, and the others still run.
+  failed, before anything is sent, and the others still run. A URL without `--remote-key-env` is called with
+  no `Authorization` header (right for a local `jul serve` or llama.cpp); `--remote-key-env` also replaces
+  `CLOUDFLARE_API_TOKEN` for `cloudflare:*`, as `jul serve --escalate-key-env` does. A `user:password@` in a URL
+  is never written to the report or the logs.
 
   ```bash
   jul bench test.jsonl --models accurate,typesafe,cloudflare:clef,https://kev.example#kev-4b \

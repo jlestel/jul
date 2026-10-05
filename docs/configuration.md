@@ -42,12 +42,12 @@ environment variable the code reads and every file it writes.
 | Variable | Default | What it does |
 | --- | --- | --- |
 | `JUL_API_KEY` | none | the key `jul serve` requires (`--api-key` overrides it); without one, any caller is accepted |
-| `TYPESAFE_API_KEY` | — | Jev's key, for `--escalate-to typesafe` |
-| `CLOUDFLARE_ACCOUNT_ID` | — | 32 hex characters, for `--escalate-to cloudflare` |
-| `CLOUDFLARE_API_TOKEN` (or `CLOUDFLARE_AUTH_TOKEN`) | — | Workers AI token, for `--escalate-to cloudflare` |
+| `TYPESAFE_API_KEY` | — | Jev's key, for `--escalate-to typesafe` and `jul bench --models typesafe` |
+| `CLOUDFLARE_ACCOUNT_ID` | — | 32 hex characters, for `--escalate-to cloudflare` and `jul bench --models cloudflare:clef` |
+| `CLOUDFLARE_API_TOKEN` (or `CLOUDFLARE_AUTH_TOKEN`) | — | Workers AI token, for the same |
 
-Escalation keys are read from the environment only (`--escalate-key-env` names the variable), and no key is
-ever logged. The server key can also be given with `--api-key`, but the environment keeps it out of `ps`
+Escalation and bench keys are read from the environment only (`--escalate-key-env`, or `--remote-key-env`
+for `jul bench`, names the variable), and no key is ever logged. The server key can also be given with `--api-key`, but the environment keeps it out of `ps`
 and shell history.
 
 ### Tests only

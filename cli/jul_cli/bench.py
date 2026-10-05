@@ -253,12 +253,30 @@ def remote_client(target: str, key_env: str | None = None):
     if target.startswith(("http://", "https://")):
         url, _, model = target.partition("#")
         if key_env and not os.environ.get(key_env):
-            raise ValueError(f"{key_env} is not set: {target} is asked with your own key")
+            raise ValueError(f"{key_env} is not set: {_shown(target)} is asked with your own key")
         return remote_tier(url, model or None, key_env)
+    if target.partition(":")[0] == "cloudflare":     # as `jul serve --escalate-key-env`: the variable wins
+        return remote_tier(target, None, key_env)
     env = PROVIDERS.get(target.partition(":")[0], (None, None, None))[2]
     if env and not os.environ.get(env):
         raise ValueError(f"{env} is not set: {target} is asked with your own key")
     return remote_tier(target)
+
+
+def _public_url(url: str) -> str:
+    """The URL without user:password@, which must not land in a report or a log."""
+    from urllib.parse import urlsplit, urlunsplit
+    parts = urlsplit(url)
+    return urlunsplit(parts._replace(netloc=parts.hostname + (f":{parts.port}" if parts.port else ""))) \
+        if parts.username or parts.password else url
+
+
+def _shown(model: str) -> str:
+    """A model as written in the report and the logs: a URL target without its user:password@."""
+    if not model.startswith(("http://", "https://")):
+        return model
+    url, sep, name = model.partition("#")
+    return _public_url(url) + sep + name
 
 
 def _is_http(client) -> bool:
@@ -383,14 +401,14 @@ def bench_model(model: str, tasks: list[Task], backend=None, make_client=None, l
     try:
         client = make_client(model, backend, home)
         if _is_http(client):
-            result["remote"] = client.url
+            result["remote"] = _public_url(client.url)
         ok_methods, ok_features, skipped = readings(client, methods, features if any(t.train for t in tasks) else [])
         t0 = time.perf_counter()
         for task in tasks:
             runs: list[dict] = []
             for m in ok_methods:
                 label = "zero-shot" + (f":{m}" if m else "")
-                log(f"  {model} · {task.name} · {label} ({len(task.test)})")
+                log(f"  {_shown(model)} · {task.name} · {label} ({len(task.test)})")
                 try:
                     runs.append({"setting": label, "method": m or "default", **evaluate(client, task, method=m)})
                 except (ValueError, NotImplementedError) as exc:     # e.g. letters on an embeddings API
@@ -405,7 +423,7 @@ def bench_model(model: str, tasks: list[Task], backend=None, make_client=None, l
                 except (ValueError, ImportError) as exc:
                     runs.append({"setting": label, "skipped": f"{type(exc).__name__}: {exc}"})
                     continue
-                log(f"  {model} · {task.name} · {label} on {len(task.train)}")
+                log(f"  {_shown(model)} · {task.name} · {label} on {len(task.train)}")
                 runs.append({"setting": label, "features": f, **evaluate(client, task, context=ctx),
                              "activated": report.activated, "reason": report.reason, "n_train": len(task.train)})
             runs += [{"setting": k, "skipped": v} for k, v in skipped.items()]
@@ -629,14 +647,15 @@ def run(a, make_client=None, stream=sys.stdout) -> dict:
     results = []
     for m in models:
         name, _, backend = (m, "", "") if is_remote(m) else m.partition("@")
+        shown = _shown(m)
         r = bench_model(name, tasks, backend or a.backend, make_client, log, methods, features,
                         getattr(a, "remote_key_env", None))
-        r["model"] = m
+        r["model"] = shown
         results.append(r)
     report = {
         "data": {"test": str(a.test), "train": str(a.train) if a.train else None,
                  "test_rows": sum(len(t.test) for t in tasks), "train_rows": sum(len(t.train) for t in tasks)},
-        "models": models,
+        "models": [_shown(m) for m in models],
         "methods": [m or "default" for m in methods], "features": features if a.train else [],
         "questions": [{"name": t.name, "type": t.kind, "instructions": t.instructions, "options": t.options,
                        "n_test": len(t.test), "n_train": len(t.train)} for t in tasks],

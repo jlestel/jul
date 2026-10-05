@@ -374,6 +374,7 @@ Kev models          runs them locally (decision.json)      jul models add NAME -
 Kev server          routes unsure questions to it          jul serve --escalate-to https://...
 Laya                runs it locally (its own runtime)      --model laya | laya:multilingual
 Jev (TypeSafe)      routes unsure questions to it          jul serve --escalate-to typesafe
+Any of them         benches them on your rows, with JuL    jul bench test.jsonl --models accurate,typesafe
 Clef · Nimble       routes unsure questions to them        --escalate-to cloudflare | ollama
 Embedding LLMs      runs them locally (MLX, PyTorch)       jul models add NAME --repo HF_REPO
 Encoders            runs them on CPU, in a Lambda (ONNX)   --backend onnx
