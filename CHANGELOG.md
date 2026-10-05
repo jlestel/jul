@@ -3,6 +3,14 @@
 Versions come from git tags (see [publishing](docs/publishing.md)): a `v*` tag releases to PyPI, every push to
 `main` publishes a dev build to TestPyPI.
 
+## Unreleased
+
+### Added
+
+- A decision model can **route question types to its vector reading**: `"routing": {"types": ["score"]}` in its
+  `decision.json` sends those questions to the vectors fitted by `jul models add` on the same weights, at any
+  option count. For pointer heads that read Score worse than the vectors do.
+
 ## 0.4.0 — 2026-10-05
 
 ### Added

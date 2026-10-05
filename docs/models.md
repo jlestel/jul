@@ -471,6 +471,7 @@ weights: **868 ms → 77 ms at equal accuracy**.
 | `limits.max_state_tokens` / `max_branch_tokens` | `decision.json` | 384 / 1024 | where a too-long state or question is cut |
 | `routing.above_options` | preset, measured by `jul models add` | measured | option count above which the vector reading answers |
 | `routing` formulations, `tau`, `center` | preset, fitted by `jul models add` | — | the fallback reading, fitted on these very weights |
+| `routing.types` | `decision.json` | none | question types the vector reading answers at any option count (e.g. `["score"]`) |
 | `route_above=N` | per call | the model's value | overrides that threshold; `0` disables routing |
 | `method=` | per call or client | `"vector"` | `vector` or `letters`; ignored on a pointer preset |
 | `one_word_only=` | client | `False` | one formulation instead of two: faster, a little less accurate |
@@ -493,6 +494,11 @@ So `jul models add` **measures** the threshold rather than guessing one: it take
 count at which the vector reading is three times faster, and records in the preset what that costs in
 accuracy. A model where that never happens gets no routing at all. `--route-above N` sets it by hand and
 `--no-routing` skips the whole fitting; the model's own `decision.json` may also carry a threshold.
+
+A decision model may also **route by question type**: its `decision.json` lists in `routing.types` the
+types its pointer head reads worse than the vector reading of the same weights, and those questions go to
+the vectors at any option count (`route_above=0` does not change that). The fallback is the one `jul models
+add` fits anyway.
 
 **For maximum accuracy, pass `route_above=0`** on the call: every question then goes to the pointer head,
 whatever its option count, and you pay the latency in the table above. The default is a compromise, and
