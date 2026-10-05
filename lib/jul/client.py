@@ -242,7 +242,9 @@ class TypeSafeClient:
         scores, features, tokens = engine.read(compiled, text, shared)
         if head is not None:
             return tuning.apply(head, features, text), tokens
-        return self._calibrated(ctx, kind, question, options, scores / self._preset.tau), tokens
+        # engine.preset, not self._preset: a decision model routes questions to its vector fallback by swapping
+        # engine.preset, and its own preset's tau (1.0) would flatten every routed answer to near uniform.
+        return self._calibrated(ctx, kind, question, options, scores / engine.preset.tau), tokens
 
     def _digest(self, kind: str, question: Question, options: list[Option]) -> str:
         return question_digest(model_key(self._preset.name, self.backend), kind, question.instructions, options)

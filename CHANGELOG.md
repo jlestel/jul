@@ -11,6 +11,12 @@ Versions come from git tags (see [publishing](docs/publishing.md)): a `v*` tag r
   `decision.json` sends those questions to the vectors fitted by `jul models add` on the same weights, at any
   option count. For pointer heads that read Score worse than the vectors do.
 
+### Fixed
+
+- A decision model's questions routed to its vector fallback were read at the pointer preset's temperature
+  (1.0) instead of the fallback's own tau, which flattened their probabilities to near uniform (same answer,
+  wrong confidence; a Score's expected level collapsed to the middle).
+
 ## 0.4.0 — 2026-10-05
 
 ### Added
