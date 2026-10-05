@@ -76,6 +76,14 @@ jul bench test.csv --json > results.json
   jul bench test.jsonl --models accurate,typesafe,cloudflare:clef,https://kev.example#kev-4b \
     --remote-key-env KEV_API_KEY
   ```
+- **Cascade**, `--escalate-to TARGET [--min-confidence 0.8]`: each local model is also measured the way
+  `jul serve --escalate-to` answers, itself first and the remote server only for the answers below the bar.
+  Its row (`cascade>typesafe@0.8`) gives the accuracy of the pair and the share of rows sent to the server,
+  which is what it costs. Remote models in `--models` are not cascaded.
+
+  ```bash
+  jul bench test.jsonl --models accurate,fast --escalate-to typesafe --min-confidence 0.8
+  ```
 
 ## File formats
 
