@@ -310,9 +310,14 @@ fifty-nine-option one takes 596 ms (v1, M4 Pro). Weights: [`usejul/jul-decision-
 (MLX, 1.4 GB) and [`usejul/jul-decision-minicpm5-2b`](https://huggingface.co/usejul/jul-decision-minicpm5-2b)
 (PyTorch, bf16).
 
-Two differences with the presets above: `autotune(...)` does not apply (its heads are trained on the
-vectors of the other method, and such a model needs a full fine-tune instead), and a state longer than
-the limit in its `decision.json` is truncated rather than stretched.
+`autotune(...)` works on a decision model through that same vector reading. The head is trained on its
+vectors, and a question with an active head is read through the vectors plus the head. Questions without
+a head keep the pointer head. The safety net judges the head against what the question gets without one:
+the pointer head for Choice and Noul, the vector reading for a routed question (Score on
+`jul-decision-minicpm5-2b`). A head that does not beat it stays inactive. A decision model added with
+`--no-routing` has no vector reading, and `autotune` says so.
+
+A state longer than the limit in its `decision.json` is truncated rather than stretched.
 
 ## Laya
 
@@ -460,8 +465,8 @@ A third option does not read a general model at all: `jul-decision-minicpm5-2b` 
 to answer typed questions (a merged LoRA and a pointer head), built in as the alias `fast`: as accurate as the
 default on our 300-question bench (0.680 against 0.677) at half its size. Its pointer head brings its own format;
 Score goes to the vector reading of the same weights, shipped fitted per backend (the layers and tau in the table
-are that reading's, on MLX). It is a decision model, which `autotune(...)` does not support yet: until it does,
-tune `minicpm5-2b` (the same base, read with vectors) or the default (see [Decision models](#decision-models)).
+are that reading's, on MLX). `autotune(...)` trains its heads on that same vector reading: a question with an
+active head is read through it, the others keep the pointer head (see [Decision models](#decision-models)).
 
 ## How it answers
 
@@ -486,7 +491,7 @@ Four ways to read a model. A preset picks one; a call may override it.
 | **vector** (default) | cosine between the state's hidden state and each option's, `softmax(cos / tau)` | preset `method: "vector"` | any model |
 | **letters** | the logits of the option letters (A, B, C…) at the next position | `method="letters"`, per call or per client | any model; a tuned head overrides it |
 | **pointer** | a trained pointer head, at the delimiter tokens of the format in `decision.json` | preset `method: "pointer"` | decision models only |
-| **tuned head** | a logistic head fitted by `autotune` on vector features | `autotune()` plus a `Context` | pins the reading to vectors |
+| **tuned head** | a logistic head fitted by `autotune` on vector features | `autotune()` plus a `Context` | pins the reading to vectors (on a decision model, its vector fallback) |
 
 A decision model may also **route by option count**: below the threshold the pointer head answers, above
 it the vector reading does. The pointer reads every option on every call, so its cost grows with the option

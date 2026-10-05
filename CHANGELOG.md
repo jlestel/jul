@@ -15,6 +15,11 @@ Versions come from git tags (see [publishing](docs/publishing.md)): a `v*` tag r
   the answers below `--min-confidence`, as `jul serve --escalate-to`): the accuracy of the pair and the share of
   rows sent to the server, also on the verdict line when the cascade is picked. The server's failures are
   counted on the row, and a server that failed on every escalated row (a rejected key) makes the row `n/a`.
+- **`autotune` works on decision models** (`fast`, `jul-decision-minicpm5-2b`). The head is trained on the
+  vectors of the model's vector fallback (the preset's `routing` block, fitted on the same weights). A
+  question with an active head is read through that fallback plus the head, and the others keep the pointer
+  head. The safety net compares the head with the pointer head for Choice and Noul, and with the vector
+  reading for a routed type such as Score. `jul bench` now autotunes decision models too.
 - A decision model can **route question types to its vector reading**: `"routing": {"types": ["score"]}` in its
   `decision.json` sends those questions to the vectors fitted by `jul models add` on the same weights, at any
   option count. For pointer heads that read Score worse than the vectors do.
@@ -23,9 +28,7 @@ Versions come from git tags (see [publishing](docs/publishing.md)): a `v*` tag r
 
 - **The alias `fast` is now `jul-decision-minicpm5-2b`**, built in (it was `minicpm5-2b`, read with vectors):
   0.680 against 0.630 on the bench below, at the same speed. Its Score reading is shipped fitted per backend
-  (`assets/presets/jul-decision-minicpm5-2b@{mlx,torch}.json`). A decision model: `autotune` does not support
-  it yet and says so, naming `minicpm5-2b` (the same base read with vectors) and the default as what to tune
-  meanwhile; `one_word_only=True` leaves it as it is (it already reads in one pass). On MLX, Choice questions
+  (`assets/presets/jul-decision-minicpm5-2b@{mlx,torch}.json`). `one_word_only=True` leaves it as it is (it already reads in one pass). On MLX, Choice questions
   above 20 options go to the vectors (4 to 8x faster, a few points less accurate, see the preset's notes);
   `route_above=0` keeps the pointer head.
 - **`jul-decision-wemm-4b` reads Score with the vectors.** Its adapters ([`usejul/jul-decision-wemm-4b`](https://huggingface.co/usejul/jul-decision-wemm-4b)

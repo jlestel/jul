@@ -69,17 +69,11 @@ def test_one_word_only_keeps_a_decision_model_as_it_is():
         assert one_word_preset("fast", backend).name == "jul-decision-minicpm5-2b"
 
 
-def test_autotune_on_a_decision_model_says_what_to_tune_instead():
-    from types import SimpleNamespace
-
-    from jul.client import TypeSafeClient
-    from jul.context import Context
-    client = TypeSafeClient.__new__(TypeSafeClient)
-    client._context_home = None
-    client._preset = resolve("fast")
-    client._engine_for = lambda model: SimpleNamespace(pointer=object())
-    with pytest.raises(ValueError, match="not support it yet.*'minicpm5-2b'.*'jul-decision-wemm-4b'"):
-        client.autotune(Context(name="t"), {}, [])
+def test_the_built_in_decision_model_ships_the_fallback_autotune_trains_on():
+    """autotune on `fast` trains its heads on this vector reading of the same weights, for every backend."""
+    for backend in (None, "mlx", "torch"):
+        routing = resolve("fast", backend).routing
+        assert routing and routing["formulations"] and routing["tau"] > 0, backend
 
 
 def test_the_one_word_variant_keeps_a_single_formulation():

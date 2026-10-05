@@ -171,7 +171,7 @@ def test_a_routed_question_is_read_at_the_fallback_tau():
     engine = SimpleNamespace(preset=SimpleNamespace(tau=0.05),       # the vector fallback swapped in
                              compile=lambda *a: None, read=lambda compiled, text, shared: (cos, None, 7))
     client._head = lambda *a: None
-    client._head_formulations = lambda head: None
+    client._head_formulations = lambda head, preset=None: None
     q = Score(instructions="How bad?", criteria=["low", "medium", "high"])
     p, tokens = client._answer_probabilities(engine, "score", "vector", q, options_of(q), "text", None, {})
     assert tokens == 7 and p[0] > 0.85                               # softmax(cos / 0.05), not softmax(cos / 1.0)

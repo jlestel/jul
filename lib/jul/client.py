@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import math
 import uuid
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -27,7 +28,7 @@ from .context import Context, question_digest, resolve_context
 from .engine import Engine, softmax
 from .decision import fallback_preset
 from .laya_model import LayaModel, is_laya
-from .presets import DEFAULT_MODEL, TUNE_INSTEAD, Preset, formulations_for, one_word_preset, resolve
+from .presets import Preset, formulations_for, one_word_preset, resolve
 from .types import (Choice, ChoiceAnswer, Noul, NoulAnswer, Option, Question, Score, ScoreAnswer,
                     SystemOneResponse, Usage, options_of, serialize_state)
 
@@ -144,17 +145,17 @@ class TypeSafeClient:
         answers, tokens = {}, 0
 
         if engine.pointer is not None:
-            # A decision model reads the raw state in its own format, once for all the questions. Beyond
-            # `route_above` options the pointer head costs more latency than it earns,
-            # so those questions go to the vector reading its decision.json describes.
-            # The fallback's fitted numbers live in the preset, written by `jul models add` on these very
-            # weights; a model's own decision.json may carry them too (and the default threshold).
-            spec_routing = engine.pointer.spec.routing or {}
-            fitted = engine.preset.routing or spec_routing.get("vector")
-            above = (route_above if route_above is not None else
-                     (engine.preset.routing or {}).get("above_options") or engine.pointer.spec.route_above)
-            types = (engine.preset.routing or {}).get("types") or engine.pointer.spec.route_types
-            routed = routed_questions(questions, above, types) if fitted else {}
+            # A decision model reads the raw state in its own format, once for all the questions. Some
+            # questions go to the vector reading of the same weights instead (its fallback, fitted by
+            # `jul models add`): beyond `route_above` options (latency), the types its pointer head reads
+            # worse (`routing.types`, quality), and any question with a head from `autotune`, which was
+            # trained on that reading's vectors.
+            fallback = self._fallback(engine)
+            above, types = self._routing(engine, route_above)
+            routed = routed_questions(questions, above, types) if fallback else {}
+            if fallback:
+                routed.update({n: q for n, q in questions.items() if n not in routed
+                               and self._head(ctx, _kind_of(q), q, options_of(q)) is not None})
             direct = {n: q for n, q in questions.items() if n not in routed}
             if direct:
                 items = [(_kind_of(q), q.instructions, options_of(q)) for q in direct.values()]
@@ -163,18 +164,13 @@ class TypeSafeClient:
                     answers[name] = _format(kind, question, options,
                                             self._calibrated(ctx, kind, question, options, z))
             if routed:
-                pointer_preset, engine.preset = engine.preset, fallback_preset(
-                    engine.preset.name, self.backend, fitted,
-                    engine.preset.asset_dir if engine.preset.routing else engine.pointer.spec.directory)
-                try:
+                with _reading(engine, fallback):
                     for name, question in routed.items():
                         kind, options = _kind_of(question), options_of(question)
                         probabilities, spent = self._answer_probabilities(engine, kind, "vector", question,
                                                                          options, text, ctx, shared)
                         tokens += spent
                         answers[name] = _format(kind, question, options, probabilities)
-                finally:
-                    engine.preset = pointer_preset
             return SystemOneResponse(answers={n: answers[n] for n in questions}, model=self._preset.name,
                                      usage=Usage(input_tokens=tokens), request_id=str(uuid.uuid4()))
 
@@ -217,6 +213,24 @@ class TypeSafeClient:
         return SystemOneResponse(answers=answers, model=self._preset.name, usage=Usage(input_tokens=tokens),
                                  request_id=str(uuid.uuid4()))
 
+    def _fallback(self, engine: Engine) -> Preset | None:
+        """A decision model's vector reading on its own weights, or None when it has none fitted.
+
+        Its numbers live in the preset, written by `jul models add` on these very weights; a model's own
+        decision.json may carry them too (`routing.vector`)."""
+        fitted = engine.preset.routing or (engine.pointer.spec.routing or {}).get("vector")
+        if not fitted:
+            return None
+        return fallback_preset(engine.preset.name, self.backend, fitted,
+                               engine.preset.asset_dir if engine.preset.routing else engine.pointer.spec.directory)
+
+    def _routing(self, engine: Engine, route_above: int | None) -> tuple[int | None, tuple]:
+        """(option count above which a decision model reads with its fallback, types it always routes there)."""
+        routing = engine.preset.routing or {}
+        above = (route_above if route_above is not None else
+                 routing.get("above_options") or engine.pointer.spec.route_above)
+        return above, tuple(routing.get("types") or engine.pointer.spec.route_types)
+
     def _default_method(self, engine: Engine, ctx: Context | None, kind: str, question: Question,
                         options: list[Option]) -> str:
         """The cross model for the types it declares, unless this question has a tuned head or a
@@ -238,7 +252,8 @@ class TypeSafeClient:
             logits, tokens = engine.letter_logits(letters, text)
             return self._calibrated(ctx, kind, question, options, logits), tokens
 
-        compiled = engine.compile(kind, question.instructions, options, ctx, self._head_formulations(head))
+        compiled = engine.compile(kind, question.instructions, options, ctx,
+                                  self._head_formulations(head, engine.preset))
         scores, features, tokens = engine.read(compiled, text, shared)
         if head is not None:
             return tuning.apply(head, features, text), tokens
@@ -249,10 +264,11 @@ class TypeSafeClient:
     def _digest(self, kind: str, question: Question, options: list[Option]) -> str:
         return question_digest(model_key(self._preset.name, self.backend), kind, question.instructions, options)
 
-    def _head_formulations(self, head: dict | None):
-        """The formulations a head was trained on (None: the preset's)."""
+    def _head_formulations(self, head: dict | None, preset: Preset | None = None):
+        """The formulations a head was trained on (None: the preset's). `preset` is the one being read: a
+        decision model's heads name formulations of its vector fallback, not of its pointer preset."""
         names = (head or {}).get("meta", {}).get("formulations")
-        return formulations_for(self._preset, names) if names else None
+        return formulations_for(preset or self._preset, names) if names else None
 
     def _head(self, ctx: Context | None, kind, question, options) -> dict | None:
         return ctx.heads.get(self._digest(kind, question, options)) if ctx else None
@@ -288,13 +304,6 @@ class TypeSafeClient:
         if isinstance(context, str) and ctx.name is None:
             ctx.name = context
         engine = self._engine_for(model)
-        if engine.pointer is not None:
-            twin = TUNE_INSTEAD.get(self._preset.name)
-            raise ValueError(
-                f"{self._preset.name!r} is a decision model (pointer method): autotune does not support it yet "
-                "(it trains heads on vector features; support for decision models is coming). Meanwhile, tune "
-                + (f"{twin!r}, the same base model read with vectors, or " if twin else "")
-                + f"the default model, {DEFAULT_MODEL!r}: autotune(..., model=...).")
         states = [serialize_state(s) for s, _ in labeled]
         reports: dict[str, tuning.TuningReport] = {}
         features_mode = features
@@ -308,6 +317,19 @@ class TypeSafeClient:
                 ctx.save(home=self._context_home)
             return reports
 
+        # A decision model: the head is trained on the vectors of its fallback reading (the same weights,
+        # read as a vector preset), and answers through it once active. Zero-shot is what the question
+        # gets without a head: the pointer head, or the fallback for a question the model routes there.
+        fallback = self._fallback(engine) if engine.pointer is not None else None
+        if engine.pointer is not None and fallback is None:
+            raise ValueError(f"{self._preset.name!r} is a decision model with no vector reading fitted on its "
+                             "weights (preset `routing`), which autotune trains its heads on: add it with "
+                             "`jul models add` without --no-routing")
+        above, types = self._routing(engine, None) if fallback else (None, ())
+        pointed = {n: q for n, q in questions.items()
+                   if fallback is not None and n not in routed_questions(questions, above, types)}
+        pointer_logits = self._pointer_logits(engine, pointed, labeled) if pointed else {}
+
         for name, question in questions.items():
             kind = _kind_of(question)
             options = options_of(question)
@@ -318,25 +340,39 @@ class TypeSafeClient:
                 raise ValueError(f"question {name!r} has fewer than 2 labeled examples")
 
             names = formulations.get(name) if isinstance(formulations, Mapping) else formulations
-            chosen = formulations_for(self._preset, names) if names else None
-            compiled = engine.compile(kind, question.instructions, options, ctx, chosen)
-            scores, features = engine.read_many(compiled, [states[i] for i, _ in rows])
+            with _reading(engine, fallback):
+                chosen = formulations_for(engine.preset, names) if names else None
+                compiled = engine.compile(kind, question.instructions, options, ctx, chosen)
+                scores, features = engine.read_many(compiled, [states[i] for i, _ in rows])
+                vector_logits = scores / engine.preset.tau
             y = np.array([label for _, label in rows])
 
             digest = self._digest(kind, question, options)
             # A type the cross model reads is answered by it until a head does better: the head is judged
             # against the cross model's zero-shot answers on these very examples, and no vector calibration
-            # is kept (it would take the question off the cross model).
+            # is kept (it would take the question off the cross model). A decision model's question is
+            # judged against its pointer head, unless the model routes it to the fallback anyway; the
+            # calibration is fitted on whichever answers it without a head.
             crossed = engine.cross is not None and engine.cross.handles(kind)
-            baseline = (np.stack([engine.cross.logits(labeled[i][0], kind, question.instructions, options)[0]
-                                  for i, _ in rows]) if crossed else scores)
+            on_pointer = name in pointed
+            if crossed:
+                baseline = np.stack([engine.cross.logits(labeled[i][0], kind, question.instructions, options)[0]
+                                     for i, _ in rows])
+            elif on_pointer:
+                baseline = np.stack([pointer_logits[i, name] for i, _ in rows])
+            else:
+                baseline = scores
             head, report = tuning.train(features, y, baseline, keys, name, self._preset.name,
                                         texts=[states[i] for i, _ in rows], mode=features_mode)
             if crossed:
                 ctx.calibration.pop(digest, None)
                 report.reason += "; zero-shot here is the cross model" + ("" if head else ", which keeps the question")
             else:
-                ctx.calibration[digest] = fit_temperature_bias(scores / self._preset.tau, y)
+                ctx.calibration[digest] = fit_temperature_bias(baseline if on_pointer else vector_logits, y)
+                if on_pointer:
+                    report.reason += ("; zero-shot here is the pointer head"
+                                      + (", the head answers on the vector fallback" if head
+                                         else ", which keeps the question"))
             if head is not None:
                 head["meta"]["formulations"] = [f.name for f in chosen] if chosen else None
                 ctx.heads[digest] = head
@@ -347,6 +383,20 @@ class TypeSafeClient:
         if save and ctx.name:
             ctx.save(home=self._context_home)
         return reports
+
+    @staticmethod
+    def _pointer_logits(engine: Engine, questions: Mapping[str, Question], labeled: list) -> dict:
+        """{(row, question name): the pointer head's logits}, every labeled question of a state in one pass
+        of the decision model, as `system_one` reads them."""
+        out = {}
+        for i, (state, answers) in enumerate(labeled):
+            names = [n for n in questions if n in answers]
+            if not names:
+                continue
+            items = [(_kind_of(questions[n]), questions[n].instructions, options_of(questions[n])) for n in names]
+            logits, _ = engine.pointer.logits(state, items)
+            out.update({(i, n): z for n, z in zip(names, logits)})
+        return out
 
     def _autotune_contrastive(self, engine: Engine, ctx: Context, name: str, question: Question,
                               labeled: list) -> tuning.TuningReport:
@@ -393,6 +443,20 @@ class AsyncTypeSafeClient(TypeSafeClient):
 
 
 # --- helpers ---------------------------------------------------------------------------------
+
+@contextmanager
+def _reading(engine: Engine, preset: Preset | None):
+    """Reads with `preset` on the loaded weights for the duration (a decision model's vector fallback);
+    None leaves the engine as it is."""
+    if preset is None:
+        yield
+        return
+    previous, engine.preset = engine.preset, preset
+    try:
+        yield
+    finally:
+        engine.preset = previous
+
 
 def _logsumexp(z: np.ndarray) -> float:
     m = float(np.max(z))
