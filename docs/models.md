@@ -460,8 +460,8 @@ A third option does not read a general model at all: `jul-decision-minicpm5-2b` 
 to answer typed questions (a merged LoRA and a pointer head), built in as the alias `fast`: as accurate as the
 default on our 300-question bench (0.680 against 0.677) at half its size. Its pointer head brings its own format;
 Score goes to the vector reading of the same weights, shipped fitted per backend (the layers and tau in the table
-are that reading's, on MLX). It is a decision model, so `autotune(...)` does not apply to it: tune the default
-instead (see [Decision models](#decision-models)).
+are that reading's, on MLX). It is a decision model, which `autotune(...)` does not support yet: until it does,
+tune `minicpm5-2b` (the same base, read with vectors) or the default (see [Decision models](#decision-models)).
 
 ## How it answers
 

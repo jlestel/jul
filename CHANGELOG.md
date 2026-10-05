@@ -23,7 +23,11 @@ Versions come from git tags (see [publishing](docs/publishing.md)): a `v*` tag r
 
 - **The alias `fast` is now `jul-decision-minicpm5-2b`**, built in (it was `minicpm5-2b`, read with vectors):
   0.680 against 0.630 on the bench below, at the same speed. Its Score reading is shipped fitted per backend
-  (`assets/presets/jul-decision-minicpm5-2b@{mlx,torch}.json`). A decision model: no `autotune`.
+  (`assets/presets/jul-decision-minicpm5-2b@{mlx,torch}.json`). A decision model: `autotune` does not support
+  it yet and says so, naming `minicpm5-2b` (the same base read with vectors) and the default as what to tune
+  meanwhile; `one_word_only=True` leaves it as it is (it already reads in one pass). On MLX, Choice questions
+  above 20 options go to the vectors (4 to 8x faster, a few points less accurate, see the preset's notes);
+  `route_above=0` keeps the pointer head.
 - **`jul-decision-wemm-4b` reads Score with the vectors.** Its adapters ([`usejul/jul-decision-wemm-4b`](https://huggingface.co/usejul/jul-decision-wemm-4b)
   `1525e34`) keep Noul and Choice; their Score reading was worse than the vector reading of the same weights.
   On a bench of 300 typed questions written from scratch for it (sentiment, finance, support, agent routing,

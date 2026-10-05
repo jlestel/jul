@@ -308,6 +308,8 @@ PRESETS["jul-decision-minicpm5-2b"] = Preset(
 ONE_WORD_ONLY: dict[str, tuple[int, float]] = {"minicpm5-2b": (39, 0.04554)}
 
 ALIASES = {"fast": "jul-decision-minicpm5-2b", "accurate": "jul-decision-wemm-4b"}
+#: What to autotune instead of a decision model, until autotune supports them: the same base read with vectors.
+TUNE_INSTEAD = {"jul-decision-minicpm5-2b": "minicpm5-2b"}
 DEFAULT_MODEL = "jul-decision-wemm-4b"
 
 
@@ -333,8 +335,13 @@ def resolve(name: str | None, backend: str | None = None, home: Path | None = No
 
 
 def one_word_preset(name: str | None = None, backend: str | None = None, home: Path | None = None) -> Preset:
-    """The cheaper single-pass variant of a preset: one formulation, its own temperature."""
+    """The cheaper single-pass variant of a preset: one formulation, its own temperature.
+
+    A decision model reads every question in one pass of its own format already, so it comes back as it is
+    (`one_word_only=True` with `fast` kept working when `fast` became one)."""
     p = resolve(name, backend, home)
+    if p.method == "pointer":
+        return p
     one_word = p.one_word or ONE_WORD_ONLY.get(p.name)
     if one_word is None:
         raise ValueError(f"{p.name!r} has no fitted one-word variant")

@@ -10,7 +10,7 @@
   "one_word": null,
   "latency_ms": "~90",
   "quality": "0.680 on a 300-question hand-written bench (PyTorch); pointer head for Choice and Noul, Score on the vectors",
-  "notes": "Pointer format and temperature (1.260) from the repo's decision.json, which routes Score to the vectors. Vector fallback fitted by `jul models add` on the MLX 4-bit weights on 2026-10-05: layers 38 / 37, center generic, tau 0.04735, dev accuracy 0.630; above 20 options it is 4.3x faster for 3 points.",
+  "notes": "Pointer format and temperature (1.260) from the repo's decision.json, which routes Score to the vectors. Vector fallback fitted by `jul models add` on the MLX 4-bit weights (M4 Pro) on 2026-10-05: layers 38 / 37, center generic, tau 0.04735, dev accuracy 0.630. Above 20 options Choice is read by the vectors too: 4 to 8x faster (57 ms flat against 246 ms at 20 options and 449 ms at 40), at an accuracy cost measured on 33 to 50 massive questions per count, so noisy: -3 points at 20, +2 at 30, -12 at 40 (+9 at 10, -5 at 5). route_above=0 on a call keeps the pointer head.",
   "calibration": null,
   "method": "pointer",
   "routing": {

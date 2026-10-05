@@ -1,6 +1,7 @@
 """Engine pieces that need no model."""
 
 import numpy as np
+import pytest
 
 from jul.engine import normalize, short_names, softmax
 from jul.presets import PRESETS, one_word_preset, resolve
@@ -58,8 +59,27 @@ def test_the_shipped_decision_presets_route_score_to_their_own_fallback():
         assert preset.method == "pointer" and preset.backend == backend
         assert preset.routing["formulations"] and preset.routing["tau"] > 0
         if preset.routing["center"] == "generic":   # the fallback finds its center next to the preset
-            assert (preset.asset_dir / f"jul-decision-minicpm5-2b{'' if backend == 'mlx' else '.' + backend}"
-                    ".one_word.center.npy").exists()
+            from jul.presets import center_asset_name
+            assert (preset.asset_dir / center_asset_name(preset.name, backend, "one_word")).exists()
+
+
+def test_one_word_only_keeps_a_decision_model_as_it_is():
+    """`fast` became a decision model; TypeSafeClient(model="fast", one_word_only=True) must not break."""
+    for backend in (None, "mlx", "torch"):
+        assert one_word_preset("fast", backend).name == "jul-decision-minicpm5-2b"
+
+
+def test_autotune_on_a_decision_model_says_what_to_tune_instead():
+    from types import SimpleNamespace
+
+    from jul.client import TypeSafeClient
+    from jul.context import Context
+    client = TypeSafeClient.__new__(TypeSafeClient)
+    client._context_home = None
+    client._preset = resolve("fast")
+    client._engine_for = lambda model: SimpleNamespace(pointer=object())
+    with pytest.raises(ValueError, match="not support it yet.*'minicpm5-2b'.*'jul-decision-wemm-4b'"):
+        client.autotune(Context(name="t"), {}, [])
 
 
 def test_the_one_word_variant_keeps_a_single_formulation():
