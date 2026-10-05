@@ -16,6 +16,13 @@ Versions come from git tags (see [publishing](docs/publishing.md)): a `v*` tag r
   rows sent to the server, also on the verdict line when the cascade is picked. The server's failures are
   counted on the row, and a server that failed on every escalated row (a rejected key) makes the row `n/a`.
 
+### Fixed
+
+- **EmbeddingGemma read as an encoder.** A model whose config sets `use_bidirectional_attention`
+  (`google/embeddinggemma-300m`, a bidirectional `gemma3_text`) is now read like the encoders: mean over the
+  text, its declared `query` prompt, no prefix cache. It was read as a decoder (last token, cached prefix):
+  0.160 dev accuracy after `jul models add`, 0.655 now (multilingual-e5-small: 0.585, same data). Torch backend.
+
 ## 0.4.0 — 2026-10-05
 
 ### Added
