@@ -11,7 +11,7 @@ data at call time, and Jev receives none.
 | JuL `wemm-4b-4bit`             |     0.90 |      0.87 |     0.80 |     0.857 |     0.084 |     55 ms |  2.6 GB |
 | JuL `f2llm-4b`                 |     0.89 |      0.82 |     0.81 |     0.840 |     0.090 |     46 ms |  3.0 GB |
 | JuL `f2llm-1.7b`               |     0.91 |      0.67 | **0.87** |     0.817 | **0.082** | **24 ms** |  1.0 GB |
-| JuL `minicpm5-2b-decision` ¹   |     0.91 |      0.79 |     0.69 |     0.796 |     0.133 |    217 ms |         |
+| JuL `jul-decision-minicpm5-2b` v1.0 ¹ |     0.91 |      0.79 |     0.69 |     0.796 |     0.133 |    217 ms |         |
 | **Jev (published)**            |     0.91 |      0.87 |     0.48 |     0.753 |     0.156 |    246 ms |  hosted |
 | JuL `minicpm5-2b`              |     0.80 |      0.59 |     0.46 |     0.617 |     0.113 |     64 ms |  2.7 GB |
 | JuL `jul-decision-e5-small` ²  |     0.72 |      0.59 |     0.36 |     0.557 |     0.140 |  **4 ms** | 0.09 GB |
@@ -69,7 +69,7 @@ research repo), on an M4 Pro (24 GB) on mains power:
 
 Cells are accuracy / ECE (lower is better) / p50 latency.
 
-| Development set      |   `minicpm5-2b` (vectors) |      `minicpm5-2b-decision` |
+| Development set      |   `minicpm5-2b` (vectors) |      `jul-decision-minicpm5-2b` v1 |
 | -------------------- | ------------------------: | --------------------------: |
 | FinancialPhraseBank  |   0.705 / 0.129 / 105 ms  | **0.740** / 0.188 / **64 ms** |
 | Yahoo Topics         |   0.450 / **0.045** / 203 ms | **0.565** / 0.087 / 136 ms |
@@ -131,7 +131,7 @@ its `<embedding>` token, by its own script), on the development sets and on Kev'
 Ticket routing, topics, intents, sentiment, emotions. On the development sets it beats everything
 else here, the trained decision model included, and French costs it nothing:
 
-| Development set (label sentences) | `minicpm5-2b` (vectors) | `minicpm5-2b-decision` | WeMM-Embedding-4B |
+| Development set (label sentences) | `minicpm5-2b` (vectors) | `jul-decision-minicpm5-2b` v1 | WeMM-Embedding-4B |
 | --- | ---: | ---: | ---: |
 | FinancialPhraseBank | 0.705 | 0.740 | **0.800** |
 | Yahoo Topics | 0.450 | 0.565 | **0.655** |
@@ -146,7 +146,7 @@ else here, the trained decision model included, and French costs it nothing:
 sentence a paraphrase of that one, does this case satisfy the policy, is the report late. An embedding
 never sees the option while it reads the text, so it cannot compare them. On Kev's `transfer-v4`
 (656 decision questions from sources never trained on) it scores **0.643 against 0.739** for
-`minicpm5-2b-decision`, and falls *below the majority class* on paraphrase (0.45), two of three policy
+`jul-decision-minicpm5-2b` v1, and falls *below the majority class* on paraphrase (0.45), two of three policy
 compositions and deadlines. Use the decision model for those.
 
 One temperature, 0.0219 fitted on the development sets, calibrates it across tasks (fitted on three
@@ -184,7 +184,7 @@ Not yet measured — do not rely on these without checking:
 
 Embedding models lead on sorting one text into labels; the decision model leads on questions that read
 two things together. The natural shape is to route by question type: a `Choice` over a single text to
-`wemm-4b-4bit`, the rest to `minicpm5-2b-decision`. `Noul` and `Score` still have to be measured on the
+`wemm-4b-4bit`, the rest to `jul-decision-minicpm5-2b` v1. `Noul` and `Score` still have to be measured on the
 embedding models — only `Choice` is so far.
 
 ### Smaller leads, already measured

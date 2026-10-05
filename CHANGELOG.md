@@ -19,14 +19,22 @@ Versions come from git tags (see [publishing](docs/publishing.md)): a `v*` tag r
   `decision.json` sends those questions to the vectors fitted by `jul models add` on the same weights, at any
   option count. For pointer heads that read Score worse than the vectors do.
 
+### Changed
+
+- **`jul-decision-wemm-4b` reads Score with the vectors.** Its adapters ([`usejul/jul-decision-wemm-4b`](https://huggingface.co/usejul/jul-decision-wemm-4b)
+  `1525e34`) keep Noul and Choice; their Score reading was worse than the vector reading of the same weights.
+  On a bench of 300 typed questions written from scratch for it (sentiment, finance, support, agent routing,
+  moderation): 0.627 → 0.677 (Score 0.27 → 0.41). It is a change of the adapters' `cross.json`, so jul 0.4.0
+  gets it too.
+- **`minicpm5-2b-decision` is now [`usejul/jul-decision-minicpm5-2b`](https://huggingface.co/usejul/jul-decision-minicpm5-2b)**
+  (and `-mlx-4bit`), the old names redirect. **v2**: trained on human-written typed decisions, Score routed to its
+  vector reading; 0.680 on that bench at 85 ms, against 0.637 for v1.1 (`revision="v1.1"`).
+
 ### Fixed
 
 - A decision model's questions routed to its vector fallback were read at the pointer preset's temperature
   (1.0) instead of the fallback's own tau, which flattened their probabilities to near uniform (same answer,
   wrong confidence; a Score's expected level collapsed to the middle).
-
-### Fixed
-
 - **EmbeddingGemma read as an encoder.** A model whose config sets `use_bidirectional_attention`
   (`google/embeddinggemma-300m`, a bidirectional `gemma3_text`) is now read like the encoders: mean over the
   text, its declared `query` prompt, no prefix cache. It was read as a decoder (last token, cached prefix):

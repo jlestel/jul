@@ -5,7 +5,7 @@ last token against the question's — is the one of Kev (https://github.com/jare
 Apache 2.0), which trained the models this reads. This is an independent implementation; the tests check
 it against Kev's own encoder and model (see NOTICE).
 
-A decision model (for example `minicpm5-2b-decision`: MiniCPM5-2B with a merged LoRA and a pointer
+A decision model (for example `jul-decision-minicpm5-2b`: MiniCPM5-2B with a merged LoRA and a pointer
 head) was trained on one input format. That format lives next to the weights, in `decision.json`, so
 the code here knows nothing about any particular model:
 

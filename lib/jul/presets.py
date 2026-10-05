@@ -245,7 +245,7 @@ PRESETS: dict[str, Preset] = {
         center="options",
         notes="An embedding model read like any LLM. Banking77 and Emotion are in MTEB, which it trained "
               "on; on AG News, which it did not, it scores 0.90 against Jev's 0.91. It sorts one text "
-              "into labels; on questions that read two texts together, prefer minicpm5-2b-decision.",
+              "into labels; on questions that read two texts together, prefer jul-decision-minicpm5-2b.",
     ),
     # Layer 39 / 40 and both temperatures fitted on the dev sets (the combination
     # is stable over layers 38-41, 0.565-0.578). Fitting the combination's own tau lowered mean dev

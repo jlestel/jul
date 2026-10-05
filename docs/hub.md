@@ -34,15 +34,15 @@ Anything on the Hugging Face Hub, or in a local directory, that JuL can load on 
 | --- | --- | --- | --- |
 | **Embedding LLMs** | decoders fine-tuned for embeddings, read at a middle layer | `wemm-4b-4bit` (built in), `wemm-9b`, `f2llm-1.7b`, `qwen3-embedding-0.6b`, `harrier-0.6b` | sorting one text into options, zero-shot |
 | **Any decoder** | a general LLM read the same way | `minicpm5-2b` (built in), `bitnet-2b`, any instruct model | trying a model you already use |
-| **Decision models** | trained to answer typed questions, bring their own format in a `decision.json` | `minicpm5-2b-decision` | questions that read two things together |
-| **Cross models (adapters)** | LoRA adapters that read the question and the text together, on the same weights | `jul-decision-wemm-4b` (the default), `jul-decision-wemm-4b-4bit` | yes/no and scores, one model in memory |
+| **Decision models** | trained to answer typed questions, bring their own format in a `decision.json` | `jul-decision-minicpm5-2b` | questions that read two things together |
+| **Cross models (adapters)** | LoRA adapters that read the question and the text together, on the same weights | `jul-decision-wemm-4b` (the default), `jul-decision-wemm-4b-4bit` | yes/no and choices (the default), scores (`-4bit`), one model in memory |
 | **Encoders** | small bidirectional models, read as their sentence embedding | `e5-small`, `jul-decision-e5-small` | milliseconds, CPU only, Lambda |
 | **Contrastive heads** | projection heads on a frozen backbone | `clm-8b` (CLM's heads on Qwen3-8B), your own with `--train-heads` | reusing heads trained elsewhere |
 
 ```bash
 jul models add harrier-0.6b --repo majentik/harrier-oss-v1-0.6b-MLX-4bit     # an embedding LLM
 jul models add my-model --repo org/Some-Instruct-3B                          # any decoder
-jul models add minicpm5-2b-decision --repo usejul/minicpm5-2b-decision-mlx-4bit   # a decision model
+jul models add jul-decision-minicpm5-2b --repo usejul/jul-decision-minicpm5-2b-mlx-4bit   # a decision model
 jul models add clm-8b --repo Contrastive-LM/CLM-v0.1-8B                       # contrastive heads
 jul models                                                                   # what you have
 ```

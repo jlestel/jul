@@ -21,7 +21,7 @@ one command away,
 | `qwen3-embedding-0.6b` | [`mlx-community/Qwen3-Embedding-0.6B-4bit-DWQ`](https://huggingface.co/mlx-community/Qwen3-Embedding-0.6B-4bit-DWQ) | 0.32 GB | 0.637 | 0.760 |
 | `harrier-0.6b` | [`majentik/harrier-oss-v1-0.6b-MLX-4bit`](https://huggingface.co/majentik/harrier-oss-v1-0.6b-MLX-4bit) | **0.31 GB** | 0.667 | 0.814 |
 | `minicpm5-2b` | [`openbmb/MiniCPM5-2B-MLX`](https://huggingface.co/openbmb/MiniCPM5-2B-MLX) | 2.7 GB | 0.617 | 0.757 |
-| `minicpm5-2b-decision` | [`usejul/minicpm5-2b-decision-mlx-4bit`](https://huggingface.co/usejul/minicpm5-2b-decision-mlx-4bit) | 1.3 GB | 0.796 |  |
+| `jul-decision-minicpm5-2b` (v1.0) | [`usejul/jul-decision-minicpm5-2b-mlx-4bit`](https://huggingface.co/usejul/jul-decision-minicpm5-2b-mlx-4bit) | 1.3 GB | 0.796 |  |
 | `ternary-bonsai-1.7b` | [`prism-ml/Ternary-Bonsai-1.7B-mlx-2bit`](https://huggingface.co/prism-ml/Ternary-Bonsai-1.7B-mlx-2bit) | 0.46 GB | 0.640 | 0.760 |
 | `ternary-bonsai-8b` | [`prism-ml/Ternary-Bonsai-8B-mlx-2bit`](https://huggingface.co/prism-ml/Ternary-Bonsai-8B-mlx-2bit) | 1.75 GB | 0.563 | 0.753 |
 | `bitnet-2b` | [`mlx-community/bitnet-b1.58-2B-4T`](https://huggingface.co/mlx-community/bitnet-b1.58-2B-4T) | 1.1 GB | 0.617 | 0.723 |
@@ -241,8 +241,9 @@ p_listwise` (`mix` in `cross.json`, 3 for the default model), because each fixes
 the four label sets of the dev, never trained on, the vectors score 0.707, the listwise reading alone
 0.723 and both 0.730.
 
-`jul-decision-wemm-4b`, the default model, is WeMM-Embedding-4B with such adapters for Noul, Score and
-Choice ([usejul/jul-decision-wemm-4b](https://huggingface.co/usejul/jul-decision-wemm-4b), 65 MB). They
+`jul-decision-wemm-4b`, the default model, is WeMM-Embedding-4B with such adapters for Noul and Choice
+([usejul/jul-decision-wemm-4b](https://huggingface.co/usejul/jul-decision-wemm-4b), 65 MB); Score is read by the
+vectors. They
 were trained on the bf16 weights and are attached on PyTorch; on MLX the preset reads as `wemm-4b-4bit`
 until they are measured in 4-bit. Decision bench, PyTorch on an A10G (2,108 questions, 12 task families,
 English and French):
@@ -253,7 +254,17 @@ English and French):
 | `jul-decision-wemm-4b` | **0.849** | **0.883** | **0.872** | **0.672** | 97 ms |
 | Jev (API) | 0.873 | 0.924 | 0.878 | 0.699 | 655 ms |
 
-Per family: [README](https://github.com/usejul/jul#decision-bench-against-jev).
+Per family: [README](https://github.com/usejul/jul#decision-bench-against-jev). The decision bench keeps the
+questions and label sets of the adapters' training data (only its texts are new). On a bench of 300 typed questions written from scratch for it (sentiment, finance, support, agent routing,
+moderation), Score
+read by the adapters fell behind the vectors of the same weights, so since adapter `1525e34` their `cross.json`
+no longer lists `score`:
+
+| | All | Choice | Noul | Score |
+| --- | ---: | ---: | ---: | ---: |
+| `wemm-4b-4bit` vectors | 0.657 | 0.78 | 0.78 | 0.41 |
+| adapters for Noul, Score and Choice | 0.627 | 0.82 | 0.79 | 0.27 |
+| **`jul-decision-wemm-4b`** (adapters for Noul and Choice) | **0.677** | 0.83 | 0.79 | 0.41 |
 
 ## Decision models
 
@@ -264,22 +275,38 @@ next to its weights, in a `decision.json` (delimiters, layout, readout, head fil
 longest state and question it was trained on).
 
 ```bash
-jul models add minicpm5-2b-decision --repo usejul/minicpm5-2b-decision-mlx-4bit   # MLX, 1.3 GB
-jul models add minicpm5-2b-decision --repo usejul/minicpm5-2b-decision --backend torch
+jul models add jul-decision-minicpm5-2b --repo usejul/jul-decision-minicpm5-2b-mlx-4bit   # MLX, 1.4 GB
+jul models add jul-decision-minicpm5-2b --repo usejul/jul-decision-minicpm5-2b --backend torch
 jul ask choice "Which team should handle this ticket?" -o billing -o shipping -o access \
-    --state "I was charged twice for order 4411" --model minicpm5-2b-decision
+    --state "I was charged twice for order 4411" --model jul-decision-minicpm5-2b
 ```
 
-A repo (or a local directory) holding a `decision.json` is registered as it is: there is nothing to
-fit, no layer to choose and no tau, so the command returns at once. The API is the same as for any other model, and all three
-question types go through the same format. The state is encoded once per call and every question
+A repo (or a local directory) holding a `decision.json` brings its own format: no layer to choose and no tau
+for the pointer head. `jul models add` still fits the vector reading of the same weights, which long questions
+([routing by option count](#every-reading-and-every-setting)) and the types the model routes (`routing.types`) are read with;
+`--no-routing` skips it. The API is the same as for any other model.
+
+`jul-decision-minicpm5-2b` is MiniCPM5-2B with a merged LoRA and a pointer head (Kev's architecture), trained
+on human-written typed decisions; its pointer head reads Choice and Noul, and its `decision.json` routes Score
+to the vectors, which read it better. On a bench of 300 typed questions written from scratch for it (sentiment, finance, support, agent routing,
+moderation), PyTorch on an A10G:
+
+| | All | Choice | Noul | Score | p50 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `minicpm5-2b`, untrained (vectors) | 0.630 | 0.75 | 0.66 | 0.48 | 142 ms |
+| `jul-decision-minicpm5-2b` v1.1 (Kev's decision mix) | 0.637 | 0.82 | 0.66 | 0.43 | 85 ms |
+| v2, the pointer head for every type | 0.647 | 0.87 | 0.76 | 0.31 | 85 ms |
+| **`jul-decision-minicpm5-2b` v2** (Score on the vectors) | **0.680** | **0.87** | **0.76** | 0.41 | 85 ms |
+| `jul-decision-wemm-4b`, for comparison | 0.677 | 0.83 | 0.79 | 0.41 | 86–439 ms |
+
+The older versions stay on the Hub as `revision="v1.0"` and `"v1.1"`; the old repo names redirect. The state is encoded once per call and every question
 continues from it, so questions never see each other.
 
 The state is paid once per call: a ticket with four questions (two `Choice`, a `Noul` and a `Score`)
 answers in **180 ms** on an M4 Pro, against 65 ms for the first question alone. What costs is the
 options — they are re-read on every request — so a three-option question runs in 64 ms where a
-fifty-nine-option one takes 596 ms. Weights: [`usejul/minicpm5-2b-decision-mlx-4bit`](https://huggingface.co/usejul/minicpm5-2b-decision-mlx-4bit)
-(MLX, 1.3 GB) and [`usejul/minicpm5-2b-decision`](https://huggingface.co/usejul/minicpm5-2b-decision)
+fifty-nine-option one takes 596 ms (v1, M4 Pro). Weights: [`usejul/jul-decision-minicpm5-2b-mlx-4bit`](https://huggingface.co/usejul/jul-decision-minicpm5-2b-mlx-4bit)
+(MLX, 1.4 GB) and [`usejul/jul-decision-minicpm5-2b`](https://huggingface.co/usejul/jul-decision-minicpm5-2b)
 (PyTorch, bf16).
 
 Two differences with the presets above: `autotune(...)` does not apply (its heads are trained on the
@@ -427,10 +454,10 @@ that read Noul, Score and Choice with the question and the text together; they a
 on MLX it reads exactly as `wemm-4b-4bit` until they are measured in 4-bit.
 On the same M4 Pro it is 2.3 times slower than `minicpm5-2b`, which stays the fast option.
 
-A third option does not read a general model at all: `minicpm5-2b-decision` is MiniCPM5-2B *trained*
-to answer typed questions (a merged LoRA and a pointer head). It has no layer and no tau — it brings
-its own format — and it is 6 points ahead on the development sets, at a latency that depends on how
-many options a question has. It is not built in: `jul models add` registers it in a second.
+A third option does not read a general model at all: `jul-decision-minicpm5-2b` is MiniCPM5-2B *trained*
+to answer typed questions (a merged LoRA and a pointer head). Its pointer head brings its own format, with no
+layer and no tau, and its latency depends on how many options a question has. It is not built in: `jul models
+add` registers it (see [Decision models](#decision-models)).
 
 ## How it answers
 
