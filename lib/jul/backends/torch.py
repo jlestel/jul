@@ -65,8 +65,7 @@ def _device_dtype(device: str | None, dtype: torch.dtype | None) -> tuple[torch.
 
 def torch_class(repo: str) -> type[Backbone]:
     """TorchEncoderBackbone for an encoder repo, TorchBackbone otherwise."""
-    model_type = AutoConfig.from_pretrained(repo).model_type
-    return TorchEncoderBackbone if model_type in encoder.MODEL_TYPES else TorchBackbone
+    return TorchEncoderBackbone if encoder.is_encoder(AutoConfig.from_pretrained(repo)) else TorchBackbone
 
 
 @dataclass

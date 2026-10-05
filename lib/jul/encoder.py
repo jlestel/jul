@@ -34,6 +34,12 @@ import numpy as np
 MODEL_TYPES = {"bert", "xlm-roberta", "roberta", "distilbert", "camembert", "deberta-v2", "electra",
                "mpnet", "modernbert", "nomic_bert", "new"}
 
+
+def is_encoder(config) -> bool:
+    """An encoder: a known encoder `model_type`, or a decoder architecture turned bidirectional for
+    embeddings (EmbeddingGemma: gemma3_text with `use_bidirectional_attention`), read as one."""
+    return config.model_type in MODEL_TYPES or bool(getattr(config, "use_bidirectional_attention", False))
+
 #: Where a model declares its input convention: sentence-transformers' prompts, {"query": ...}.
 PROMPTS_FILE = "config_sentence_transformers.json"
 #: The conventions of models that declare none, by repo prefix: shipped with jul, then the user's.

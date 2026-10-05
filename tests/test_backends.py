@@ -320,3 +320,14 @@ def test_a_batch_behind_a_prefix_that_cannot_be_repeated_runs_the_prefix_with_ea
     for a, b in zip(one_by_one, batched):
         for l in (2, 3):
             assert np.allclose(a[l], b[l], atol=1e-4), (l, float(np.abs(a[l] - b[l]).max()))
+
+
+def test_bidirectional_decoders_are_read_as_encoders():
+    """EmbeddingGemma is a gemma3_text with bidirectional attention: read as an encoder, not a decoder."""
+    from types import SimpleNamespace
+
+    from jul.encoder import is_encoder
+    assert is_encoder(SimpleNamespace(model_type="xlm-roberta"))
+    assert is_encoder(SimpleNamespace(model_type="gemma3_text", use_bidirectional_attention=True))
+    assert not is_encoder(SimpleNamespace(model_type="gemma3_text", use_bidirectional_attention=False))
+    assert not is_encoder(SimpleNamespace(model_type="qwen3"))

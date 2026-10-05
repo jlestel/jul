@@ -60,7 +60,9 @@ on the Jev bench separately, once.
 
 An encoder (BERT, XLM-R, multilingual-e5…) is a backbone like any other: `jul models add`,
 `autotune` and `jul pack` run on it unchanged, on the torch and onnx backends. JuL recognizes one by
-its `model_type` and reads it as it was trained, not as a decoder (`lib/jul/encoder.py`):
+its `model_type`, or by `use_bidirectional_attention` in its config (a decoder turned into an embedding
+model, as [EmbeddingGemma](https://huggingface.co/google/embeddinggemma-300m); torch backend only for now),
+and reads it as it was trained, not as a decoder (`lib/jul/encoder.py`):
 
 - the vector is the mean of the layer over the whole sequence (the sentence embedding e5 was trained to
   produce), not a last token; zero-shot is plain embedding similarity between state and options;
