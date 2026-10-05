@@ -3,6 +3,15 @@
 Versions come from git tags (see [publishing](docs/publishing.md)): a `v*` tag releases to PyPI, every push to
 `main` publishes a dev build to TestPyPI.
 
+## Unreleased
+
+### Added
+
+- **`jul bench` compares JuL with remote servers**: `--models` also takes `typesafe` (Jev), `ollama[:model]`,
+  `cloudflare:clef|clef-flash` and any `/v1/systemone` URL as `URL#model` (Kev, a hosted Laya…), each with the
+  user's own key (`--remote-key-env` for a URL). Zero-shot only, network latency included, the report says the
+  rows were sent there; a missing key fails that target alone, before anything is sent.
+
 ## 0.4.0 — 2026-10-05
 
 ### Added

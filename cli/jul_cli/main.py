@@ -597,7 +597,13 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("test", help="JSONL or CSV, one row per answer: question, state, options, answer (type optional)")
     s.add_argument("--train", help="same format: rows to autotune on; without it, zero-shot only")
     s.add_argument("--models", help="presets or aliases, comma-separated, each optionally @backend "
-                                     "(e.g. jul-decision-e5-small@onnx,minicpm5-2b@torch); default: the default model")
+                                     "(e.g. jul-decision-e5-small@onnx,minicpm5-2b@torch); default: the default model. "
+                                     "Also remote System One servers: typesafe (Jev), ollama[:model], "
+                                     "cloudflare:clef|clef-flash, or URL#model (Kev, a hosted Laya...): the test rows "
+                                     "are sent there")
+    s.add_argument("--remote-key-env", default=None, metavar="VAR",
+                   help="the environment variable holding the key of the URL targets in --models "
+                        "(providers use their own: TYPESAFE_API_KEY, CLOUDFLARE_API_TOKEN)")
     s.add_argument("--backend", **backend_kw)
     s.add_argument("--method", metavar="M[,M]|auto",
                    help="zero-shot readings to compare: vector, letters, cross, or auto for every one the model "
@@ -628,7 +634,10 @@ def main(argv=None) -> None:
         raise SystemExit(f"context {a.action} needs a name")
     if a.command == "bench":
         from jul_cli.setup import require_setup
+        from jul_cli.bench import is_remote
         for model in (a.models or "").split(",") if a.models else [None]:
+            if model and is_remote(model.strip()):
+                continue                       # a server: nothing to set up here
             name, _, backend = (model or "").strip().partition("@")
             require_setup(name or None, backend or a.backend)
     if a.command in {"ask", "run", "autotune", "pack"} or (
