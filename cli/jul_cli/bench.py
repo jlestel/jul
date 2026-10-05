@@ -16,6 +16,12 @@ With `--train`, every model is measured zero-shot, then autotuned on the train r
 the same test rows. Train and test are checked for overlap first: the same text in both (after folding
 case, punctuation and digits) stops the bench, near duplicates are reported. Nothing is saved: the tuned
 heads live in a temporary context.
+
+A model can also be a remote System One server, to compare JuL with the rest of the ecosystem on the same
+rows: `typesafe` (Jev, key in TYPESAFE_API_KEY), `ollama[:model]` (Nimble), `cloudflare:clef|clef-flash`
+(CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN), or the URL of any /v1/systemone server, `URL#model` (Kev,
+llama.cpp, a hosted Laya, another `jul serve`). The test rows are sent to that server; it is measured
+zero-shot only, and its latency includes the network.
 """
 
 from __future__ import annotations
@@ -229,6 +235,55 @@ def drop_overlap(tasks: list[Task], overlap: dict) -> int:
     return dropped
 
 
+# --- remote targets ---------------------------------------------------------------------------
+
+def is_remote(model: str) -> bool:
+    """A System One server rather than a model JuL runs: a provider shorthand or a URL."""
+    from jul.escalate import PROVIDERS
+    if model.startswith(("http://", "https://")):
+        return True
+    return model.partition(":")[0] in (*PROVIDERS, "cloudflare")
+
+
+def remote_client(target: str, key_env: str | None = None):
+    """The `SystemOneHTTP` for a target: `typesafe`, `ollama[:model]`, `cloudflare:clef`, or `URL[#model]`.
+    A provider's key comes from its usual variable, a URL's from `key_env`. A variable named but unset stops
+    here, before any row is sent."""
+    from jul.escalate import PROVIDERS, remote_tier
+    if target.startswith(("http://", "https://")):
+        url, _, model = target.partition("#")
+        if key_env and not os.environ.get(key_env):
+            raise ValueError(f"{key_env} is not set: {_shown(target)} is asked with your own key")
+        return remote_tier(url, model or None, key_env)
+    if target.partition(":")[0] == "cloudflare":     # as `jul serve --escalate-key-env`: the variable wins
+        return remote_tier(target, None, key_env)
+    env = PROVIDERS.get(target.partition(":")[0], (None, None, None))[2]
+    if env and not os.environ.get(env):
+        raise ValueError(f"{env} is not set: {target} is asked with your own key")
+    return remote_tier(target)
+
+
+def _public_url(url: str) -> str:
+    """The URL without user:password@, which must not land in a report or a log."""
+    from urllib.parse import urlsplit, urlunsplit
+    parts = urlsplit(url)
+    return urlunsplit(parts._replace(netloc=parts.hostname + (f":{parts.port}" if parts.port else ""))) \
+        if parts.username or parts.password else url
+
+
+def _shown(model: str) -> str:
+    """A model as written in the report and the logs: a URL target without its user:password@."""
+    if not model.startswith(("http://", "https://")):
+        return model
+    url, sep, name = model.partition("#")
+    return _public_url(url) + sep + name
+
+
+def _is_http(client) -> bool:
+    from jul.escalate import SystemOneHTTP
+    return isinstance(client, SystemOneHTTP)
+
+
 # --- measuring ----------------------------------------------------------------------------------
 
 def wilson(k: int, n: int) -> tuple[float, float]:
@@ -286,6 +341,13 @@ def readings(client, methods: list, features: list) -> tuple[list, list, dict]:
     embedding only; `cross` needs a preset with a cross model."""
     skipped: dict[str, str] = {}
     engine = None
+    if _is_http(client):
+        for m in methods:
+            if m:
+                skipped[f"zero-shot:{m}"] = "remote server: answers its own way"
+        for f in features:
+            skipped[f"autotune:{f}"] = "remote server: no autotune"
+        return [None], [], skipped
     if getattr(client, "_laya", None) is not None:
         for m in methods:
             if m:
@@ -317,13 +379,17 @@ def readings(client, methods: list, features: list) -> tuple[list, list, dict]:
 
 
 def bench_model(model: str, tasks: list[Task], backend=None, make_client=None, log=print,
-                methods: list | None = None, features: list | None = None) -> dict:
+                methods: list | None = None, features: list | None = None,
+                remote_key_env: str | None = None) -> dict:
     """Every zero-shot method asked, then (tasks with train rows) every autotune features asked, each head
     in a throwaway context. `methods=[None]` is the model's default reading."""
     from jul import Context
     methods = methods or [None]
     features = features if features is not None else ["vector"]
-    if make_client is None:
+    if is_remote(model):
+        def make_client(model, backend, home):
+            return remote_client(model, remote_key_env)
+    elif make_client is None:
         from jul import TypeSafeClient
 
         def default_client(model, backend, home):
@@ -334,13 +400,15 @@ def bench_model(model: str, tasks: list[Task], backend=None, make_client=None, l
     result: dict = {"model": model, "questions": {}}
     try:
         client = make_client(model, backend, home)
+        if _is_http(client):
+            result["remote"] = _public_url(client.url)
         ok_methods, ok_features, skipped = readings(client, methods, features if any(t.train for t in tasks) else [])
         t0 = time.perf_counter()
         for task in tasks:
             runs: list[dict] = []
             for m in ok_methods:
                 label = "zero-shot" + (f":{m}" if m else "")
-                log(f"  {model} · {task.name} · {label} ({len(task.test)})")
+                log(f"  {_shown(model)} · {task.name} · {label} ({len(task.test)})")
                 try:
                     runs.append({"setting": label, "method": m or "default", **evaluate(client, task, method=m)})
                 except (ValueError, NotImplementedError) as exc:     # e.g. letters on an embeddings API
@@ -355,7 +423,7 @@ def bench_model(model: str, tasks: list[Task], backend=None, make_client=None, l
                 except (ValueError, ImportError) as exc:
                     runs.append({"setting": label, "skipped": f"{type(exc).__name__}: {exc}"})
                     continue
-                log(f"  {model} · {task.name} · {label} on {len(task.train)}")
+                log(f"  {_shown(model)} · {task.name} · {label} on {len(task.train)}")
                 runs.append({"setting": label, "features": f, **evaluate(client, task, context=ctx),
                              "activated": report.activated, "reason": report.reason, "n_train": len(task.train)})
             runs += [{"setting": k, "skipped": v} for k, v in skipped.items()]
@@ -529,6 +597,9 @@ def render(report: dict, ink: Ink | None = None) -> str:
         notes.append(f"under 50 test rows ({', '.join(small)[:40]}): intervals are wide, prefer ~50+ per question")
     if any(c.get("candidates", 0) > len(report["models"]) for c in report["recommendation"].values()):
         notes.append("several readings per model: the best of many on the same test rows is slightly optimistic")
+    remote = [r["model"] for r in report["results"] if r.get("remote")]
+    if remote:
+        notes.append(f"remote ({', '.join(remote)[:50]}): the test rows were sent there; latency includes the network")
     notes.append("pretraining contamination cannot be checked: a model may have seen public data")
     out += [ink.dim("· " + n) for n in notes]
     return "\n".join(out)
@@ -575,14 +646,16 @@ def run(a, make_client=None, stream=sys.stdout) -> dict:
 
     results = []
     for m in models:
-        name, _, backend = m.partition("@")
-        r = bench_model(name, tasks, backend or a.backend, make_client, log, methods, features)
-        r["model"] = m
+        name, _, backend = (m, "", "") if is_remote(m) else m.partition("@")
+        shown = _shown(m)
+        r = bench_model(name, tasks, backend or a.backend, make_client, log, methods, features,
+                        getattr(a, "remote_key_env", None))
+        r["model"] = shown
         results.append(r)
     report = {
         "data": {"test": str(a.test), "train": str(a.train) if a.train else None,
                  "test_rows": sum(len(t.test) for t in tasks), "train_rows": sum(len(t.train) for t in tasks)},
-        "models": models,
+        "models": [_shown(m) for m in models],
         "methods": [m or "default" for m in methods], "features": features if a.train else [],
         "questions": [{"name": t.name, "type": t.kind, "instructions": t.instructions, "options": t.options,
                        "n_test": len(t.test), "n_train": len(t.train)} for t in tasks],

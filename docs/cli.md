@@ -62,6 +62,20 @@ jul bench test.csv --json > results.json
   the bench; `--drop-overlap` removes those rows from test, `--allow-overlap` runs anyway. Near duplicates
   (character 5-gram similarity above `--near`, 0.8 by default) and duplicates inside test are reported. What
   cannot be checked: a model that saw public data during its pretraining.
+- **Remote servers**, next to JuL's models: `typesafe` (Jev, key in `TYPESAFE_API_KEY`), `ollama[:model]`
+  (Nimble), `cloudflare:clef` or `cloudflare:clef-flash` (`CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`), or
+  the URL of any `/v1/systemone` server as `URL#model` with its key in `--remote-key-env VAR` (Kev, llama.cpp,
+  a hosted Laya, another `jul serve`). Each is asked with your own key, zero-shot only, and its latency
+  includes the network. **The test rows are sent to that server.** A target whose key is missing is shown
+  failed, before anything is sent, and the others still run. A URL without `--remote-key-env` is called with
+  no `Authorization` header (right for a local `jul serve` or llama.cpp); `--remote-key-env` also replaces
+  `CLOUDFLARE_API_TOKEN` for `cloudflare:*`, as `jul serve --escalate-key-env` does. A `user:password@` in a URL
+  is never written to the report or the logs.
+
+  ```bash
+  jul bench test.jsonl --models accurate,typesafe,cloudflare:clef,https://kev.example#kev-4b \
+    --remote-key-env KEV_API_KEY
+  ```
 
 ## File formats
 
