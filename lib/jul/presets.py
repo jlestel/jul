@@ -282,10 +282,32 @@ PRESETS["jul-decision-wemm-4b"] = dataclasses.replace(
     cross={"repo": {"torch": "usejul/jul-decision-wemm-4b"}},
 )
 
+# MiniCPM5-2B with a merged LoRA and a pointer head trained on human-written typed decisions
+# (usejul/jul-decision-minicpm5-2b v2). Its decision.json carries the format, the temperature and
+# "routing": {"types": ["score"]}; the vector reading Score goes to is fitted per backend, shipped as
+# assets/presets/jul-decision-minicpm5-2b@{mlx,torch}.json (picked first when the backend is known). This
+# entry, the torch fit, is the fallback before a backend is. 300 hand-written typed questions, PyTorch on an
+# A10G: 0.680 (Choice 0.87, Noul 0.76, Score 0.41) at 85 ms; jul-decision-wemm-4b 0.677.
+PRESETS["jul-decision-minicpm5-2b"] = Preset(
+    name="jul-decision-minicpm5-2b",
+    repo="usejul/jul-decision-minicpm5-2b-mlx-4bit",
+    torch_repo="usejul/jul-decision-minicpm5-2b",
+    formulations=(),
+    tau=1.0,
+    latency_ms="~85",
+    quality="0.680 on a 300-question hand-written bench (PyTorch); jul-decision-wemm-4b 0.677",
+    notes="A decision model: pointer head for Choice and Noul, Score read by the vectors of the same weights.",
+    method="pointer",
+    routing={"above_options": 0,
+             "formulations": [{"name": "one_word", "template": ONE_WORD, "layer": 34},
+                              {"name": "question_options", "template": QUESTION_OPTIONS, "layer": 39}],
+             "tau": 0.06336, "center": "options", "fitted": "2026-10-05", "dev_accuracy": 0.65},
+)
+
 #: Single-formulation variants, kept because they are what the 'one word' rows of the bench measured.
 ONE_WORD_ONLY: dict[str, tuple[int, float]] = {"minicpm5-2b": (39, 0.04554)}
 
-ALIASES = {"fast": "minicpm5-2b", "accurate": "jul-decision-wemm-4b"}
+ALIASES = {"fast": "jul-decision-minicpm5-2b", "accurate": "jul-decision-wemm-4b"}
 DEFAULT_MODEL = "jul-decision-wemm-4b"
 
 

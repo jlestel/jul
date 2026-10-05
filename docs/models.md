@@ -281,7 +281,8 @@ jul ask choice "Which team should handle this ticket?" -o billing -o shipping -o
     --state "I was charged twice for order 4411" --model jul-decision-minicpm5-2b
 ```
 
-A repo (or a local directory) holding a `decision.json` brings its own format: no layer to choose and no tau
+`jul-decision-minicpm5-2b` is built in (alias `fast`): `TypeSafeClient(model="fast")` needs nothing else. Another
+repo (or a local directory) holding a `decision.json` brings its own format: no layer to choose and no tau
 for the pointer head. `jul models add` still fits the vector reading of the same weights, which long questions
 ([routing by option count](#every-reading-and-every-setting)) and the types the model routes (`routing.types`) are read with;
 `--no-routing` skips it. The API is the same as for any other model.
@@ -446,18 +447,21 @@ what they are. Jev scores 0.753, `wemm-4b-4bit` 0.857.
 | ------------------------------- | ----------------------------------- | ------- | -----: | ----------: | ----------: | -------------------- |
 | `jul-decision-wemm-4b` (alias `accurate`, default) | `usejul/WeMM-Embedding-4B-mlx-4bit` | 31 / 31 | 0.0553 |      146 ms |       55 ms | **0.857** (MLX)      |
 | `wemm-4b-4bit`                  | `usejul/WeMM-Embedding-4B-mlx-4bit` | 31 / 31 | 0.0553 |      146 ms |       55 ms | **0.857**            |
-| `minicpm5-2b` (alias `fast`)    | `openbmb/MiniCPM5-2B-MLX`           | 39 / 40 | 0.0413 |   **64 ms** |             | 0.617                |
+| `minicpm5-2b`                   | `openbmb/MiniCPM5-2B-MLX`           | 39 / 40 | 0.0413 |   **64 ms** |             | 0.617                |
+| `jul-decision-minicpm5-2b` (alias `fast`) | `usejul/jul-decision-minicpm5-2b-mlx-4bit` | pointer; Score 38 / 37 | 0.0474 | ~90 ms | | — (0.680 on our 300-question bench) |
 
 `wemm-4b-4bit` is the most accurate vector reading: 10 points above Jev with no training. The default,
 `jul-decision-wemm-4b`, is the same preset plus [LoRA adapters](#a-cross-model-on-the-presets-own-weights-lora)
-that read Noul, Score and Choice with the question and the text together; they are attached on PyTorch, and
+that read Noul and Choice with the question and the text together; they are attached on PyTorch, and
 on MLX it reads exactly as `wemm-4b-4bit` until they are measured in 4-bit.
-On the same M4 Pro it is 2.3 times slower than `minicpm5-2b`, which stays the fast option.
+On the same M4 Pro it is 2.3 times slower than `minicpm5-2b`.
 
 A third option does not read a general model at all: `jul-decision-minicpm5-2b` is MiniCPM5-2B *trained*
-to answer typed questions (a merged LoRA and a pointer head). Its pointer head brings its own format, with no
-layer and no tau, and its latency depends on how many options a question has. It is not built in: `jul models
-add` registers it (see [Decision models](#decision-models)).
+to answer typed questions (a merged LoRA and a pointer head), built in as the alias `fast`: as accurate as the
+default on our 300-question bench (0.680 against 0.677) at half its size. Its pointer head brings its own format;
+Score goes to the vector reading of the same weights, shipped fitted per backend (the layers and tau in the table
+are that reading's, on MLX). It is a decision model, so `autotune(...)` does not apply to it: tune the default
+instead (see [Decision models](#decision-models)).
 
 ## How it answers
 

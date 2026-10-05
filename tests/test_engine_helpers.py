@@ -30,7 +30,7 @@ def test_normalize_gives_unit_vectors():
 
 
 def test_presets_are_aliased_and_unknown_names_are_refused():
-    assert resolve("fast").name == "minicpm5-2b"
+    assert resolve("fast").name == "jul-decision-minicpm5-2b"
     assert resolve("accurate").name == "jul-decision-wemm-4b"
     assert resolve(None).name == "jul-decision-wemm-4b"
     try:
@@ -44,8 +44,22 @@ def test_presets_are_aliased_and_unknown_names_are_refused():
 def test_every_preset_carries_a_layer_and_a_temperature():
     for preset in PRESETS.values():
         assert preset.tau > 0
-        assert preset.formulations and all(f.layer > 0 for f in preset.formulations)
         assert preset.center in {"generic", "options", "none"}
+        if preset.method == "pointer":      # a decision model: its own format, a fitted vector fallback
+            reading = preset.routing
+            assert reading["tau"] > 0 and all(f["layer"] > 0 for f in reading["formulations"])
+        else:
+            assert preset.formulations and all(f.layer > 0 for f in preset.formulations)
+
+
+def test_the_shipped_decision_presets_route_score_to_their_own_fallback():
+    for backend in ("mlx", "torch"):
+        preset = resolve("jul-decision-minicpm5-2b", backend)
+        assert preset.method == "pointer" and preset.backend == backend
+        assert preset.routing["formulations"] and preset.routing["tau"] > 0
+        if preset.routing["center"] == "generic":   # the fallback finds its center next to the preset
+            assert (preset.asset_dir / f"jul-decision-minicpm5-2b{'' if backend == 'mlx' else '.' + backend}"
+                    ".one_word.center.npy").exists()
 
 
 def test_the_one_word_variant_keeps_a_single_formulation():

@@ -1,0 +1,102 @@
+{
+  "name": "jul-decision-minicpm5-2b",
+  "repos": {
+    "mlx": "usejul/jul-decision-minicpm5-2b-mlx-4bit"
+  },
+  "backend": "mlx",
+  "formulations": [],
+  "tau": 1.0,
+  "center": "options",
+  "one_word": null,
+  "latency_ms": "~90",
+  "quality": "0.680 on a 300-question hand-written bench (PyTorch); pointer head for Choice and Noul, Score on the vectors",
+  "notes": "Pointer format and temperature (1.260) from the repo's decision.json, which routes Score to the vectors. Vector fallback fitted by `jul models add` on the MLX 4-bit weights on 2026-10-05: layers 38 / 37, center generic, tau 0.04735, dev accuracy 0.630; above 20 options it is 4.3x faster for 3 points.",
+  "calibration": null,
+  "method": "pointer",
+  "routing": {
+    "above_options": 20,
+    "formulations": [
+      {
+        "name": "one_word",
+        "template": "This text: \"{state}\" means in one word: \"",
+        "layer": 38
+      },
+      {
+        "name": "question_options",
+        "template": "{instructions}\nPossible answers: {options}.\nText: \"{state}\"\nIn one word, the answer is: \"",
+        "layer": 37
+      }
+    ],
+    "tau": 0.04735,
+    "center": "generic",
+    "fitted": "2026-10-05",
+    "dev_accuracy": 0.63,
+    "measured": {
+      "set": "massive",
+      "per_cell": 40,
+      "counts": [
+        5,
+        10,
+        20,
+        30,
+        40
+      ],
+      "cells": {
+        "5-pointer": {
+          "n": 37,
+          "accuracy": 0.9459459459459459,
+          "p50_ms": 99.71458300060476
+        },
+        "5-vector": {
+          "n": 37,
+          "accuracy": 0.8918918918918919,
+          "p50_ms": 56.31424999955925
+        },
+        "10-pointer": {
+          "n": 43,
+          "accuracy": 0.8372093023255814,
+          "p50_ms": 148.43370800008415
+        },
+        "10-vector": {
+          "n": 43,
+          "accuracy": 0.9302325581395349,
+          "p50_ms": 56.43445799978508
+        },
+        "20-pointer": {
+          "n": 33,
+          "accuracy": 0.8484848484848485,
+          "p50_ms": 246.32020799981547
+        },
+        "20-vector": {
+          "n": 33,
+          "accuracy": 0.8181818181818182,
+          "p50_ms": 56.89075000009325
+        },
+        "30-pointer": {
+          "n": 50,
+          "accuracy": 0.82,
+          "p50_ms": 347.746874999757
+        },
+        "30-vector": {
+          "n": 50,
+          "accuracy": 0.84,
+          "p50_ms": 57.01212450003368
+        },
+        "40-pointer": {
+          "n": 34,
+          "accuracy": 0.8823529411764706,
+          "p50_ms": 449.31587550036056
+        },
+        "40-vector": {
+          "n": 34,
+          "accuracy": 0.7647058823529411,
+          "p50_ms": 57.82147950048966
+        }
+      },
+      "speedup_target": 3.0,
+      "above_options": 20,
+      "accuracy_cost": 0.030303030303030276,
+      "speedup": 4.329705760592218
+    }
+  }
+}

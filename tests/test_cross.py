@@ -107,8 +107,8 @@ def test_a_cross_model_named_for_some_backends_only():
     entry = {"repo": {"torch": "usejul/jul-decision-wemm-4b"}}
     assert cross.covers(entry, "torch") and not cross.covers(entry, "mlx")
     assert cross.covers({"repo": "some/dir"}, "mlx")
-    default = resolve(None)
-    assert default.cross == entry and default.repos == resolve("wemm-4b-4bit").repos
+    wemm = resolve("jul-decision-wemm-4b")
+    assert wemm.cross == entry and wemm.repos == resolve("wemm-4b-4bit").repos
 
 
 def test_default_method_routes_declared_types_unless_tuned(tmp_path):
