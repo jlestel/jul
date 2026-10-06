@@ -116,8 +116,7 @@ class MLXBackbone(Backbone):
             # a fresh cache holding the prefix once per row; the template's own cache is not touched
             cache = make_prompt_cache(self.model)
             for new, c in zip(cache, prefix.cache):
-                keys, values = c.state
-                new.state = (mx.repeat(keys, len(queries), axis=0), mx.repeat(values, len(queries), axis=0))
+                _repeat_into(new, c, len(queries))
         captured, _ = self._run(queries, cache, layers, False, pools)
         # every group has its own shape (rows x width): MLX would keep the freed buffers of each one
         mx.clear_cache()
@@ -186,6 +185,13 @@ class MLXBackbone(Backbone):
         mx.eval(list(captured.values()) + ([out] if out is not None else []))
         return ({k: np.array(v) for k, v in captured.items()},
                 np.array(out) if out is not None else None)
+
+
+def _repeat_into(new: KVCache, cache: KVCache, rows: int) -> None:
+    """Fill the empty `new` with the keys and values of `cache`, once per row. Read through the attributes,
+    not `state`: mlx-lm 0.32 made `state` (keys, values, offset), with the buffers past the offset."""
+    keys, values = cache.keys[..., : cache.offset, :], cache.values[..., : cache.offset, :]
+    new.update_and_fetch(mx.repeat(keys, rows, axis=0), mx.repeat(values, rows, axis=0))
 
 
 def _repeatable(prefix: _Prefix) -> bool:
