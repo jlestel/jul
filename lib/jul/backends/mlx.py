@@ -129,8 +129,8 @@ class MLXBackbone(Backbone):
         if can_trim_prompt_cache(cache):
             return _Prefix(len(tokens), cache=cache)
         # Recurrent state (e.g. Gated DeltaNet in Qwen3.5) cannot be trimmed: keep a copy of the state
-        # after the prefix. Layers replace their state arrays rather than writing into them, so the
-        # copy is never modified.
+        # after the prefix. Each query restores it into fresh containers (`_restore`), so the copy is
+        # never modified.
         return _Prefix(len(tokens), snapshot=[tuple(c.state) for c in cache])
 
     def last_hidden(self, tokens, prefix: _Prefix | None = None) -> np.ndarray:
@@ -150,8 +150,7 @@ class MLXBackbone(Backbone):
 
     def _restored(self, snapshot):
         cache = make_prompt_cache(self.model)
-        for c, state in zip(cache, snapshot):
-            c.state = list(state)
+        _restore(cache, snapshot)
         return cache
 
     @staticmethod
@@ -192,6 +191,16 @@ def _repeat_into(new: KVCache, cache: KVCache, rows: int) -> None:
     not `state`: mlx-lm 0.32 made `state` (keys, values, offset), with the buffers past the offset."""
     keys, values = cache.keys[..., : cache.offset, :], cache.values[..., : cache.offset, :]
     new.update_and_fetch(mx.repeat(keys, rows, axis=0), mx.repeat(values, rows, axis=0))
+
+
+def _restore(cache: list, snapshot: list) -> None:
+    """Load a prefix snapshot into a fresh cache without sharing anything a query writes into. Since mlx-lm
+    0.32, an ArraysCache's state holds its list of arrays (layers assign into it: `cache[1] = state`) and a
+    KVCache's state its whole buffer (written in place past the offset): both are copied here."""
+    for c, state in zip(cache, snapshot):
+        c.state = [list(s) if isinstance(s, list) else s for s in state]
+        if isinstance(c, KVCache) and c.keys is not None:
+            c.keys, c.values = c.keys[..., : c.offset, :], c.values[..., : c.offset, :]
 
 
 def _repeatable(prefix: _Prefix) -> bool:
