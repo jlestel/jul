@@ -162,7 +162,7 @@ class Engine:
         return np.stack([h[layer][: h[layer].shape[0] // 2] for h in template.run_batch(texts, layers=[layer])])
 
     def _center(self, template: PromptTemplate, formulation: Formulation, options_matrix: np.ndarray,
-                context) -> np.ndarray:
+                context, preset: Preset) -> np.ndarray:
         texts = getattr(context, "examples", None) if context is not None else None
         if texts:
             cached = context.center_for(self.backbone.key, formulation)
@@ -170,19 +170,25 @@ class Engine:
                 cached = self.vectors(template, formulation.layer, texts).mean(0)
                 context.set_center(self.backbone.key, formulation, cached)
             return cached
-        if self.preset.center == "generic":
-            generic = self.preset.generic_center(formulation, self.backbone.backend)
+        if preset.center == "generic":
+            generic = preset.generic_center(formulation, self.backbone.backend)
             if generic is not None:
                 return generic
-        if self.preset.center == "none":
+        if preset.center == "none":
             return np.zeros(options_matrix.shape[-1], dtype=options_matrix.dtype)
         return options_matrix.mean(0)
 
     def compile(self, kind: str, instructions: str, options: list[Option], context=None,
-                formulations: tuple[Formulation, ...] | None = None) -> CompiledQuestion:
-        """`formulations` replaces the preset's for this question (see presets.formulations_for)."""
-        formulations = tuple(formulations or self.preset.formulations)
+                formulations: tuple[Formulation, ...] | None = None,
+                preset: Preset | None = None) -> CompiledQuestion:
+        """`formulations` replaces the preset's for this question (see presets.formulations_for).
+
+        `preset` is the vector reading to compile for (default: the engine's). A decision model passes its
+        vector fallback here rather than swapping `self.preset`, which concurrent calls share."""
+        preset = preset or self.preset
+        formulations = tuple(formulations or preset.formulations)
         key = (kind, instructions, tuple((o.key, o.description) for o in options), formulations,
+               (preset.name, preset.center, str(preset.asset_dir)),
                getattr(context, "cache_key", lambda: None)() if context is not None else None)
         if key in self._questions:
             self._questions.move_to_end(key)
@@ -194,7 +200,7 @@ class Engine:
             template = (self._one_word_template(f, _description(context)) if shared
                         else self._template(self._render(f, instructions, options), _description(context)))
             L = self.vectors(template, f.layer, [o.text for o in options])
-            center = self._center(template, f, L, context)
+            center = self._center(template, f, L, context, preset)
             centered = L - center
             # Single option: centered vector is always zero (option == center), skip normalization
             if len(options) == 1:

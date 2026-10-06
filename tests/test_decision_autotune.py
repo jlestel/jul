@@ -95,10 +95,8 @@ def test_a_head_on_a_decision_model_answers_through_its_vector_fallback(decision
     tuned = client.system_one(state=state, questions={"team": TEAM}, context=ctx).choices["team"]
     assert engine.preset.method == "pointer"
     from jul import tuning
-    from jul.client import _reading
-    with _reading(engine, client._fallback(engine)):
-        compiled = engine.compile("choice", TEAM.instructions, _options(TEAM), ctx)
-        _, features, _ = engine.read(compiled, state)
+    compiled = engine.compile("choice", TEAM.instructions, _options(TEAM), ctx, preset=client._fallback(engine))
+    _, features, _ = engine.read(compiled, state)
     expected = tuning.apply(ctx.heads[client._digest("choice", TEAM, _options(TEAM))], features, state)
     assert np.allclose([tuned.probabilities[k] for k in keys], expected, atol=1e-4)
     # a question without a head keeps the pointer head
@@ -120,12 +118,32 @@ def test_a_routed_type_is_judged_against_the_fallback_it_is_read_with(decision_d
     engine.pointer.logits = lambda *a: calls.append(a) or real(*a)
     report = client.autotune(Context(name="t"), {"level": level}, labeled, save=False)["level"]
     assert calls == [] and "pointer" not in report.reason          # never read by the pointer head
-    from jul.client import _reading
-    with _reading(engine, client._fallback(engine)):
-        compiled = engine.compile("score", level.instructions, _options(level))
-        scores, _ = engine.read_many(compiled, [s for s, _ in labeled])
+    compiled = engine.compile("score", level.instructions, _options(level), preset=client._fallback(engine))
+    scores, _ = engine.read_many(compiled, [s for s, _ in labeled])
     y = np.array([i % 3 for i in range(45)])
     assert report.zero_shot_accuracy == pytest.approx(float((scores.argmax(1) == y).mean()))
+    client.close()
+
+
+def test_the_shared_engine_preset_is_never_swapped(decision_dir, tmp_path, monkeypatch):
+    """Concurrent calls share one engine (AsyncTypeSafeClient runs them in threads): reading a decision model's
+    fallback must pass the preset along, never assign `engine.preset`, or another call reads with the wrong one."""
+    client = _client(decision_dir, tmp_path, monkeypatch, routing={**ROUTING, "types": ["score"]})
+    engine = client._engine_for(None)
+
+    class Frozen(type(engine)):
+        def __setattr__(self, name, value):
+            if name == "preset":
+                raise AssertionError("engine.preset was reassigned")
+            super().__setattr__(name, value)
+
+    engine.__class__ = Frozen
+    monkeypatch.setattr(client, "_engine_for", lambda model: engine)
+    level = Score(instructions="How urgent?", criteria=["low", "medium", "high"])
+    ctx = Context(name="t")
+    client.autotune(ctx, {"team": TEAM}, _labeled(), save=False)                     # fallback features
+    client.system_one(state="refund please", questions={"team": TEAM, "level": level,  # routed + pointer (+ head)
+                                                          "urgent": Noul("Urgent?")}, context=ctx)
     client.close()
 
 
