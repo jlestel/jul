@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AWS Lambda, step by step · JuL docs</title>
+<meta name="description" content="Running a decision in AWS Lambda JuL&#x27;s micro model, jul-decision-e5-small, runs inside an AWS Lambda function: no GPU, no server, no container, the model in the">
+<meta name="theme-color" content="#0a0600">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230a0600'/%3E%3Ctext x='2' y='12' font-family='monospace' font-size='11' fill='%23ffb000'%3E%3E_%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/docs.css">
+<script>try{var p=localStorage.getItem("jul-phosphor");if(p)document.documentElement.dataset.phosphor=p}catch(e){}</script>
+</head>
+<body>
+<a class="skip" href="#doc">Skip to the page</a>
+<nav class="menubar" aria-label="Main">
+  <a class="brand" href="../index.html">▓ JuL-DOS 0.5</a>
+  <a href="index.html"><u>D</u>ocs</a>
+  <a href="quickstart.html" class="hide-sm"><u>Q</u>uickstart</a>
+  <a href="python-api.html" class="hide-sm"><u>A</u>PI</a>
+  <a href="cli-reference.html" class="hide-sm">C<u>L</u>I</a>
+  <a href="https://github.com/usejul/jul"><u>G</u>itHub</a>
+  <span class="spacer"></span>
+  <label class="search"><span aria-hidden="true">[/]</span><input id="q" type="search" placeholder="search" autocomplete="off" aria-label="Search the docs"></label>
+  <button id="phosphor" type="button" title="Change phosphor">PHOSPHOR:<span id="ph-name">AMB</span></button>
+</nav>
+<div id="results" class="win results" data-title="SEARCH.EXE" hidden aria-live="polite"></div>
+<div class="layout">
+  <aside class="side">
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="dir">[≡] CONTENTS</button>
+    <section class="win dir" id="dir" data-title="C:\JUL\DOCS">
+<p class="nav-h">START HERE</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="index.html">Docs home</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="quickstart.html">Quickstart</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="concepts.html">Concepts</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="hub.html">The hub</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="questions.html">Writing good questions</a></li>
+</ul>
+<p class="nav-h">GUIDES</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="installation.html">Installation</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="cli.html">Command line</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="tuning.html">Adapting to your data</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="serve.html">Serving over HTTP</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="deployment.html">Deploying a fixed need</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="aws-lambda.html" aria-current="page">AWS Lambda, step by step</a></li>
+</ul>
+<p class="nav-h">MODELS</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="models.html">Models and readings</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="benchmarks.html">Benchmarks</a></li>
+</ul>
+<p class="nav-h">REFERENCE</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="python-api.html">Python API</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="cli-reference.html">CLI reference</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="configuration.html">Configuration</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="troubleshooting.html">FAQ and troubleshooting</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="glossary.html">Glossary</a></li>
+</ul>
+<p class="nav-h">PROJECT</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="development.html">Development</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="publishing.html">Publishing</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="changelog.html">Changelog</a></li>
+</ul>
+    </section>
+    <section class="win toc" data-title="ON_PAGE.LST"><ul><li class="l2"><a href="#what-was-measured">What was measured</a></li>
+<li class="l2"><a href="#1-install-and-add-the-model-on-your-machine">1. Install and add the model (on your machine)</a></li>
+<li class="l2"><a href="#2-write-the-questions">2. Write the questions</a></li>
+<li class="l2"><a href="#3-label-examples-and-tune">3. Label examples and tune</a></li>
+<li class="l2"><a href="#4-pack">4. Pack</a></li>
+<li class="l2"><a href="#5-build-the-package">5. Build the package</a></li>
+<li class="l2"><a href="#6a-deploy-with-the-aws-cli">6a. Deploy with the AWS CLI</a></li>
+<li class="l2"><a href="#6b-deploy-with-cdk">6b. Deploy with CDK</a></li>
+<li class="l2"><a href="#sizing">Sizing</a></li>
+<li class="l2"><a href="#pitfalls">Pitfalls</a></li></ul></section>
+  </aside>
+  <main id="doc">
+    <section class="win doc" data-title="C:\JUL\DOCS\AWSLAMBD.TXT">
+<article class="prose">
+<h1 id="running-a-decision-in-aws-lambda">Running a decision in AWS Lambda</h1>
+<p>JuL's micro model, <code>jul-decision-e5-small</code>, runs inside an AWS Lambda function: no GPU, no server, no
+container, the model in the function's own package. Jev is a hosted API and CLM-8B needs a GPU server;
+to our knowledge no other typed-decision library puts its model in a Lambda.</p>
+<p><strong>What this is for.</strong> Not a general-purpose decision endpoint that answers any question you send it:
+that is what the larger models are for. It is a model embedded in a function that decides one precise
+thing, always the same, on every event it receives — which team a ticket goes to, whether a message is
+angry, whether a request needs a human — at a few milliseconds and well under a dollar per million
+calls. The questions are fixed when you build the function; the event only carries the text.</p>
+<p><strong>Tune it.</strong> The model is small (21 M parameters outside its embedding). Zero-shot it is a starting
+point, not the answer: on the Jev bench it scores 0.557 alone and 0.780 with a head trained on your
+labeled examples (<code>autotune</code>, hybrid features). For a function that decides one thing, labeled examples
+of that thing are the best investment: a few hundred per question, more for many options. No labels
+yet? <code>jul synth</code> writes synthetic ones from the questions (see <a href="tuning.html">tuning</a>).</p>
+<p>We do not publish the code of our own deployment yet. What follows is everything it does, step by step,
+deployed with the AWS CLI or with CDK. It needs jul 0.3.0 or later (cross models).</p>
+<h2 id="what-was-measured">What was measured</h2>
+<p>Support-message triage, two questions per message (intent among 72, emotion among 6), hybrid heads,
+multilingual-e5-small (the same architecture and size), arm64, eu-west-1 prices:</p>
+<table>
+<thead>
+<tr>
+<th>Lambda memory</th>
+<th style="text-align: right;">Cold start</th>
+<th style="text-align: right;">Per message (billed p50)</th>
+<th style="text-align: right;">Per million messages</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1,024 MB</td>
+<td style="text-align: right;">2.4 s</td>
+<td style="text-align: right;">36 ms</td>
+<td style="text-align: right;">$0.67</td>
+</tr>
+<tr>
+<td><strong>1,769 MB (1 vCPU)</strong></td>
+<td style="text-align: right;">2.4 s</td>
+<td style="text-align: right;"><strong>17 ms</strong></td>
+<td style="text-align: right;"><strong>$0.59</strong></td>
+</tr>
+<tr>
+<td>3,538 MB</td>
+<td style="text-align: right;">3.0 s</td>
+<td style="text-align: right;">17 ms</td>
+<td style="text-align: right;">$0.98</td>
+</tr>
+</tbody>
+</table>
+<p>Accuracy of that function: 0.787 (emotion) / 0.890 (intent). The package, model included, is 225 MB.
+The cross model that reads Noul and Score (see <a href="models.html#cross-models-reading-the-question-and-the-text-together">models</a>)
+answers a yes/no in 4–7 ms on an M4 Pro; it has not been timed in Lambda yet.</p>
+<h2 id="1-install-and-add-the-model-on-your-machine">1. Install and add the model (on your machine)</h2>
+<pre><code class="language-bash">pip install &quot;jul[onnx,tune,yaml,calibrate]&quot;
+jul models add jul-decision-e5-small --repo usejul/jul-decision-e5-small-onnx --backend onnx
+</code></pre>
+<p><code>jul models add</code> fits the vector reading on the calibration sets and attaches the cross model the repo
+carries in <code>cross/</code>.</p>
+<h2 id="2-write-the-questions">2. Write the questions</h2>
+<p><code>questions.yaml</code>: the fixed questions the function answers.</p>
+<pre><code class="language-yaml">team:
+  type: choice
+  instructions: Which team should handle this ticket?
+  criteria:
+    billing: payments, invoices, refunds
+    tech: bugs, errors, crashes
+    sales: plans, pricing, upgrades
+angry:
+  type: noul
+  instructions: Is the customer angry?
+</code></pre>
+<p>Keep it to what the function decides. Each Choice adds its options' reading, each Noul or Score a pass
+of the cross model.</p>
+<h2 id="3-label-examples-and-tune">3. Label examples and tune</h2>
+<p><code>labeled.jsonl</code>, one message per line, with the answer to each question:</p>
+<pre><code class="language-json">{&quot;state&quot;: &quot;I was charged twice for order 4411, fix it now&quot;, &quot;answers&quot;: {&quot;team&quot;: &quot;billing&quot;, &quot;angry&quot;: true}}
+{&quot;state&quot;: &quot;the export button does nothing&quot;, &quot;answers&quot;: {&quot;team&quot;: &quot;tech&quot;, &quot;angry&quot;: false}}
+</code></pre>
+<pre><code class="language-bash">jul autotune tickets --questions questions.yaml --labeled labeled.jsonl --features hybrid \
+    --model jul-decision-e5-small --backend onnx
+</code></pre>
+<p><code>autotune</code> prints, per question, whether the head beat zero-shot in cross-validation; a head that does
+not is not used. For a Noul or a Score, "zero-shot" is the cross model: the head must beat it on your
+examples to replace it.</p>
+<h2 id="4-pack">4. Pack</h2>
+<pre><code class="language-bash">jul pack bundle/ --questions questions.yaml --context tickets --model jul-decision-e5-small --backend onnx
+</code></pre>
+<p>The last part of the first line says which models the bundle needs: <code>vector</code>, <code>cross</code> or both. Choice
+questions and tuned heads read the vector model; untuned Noul and Score questions read the cross model.
+Only those go into the package: a function that asks only yes/no and score questions ships the cross
+model alone. If a pack says <code>vector + cross</code>, split the questions into two bundles (and two functions,
+see below), or tune the yes/no questions so their heads read the vectors.</p>
+<h2 id="5-build-the-package">5. Build the package</h2>
+<p>A Lambda zip holds at most 250 MB once unzipped, and must be built for the Lambda's CPU (arm64 here) and
+Python (3.12), whatever machine you build on:</p>
+<pre><code class="language-bash">mkdir -p build
+PLAT=&quot;--platform manylinux2014_aarch64 --platform manylinux_2_28_aarch64 --implementation cp --python-version 3.12 --only-binary=:all:&quot;
+pip install -q --target build $PLAT &quot;onnxruntime&gt;=1.18&quot; &quot;jinja2&gt;=3.1&quot; &quot;numpy&gt;=1.24&quot;
+pip install -q --target build $PLAT --no-deps &quot;tokenizers&gt;=0.20&quot;   # its Hub dependencies only download models
+pip install -q --target build --no-deps jul
+# not used at run time: ONNX Runtime's model tools, numpy's tests; boto3 comes with the Lambda runtime
+rm -rf build/onnxruntime/{transformers,quantization,tools} build/numpy/_core/tests build/numpy/tests build/bin
+find build -name __pycache__ -type d -prune -exec rm -rf {} +
+
+cp -r bundle build/bundle
+huggingface-cli download usejul/jul-decision-e5-small-onnx --local-dir models/jul-decision-e5-small
+cp -r models/jul-decision-e5-small build/model                 # if the bundle needs &quot;vector&quot;
+rm -rf build/model/cross build/model/.cache
+cp -r models/jul-decision-e5-small/cross build/model-cross     # if the bundle needs &quot;cross&quot;
+du -sh build                                                   # must stay under 250 MB
+</code></pre>
+<p><strong>One model per function.</strong> One model fits the 250 MB (about 225 MB with the dependencies); both do
+not. If your questions need both (Choice and untuned yes/no), prefer two functions, each packed with
+its own questions and shipping its own model: one for the Choice questions, one for the yes/no and
+score questions. Each keeps the 2.4 s cold start.</p>
+<p>Other ways, not recommended:
+- a container image (up to 10 GB) holds both models; its cold start was not measured;
+- reading a graph from S3 at start (<code>JUL_ONNX_MODEL</code>, <code>JUL_ONNX_CROSS_MODEL</code> = <code>s3://bucket/key</code>, read
+  into memory) lengthens every cold start by the download: a 1.1 GB graph from S3 took the cold start
+  to ~17 s, against 2.4 s for a model in the package.</p>
+<p><code>build/handler.py</code>:</p>
+<pre><code class="language-python">import os
+import time
+
+from jul import Bundle
+
+HERE = os.path.dirname(__file__)
+_cross = os.path.join(HERE, &quot;model-cross&quot;)
+bundle = Bundle.load(os.path.join(HERE, &quot;bundle&quot;), backend=&quot;onnx&quot;, model=os.path.join(HERE, &quot;model&quot;),
+                     cross_model=_cross if os.path.isdir(_cross) else None)
+bundle.system_one(&quot;warm-up&quot;)   # at init, not on the first call
+
+
+def handler(event, context):
+    messages = event.get(&quot;messages&quot;) or [event[&quot;message&quot;]]
+    t = time.perf_counter()
+    responses = bundle.system_one_batch(messages)
+    return {&quot;results&quot;: [{name: answer.as_dict() for name, answer in r.answers.items()} for r in responses],
+            &quot;ms&quot;: round((time.perf_counter() - t) * 1000, 1)}
+</code></pre>
+<p>The bundle names its models; <code>model=</code> and <code>cross_model=</code> only say where they are in the package, so
+nothing is downloaded at run time.</p>
+<h2 id="6a-deploy-with-the-aws-cli">6a. Deploy with the AWS CLI</h2>
+<p>A zip over 50 MB is uploaded through S3 (the package only, the model stays inside it). The role needs
+<code>AWSLambdaBasicExecutionRole</code>.</p>
+<pre><code class="language-bash">(cd build &amp;&amp; zip -qr ../function.zip .)
+aws s3 cp function.zip s3://&lt;bucket&gt;/jul/function.zip
+aws lambda create-function --function-name tickets --runtime python3.12 --architectures arm64 \
+    --memory-size 1769 --timeout 30 --handler handler.handler --role &lt;role arn&gt; \
+    --code S3Bucket=&lt;bucket&gt;,S3Key=jul/function.zip
+aws lambda invoke --function-name tickets --cli-binary-format raw-in-base64-out \
+    --payload '{&quot;message&quot;: &quot;I was charged twice, fix this now&quot;}' /dev/stdout
+</code></pre>
+<h2 id="6b-deploy-with-cdk">6b. Deploy with CDK</h2>
+<p>The same function as a CDK stack (TypeScript), next to <code>build/</code>. CDK zips the directory, uploads it and
+creates the role.</p>
+<pre><code class="language-bash">mkdir infra &amp;&amp; cd infra
+npm init -y &amp;&amp; npm install aws-cdk-lib constructs &amp;&amp; npm install -D aws-cdk tsx typescript
+echo '{&quot;app&quot;: &quot;npx tsx app.ts&quot;}' &gt; cdk.json
+</code></pre>
+<p><code>infra/app.ts</code>:</p>
+<pre><code class="language-typescript">import * as path from &quot;node:path&quot;;
+import { App, CfnOutput, Duration, RemovalPolicy, Stack } from &quot;aws-cdk-lib&quot;;
+import * as lambda from &quot;aws-cdk-lib/aws-lambda&quot;;
+import * as logs from &quot;aws-cdk-lib/aws-logs&quot;;
+
+const BUILD = path.join(__dirname, &quot;..&quot;, &quot;build&quot;);
+const MEMORY_MB = 1769; // one full vCPU
+
+const app = new App();
+const stack = new Stack(app, &quot;JulTickets&quot;, {
+  env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
+});
+
+const fn = new lambda.Function(stack, &quot;Tickets&quot;, {
+  runtime: lambda.Runtime.PYTHON_3_12,
+  architecture: lambda.Architecture.ARM_64,
+  handler: &quot;handler.handler&quot;,
+  code: lambda.Code.fromAsset(BUILD),
+  memorySize: MEMORY_MB,
+  timeout: Duration.seconds(30),
+  environment: { JUL_ONNX_THREADS: String(Math.max(1, Math.floor(MEMORY_MB / 1769))) },
+  logGroup: new logs.LogGroup(stack, &quot;TicketsLogs&quot;, {
+    retention: logs.RetentionDays.ONE_WEEK,
+    removalPolicy: RemovalPolicy.DESTROY,
+  }),
+});
+
+new CfnOutput(stack, &quot;FunctionName&quot;, { value: fn.functionName });
+</code></pre>
+<p>Two functions (one per model): build two directories (<code>build-choice/</code>, <code>build-yesno/</code>) from two bundles and
+declare two <code>lambda.Function</code>s, one per directory.</p>
+<pre><code class="language-bash">npx cdk bootstrap          # once per account and region
+npx cdk deploy
+aws lambda invoke --function-name &lt;FunctionName from the output&gt; --cli-binary-format raw-in-base64-out \
+    --payload '{&quot;message&quot;: &quot;I was charged twice, fix this now&quot;}' /dev/stdout
+</code></pre>
+<h2 id="sizing">Sizing</h2>
+<p>1,769 MB is one full vCPU, the best price per call in the table above; <code>JUL_ONNX_THREADS</code> gives ONNX
+Runtime one thread per whole vCPU. Batching several messages per event (<code>"messages": [...]</code>) lowers the
+price further. With the model in the package, a cold start is ~2.4 s; SnapStart brings nothing at that size.</p>
+<h2 id="pitfalls">Pitfalls</h2>
+<ul>
+<li><strong>Tune on your own messages.</strong> Heads trained on another domain transfer badly: emotion heads trained on
+  tweets read a fraud report as "joy" or "anger". A few hundred labeled messages from the real inbox
+  beat thousands from elsewhere.</li>
+<li><strong>Pack on the backend you deploy on</strong> (onnx): the option vectors and heads are computed with it.</li>
+<li><strong>Long texts are cut</strong> to the model's 512 positions (the end of the message goes first); the cross
+  model reads 256 tokens, question included.</li>
+</ul>
+</article>
+<nav class="pager" aria-label="Pages"><a href="deployment.html" rel="prev">◄ Deploying a fixed need</a><a href="models.html" rel="next">Models and readings ►</a></nav>
+<p class="foot dim"><a href="https://github.com/usejul/jul/edit/main/docs/aws-lambda.md">Edit this page</a> · JuL, <i>Just use Less</i> · Apache-2.0 · Not affiliated with TypeSafe AI or Jev.</p>
+    </section>
+  </main>
+</div>
+<script src="assets/docs.js"></script>
+</body>
+</html>

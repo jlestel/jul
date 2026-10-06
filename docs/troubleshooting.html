@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FAQ and troubleshooting · JuL docs</title>
+<meta name="description" content="FAQ and troubleshooting Errors No backend installed. Run: jul setup No mlx or torch in this environment. jul setup installs the right one; or pip install &quot;jul[m">
+<meta name="theme-color" content="#0a0600">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230a0600'/%3E%3Ctext x='2' y='12' font-family='monospace' font-size='11' fill='%23ffb000'%3E%3E_%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/docs.css">
+<script>try{var p=localStorage.getItem("jul-phosphor");if(p)document.documentElement.dataset.phosphor=p}catch(e){}</script>
+</head>
+<body>
+<a class="skip" href="#doc">Skip to the page</a>
+<nav class="menubar" aria-label="Main">
+  <a class="brand" href="../index.html">▓ JuL-DOS 0.5</a>
+  <a href="index.html"><u>D</u>ocs</a>
+  <a href="quickstart.html" class="hide-sm"><u>Q</u>uickstart</a>
+  <a href="python-api.html" class="hide-sm"><u>A</u>PI</a>
+  <a href="cli-reference.html" class="hide-sm">C<u>L</u>I</a>
+  <a href="https://github.com/usejul/jul"><u>G</u>itHub</a>
+  <span class="spacer"></span>
+  <label class="search"><span aria-hidden="true">[/]</span><input id="q" type="search" placeholder="search" autocomplete="off" aria-label="Search the docs"></label>
+  <button id="phosphor" type="button" title="Change phosphor">PHOSPHOR:<span id="ph-name">AMB</span></button>
+</nav>
+<div id="results" class="win results" data-title="SEARCH.EXE" hidden aria-live="polite"></div>
+<div class="layout">
+  <aside class="side">
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="dir">[≡] CONTENTS</button>
+    <section class="win dir" id="dir" data-title="C:\JUL\DOCS">
+<p class="nav-h">START HERE</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="index.html">Docs home</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="quickstart.html">Quickstart</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="concepts.html">Concepts</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="hub.html">The hub</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="questions.html">Writing good questions</a></li>
+</ul>
+<p class="nav-h">GUIDES</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="installation.html">Installation</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="cli.html">Command line</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="tuning.html">Adapting to your data</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="serve.html">Serving over HTTP</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="deployment.html">Deploying a fixed need</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="aws-lambda.html">AWS Lambda, step by step</a></li>
+</ul>
+<p class="nav-h">MODELS</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="models.html">Models and readings</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="benchmarks.html">Benchmarks</a></li>
+</ul>
+<p class="nav-h">REFERENCE</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="python-api.html">Python API</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="cli-reference.html">CLI reference</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="configuration.html">Configuration</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="troubleshooting.html" aria-current="page">FAQ and troubleshooting</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="glossary.html">Glossary</a></li>
+</ul>
+<p class="nav-h">PROJECT</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="development.html">Development</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="publishing.html">Publishing</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="changelog.html">Changelog</a></li>
+</ul>
+    </section>
+    <section class="win toc" data-title="ON_PAGE.LST"><ul><li class="l2"><a href="#errors">Errors</a></li>
+<li class="l3"><a href="#no-backend-installed-run-jul-setup">No backend installed. Run: jul setup</a></li>
+<li class="l3"><a href="#mlx-needs-apple-silicon-use---backend-torch">MLX needs Apple Silicon; use --backend torch</a></li>
+<li class="l3"><a href="#model-is-not-downloaded-for-backend--run-jul-setup---model-model">&lt;model&gt; is not downloaded for &lt;backend&gt; (...). Run: jul setup --model &lt;model&gt;</a></li>
+<li class="l3"><a href="#unknown-model-name-available-">Unknown model &#x27;&lt;name&gt;&#x27;. Available: …</a></li>
+<li class="l3"><a href="#name-was-fitted-for-mlx-only--has-no-torch-weights">&#x27;&lt;name&gt;&#x27; was fitted for mlx only / has no torch weights</a></li>
+<li class="l3"><a href="#pyyaml-is-needed-for-yaml-question-files">PyYAML is needed for YAML question files</a></li>
+<li class="l3"><a href="#a-score-needs-at-least-two-levels-lowest-first">A Score needs at least two levels, lowest first</a></li>
+<li class="l3"><a href="#question-x-has-fewer-than-2-labeled-examples">question &#x27;x&#x27; has fewer than 2 labeled examples</a></li>
+<li class="l3"><a href="#is-a-decision-model-with-no-vector-reading-fitted-on-its-weights">is a decision model with no vector reading fitted on its weights</a></li>
+<li class="l3"><a href="#only-the-vector-method-packs">only the vector method packs</a></li>
+<li class="l3"><a href="#jul-serve-warns-bound-to-0000-without-an-api-key">jul serve warns &quot;bound to 0.0.0.0 WITHOUT an API key&quot;</a></li>
+<li class="l3"><a href="#401--403-from-jul-serve">401 / 403 from jul serve</a></li>
+<li class="l2"><a href="#accuracy">Accuracy</a></li>
+<li class="l3"><a href="#it-picks-a-wrong-option-with-high-confidence">It picks a wrong option with high confidence</a></li>
+<li class="l3"><a href="#every-answer-sits-around-the-same-probability">Every answer sits around the same probability</a></li>
+<li class="l3"><a href="#a-yesno-about-how-two-things-relate-is-near-50">A yes/no about how two things relate is near 50%</a></li>
+<li class="l3"><a href="#autotune-says-not-used">autotune says &quot;not used&quot;</a></li>
+<li class="l3"><a href="#the-same-model-answers-slightly-differently-on-my-mac-and-my-server">The same model answers slightly differently on my Mac and my server</a></li>
+<li class="l3"><a href="#is-it-any-good-in-french-german-">Is it any good in French, German, …?</a></li>
+<li class="l2"><a href="#speed-and-memory">Speed and memory</a></li>
+<li class="l3"><a href="#the-first-call-takes-seconds">The first call takes seconds</a></li>
+<li class="l3"><a href="#it-is-slower-than-the-55-ms-in-the-readme">It is slower than the 55 ms in the README</a></li>
+<li class="l3"><a href="#out-of-memory">Out of memory</a></li>
+<li class="l3"><a href="#can-it-run-without-network">Can it run without network?</a></li>
+<li class="l2"><a href="#privacy">Privacy</a></li>
+<li class="l3"><a href="#does-my-text-leave-the-machine">Does my text leave the machine?</a></li>
+<li class="l3"><a href="#can-i-use-it-commercially">Can I use it commercially?</a></li>
+<li class="l2"><a href="#getting-help">Getting help</a></li></ul></section>
+  </aside>
+  <main id="doc">
+    <section class="win doc" data-title="C:\JUL\DOCS\TROUBLES.TXT">
+<article class="prose">
+<h1 id="faq-and-troubleshooting">FAQ and troubleshooting</h1>
+<h2 id="errors">Errors</h2>
+<h3 id="no-backend-installed-run-jul-setup"><code>No backend installed. Run: jul setup</code></h3>
+<p>No mlx or torch in this environment. <code>jul setup</code> installs the right one; or <code>pip install "jul[mlx]"</code> on
+Apple Silicon, <code>pip install "jul[torch]"</code> elsewhere. In Python the same thing raises <code>ImportError</code>.</p>
+<h3 id="mlx-needs-apple-silicon-use---backend-torch"><code>MLX needs Apple Silicon; use --backend torch</code></h3>
+<p>MLX only runs on M-series Macs. On Linux, Windows or an Intel Mac use <code>--backend torch</code> (or set
+<code>JUL_BACKEND=torch</code>).</p>
+<h3 id="model-is-not-downloaded-for-backend--run-jul-setup---model-model"><code>&lt;model&gt; is not downloaded for &lt;backend&gt; (...). Run: jul setup --model &lt;model&gt;</code></h3>
+<p>The CLI does not download weights behind your back. <code>jul setup --model &lt;model&gt;</code> fetches them once and runs a
+check. The Python API downloads them on the first call instead.</p>
+<h3 id="unknown-model-name-available-"><code>Unknown model '&lt;name&gt;'. Available: …</code></h3>
+<p>Not a built-in preset and never added. <code>jul models</code> lists what you have;
+<code>jul models add &lt;name&gt; --repo &lt;hf-repo&gt;</code> fits a new one.</p>
+<h3 id="name-was-fitted-for-mlx-only--has-no-torch-weights"><code>'&lt;name&gt;' was fitted for mlx only</code> / <code>has no torch weights</code></h3>
+<p>Presets are fitted per backend. Fit it for this backend: <code>jul models add &lt;name&gt; --backend torch</code> (the repo
+is remembered for known names).</p>
+<h3 id="pyyaml-is-needed-for-yaml-question-files"><code>PyYAML is needed for YAML question files</code></h3>
+<p><code>pip install "jul[yaml]"</code>, or write the questions file as JSON (same structure).</p>
+<h3 id="a-score-needs-at-least-two-levels-lowest-first"><code>A Score needs at least two levels, lowest first</code></h3>
+<p>A <code>Score</code>'s <code>criteria</code> lists the levels; give at least two. On the CLI, one <code>-o</code> per level.</p>
+<h3 id="question-x-has-fewer-than-2-labeled-examples"><code>question 'x' has fewer than 2 labeled examples</code></h3>
+<p><code>autotune</code> found almost no line answering that question. Check the names in <code>answers</code> match the question
+names, and that each line has a <code>state</code> (or <code>text</code>).</p>
+<h3 id="is-a-decision-model-with-no-vector-reading-fitted-on-its-weights"><code>is a decision model with no vector reading fitted on its weights</code></h3>
+<p><code>autotune</code> trains a decision model's heads on its vector reading (the preset's <code>routing</code> block). A model added
+with <code>jul models add --no-routing</code> has none: add it again without <code>--no-routing</code>.</p>
+<h3 id="only-the-vector-method-packs"><code>only the vector method packs</code></h3>
+<p><code>jul pack</code> needs a vector preset (embedding models, encoders, with or without a cross model). Decision
+models and contrastive heads are served with the client or <code>jul serve</code> instead.</p>
+<h3 id="jul-serve-warns-bound-to-0000-without-an-api-key"><code>jul serve</code> warns "bound to 0.0.0.0 WITHOUT an API key"</h3>
+<p>Anyone on the network can query it. Set <code>JUL_API_KEY</code> (or <code>--api-key</code>); callers then send
+<code>Authorization: Bearer &lt;key&gt;</code> or <code>x-api-key: &lt;key&gt;</code>.</p>
+<h3 id="401--403-from-jul-serve"><code>401</code> / <code>403</code> from <code>jul serve</code></h3>
+<p><code>403</code>: the server has a key and the request carries none. <code>401</code>: the request carries the wrong one.
+<code>/health</code> needs the key too.</p>
+<h2 id="accuracy">Accuracy</h2>
+<h3 id="it-picks-a-wrong-option-with-high-confidence">It picks a wrong option with high confidence</h3>
+<p>Read the option descriptions as if you had never seen the task: the model compares the text with them.
+Most fixes are there: <a href="questions.html">Writing good questions</a>. Then a <a href="tuning.html#context--what-the-data-looks-like">Context</a>
+with ~50 real texts, then <a href="tuning.html#autotune--when-it-is-off-key"><code>autotune</code></a> with labels.</p>
+<h3 id="every-answer-sits-around-the-same-probability">Every answer sits around the same probability</h3>
+<p>Options too close to each other, or a catch-all that matches everything. Make the options distinct, or
+split one <code>Choice</code> into several questions.</p>
+<h3 id="a-yesno-about-how-two-things-relate-is-near-50">A yes/no about how two things relate is near 50%</h3>
+<p>"Is this a paraphrase?", "does it follow?", "was it paid on time?": an embedding model encodes the text and
+the question apart, and answers those near chance. Use a preset with a cross model (the default model on
+PyTorch, <code>jul-decision-wemm-4b-4bit</code> on MLX, <code>jul-decision-e5-small</code> on ONNX): see
+<a href="models.html#cross-models-reading-the-question-and-the-text-together">cross models</a>.</p>
+<h3 id="autotune-says-not-used"><code>autotune</code> says "not used"</h3>
+<p>The head did not beat zero-shot in cross-validation, so it was not activated: your zero-shot answers are
+already as good as what those labels can teach. More labels (at least <code>max(20, 3 × options)</code>), <code>features="hybrid"</code>,
+or better descriptions.</p>
+<h3 id="the-same-model-answers-slightly-differently-on-my-mac-and-my-server">The same model answers slightly differently on my Mac and my server</h3>
+<p>MLX presets read 4-bit weights, PyTorch reads bf16: the vectors differ a little (cosine ~0.95), and a close
+call can flip. Tune and pack on the backend you deploy on.</p>
+<h3 id="is-it-any-good-in-french-german-">Is it any good in French, German, …?</h3>
+<p>The models answer other languages; every setting was fitted on English. On the decision bench the default
+model scores 0.829 in French against 0.862 in English. Measure on your data.</p>
+<h2 id="speed-and-memory">Speed and memory</h2>
+<h3 id="the-first-call-takes-seconds">The first call takes seconds</h3>
+<p>The model loads on the first call (a few seconds for 2.6 GB). The next ones take tens of milliseconds.
+<code>jul serve</code> loads it at startup (<code>--no-warmup</code> defers it).</p>
+<h3 id="it-is-slower-than-the-55-ms-in-the-readme">It is slower than the 55 ms in the README</h3>
+<p>55 ms is the default model on an M5 Max; an M4 Pro takes ~146 ms. Faster options, from the same API:
+<code>f2llm-1.7b</code> (24 ms), <code>harrier-0.6b</code> (13 ms), <code>jul-decision-e5-small</code> on ONNX (4 ms). A question with
+many options costs little (option vectors are cached), many questions cost one pass each unless they share
+the <code>one_word</code> prompt.</p>
+<h3 id="out-of-memory">Out of memory</h3>
+<p>Only one model is held at a time. Lower <code>JUL_BATCH_TOKENS</code> / <code>JUL_BATCH_SIZE</code> for batch work, pick a
+smaller model, or the 4-bit one on MLX. On ONNX, <code>JUL_ONNX_MAX_TOKENS</code> caps the longest row.</p>
+<h3 id="can-it-run-without-network">Can it run without network?</h3>
+<p>Yes, once the weights are downloaded: set <code>HF_HUB_OFFLINE=1</code>. Nothing else calls out, except what you ask
+for explicitly (an embeddings API backend, an escalation tier).</p>
+<h2 id="privacy">Privacy</h2>
+<h3 id="does-my-text-leave-the-machine">Does my text leave the machine?</h3>
+<p>Not with a local backend (mlx, torch, onnx): the text never leaves the process, and <code>jul serve</code> does not log it
+(only its first 200 characters at DEBUG level, off by default). It leaves only when you choose so: <code>--backend api</code> with a
+hosted provider, or an escalation tier.</p>
+<h3 id="can-i-use-it-commercially">Can I use it commercially?</h3>
+<p>JuL is Apache-2.0. Each model has its own license, on its Hugging Face page: check the one you ship.</p>
+<h2 id="getting-help">Getting help</h2>
+<p>Open an issue on <a href="https://github.com/usejul/jul/issues">GitHub</a> with the version
+(<code>python -c "import jul; print(jul.__version__)"</code>), the backend, the command or code, and the full error.</p>
+</article>
+<nav class="pager" aria-label="Pages"><a href="configuration.html" rel="prev">◄ Configuration</a><a href="glossary.html" rel="next">Glossary ►</a></nav>
+<p class="foot dim"><a href="https://github.com/usejul/jul/edit/main/docs/troubleshooting.md">Edit this page</a> · JuL, <i>Just use Less</i> · Apache-2.0 · Not affiliated with TypeSafe AI or Jev.</p>
+    </section>
+  </main>
+</div>
+<script src="assets/docs.js"></script>
+</body>
+</html>

@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Docs home · JuL docs</title>
+<meta name="description" content="JuL documentation JuL is a hub for typed decisions. You ask a question about a text: pick an option (Choice), yes or no (Noul), a level on a scale (Score). You ">
+<meta name="theme-color" content="#0a0600">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230a0600'/%3E%3Ctext x='2' y='12' font-family='monospace' font-size='11' fill='%23ffb000'%3E%3E_%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/docs.css">
+<script>try{var p=localStorage.getItem("jul-phosphor");if(p)document.documentElement.dataset.phosphor=p}catch(e){}</script>
+</head>
+<body>
+<a class="skip" href="#doc">Skip to the page</a>
+<nav class="menubar" aria-label="Main">
+  <a class="brand" href="../index.html">▓ JuL-DOS 0.5</a>
+  <a href="index.html"><u>D</u>ocs</a>
+  <a href="quickstart.html" class="hide-sm"><u>Q</u>uickstart</a>
+  <a href="python-api.html" class="hide-sm"><u>A</u>PI</a>
+  <a href="cli-reference.html" class="hide-sm">C<u>L</u>I</a>
+  <a href="https://github.com/usejul/jul"><u>G</u>itHub</a>
+  <span class="spacer"></span>
+  <label class="search"><span aria-hidden="true">[/]</span><input id="q" type="search" placeholder="search" autocomplete="off" aria-label="Search the docs"></label>
+  <button id="phosphor" type="button" title="Change phosphor">PHOSPHOR:<span id="ph-name">AMB</span></button>
+</nav>
+<div id="results" class="win results" data-title="SEARCH.EXE" hidden aria-live="polite"></div>
+<div class="layout">
+  <aside class="side">
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="dir">[≡] CONTENTS</button>
+    <section class="win dir" id="dir" data-title="C:\JUL\DOCS">
+<p class="nav-h">START HERE</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="index.html" aria-current="page">Docs home</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="quickstart.html">Quickstart</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="concepts.html">Concepts</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="hub.html">The hub</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="questions.html">Writing good questions</a></li>
+</ul>
+<p class="nav-h">GUIDES</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="installation.html">Installation</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="cli.html">Command line</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="tuning.html">Adapting to your data</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="serve.html">Serving over HTTP</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="deployment.html">Deploying a fixed need</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="aws-lambda.html">AWS Lambda, step by step</a></li>
+</ul>
+<p class="nav-h">MODELS</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="models.html">Models and readings</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="benchmarks.html">Benchmarks</a></li>
+</ul>
+<p class="nav-h">REFERENCE</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="python-api.html">Python API</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="cli-reference.html">CLI reference</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="configuration.html">Configuration</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="troubleshooting.html">FAQ and troubleshooting</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="glossary.html">Glossary</a></li>
+</ul>
+<p class="nav-h">PROJECT</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="development.html">Development</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="publishing.html">Publishing</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="changelog.html">Changelog</a></li>
+</ul>
+    </section>
+    <section class="win toc" data-title="ON_PAGE.LST"><ul><li class="l2"><a href="#where-to-start">Where to start</a></li>
+<li class="l2"><a href="#every-page">Every page</a></li></ul></section>
+  </aside>
+  <main id="doc">
+    <section class="win doc" data-title="C:\JUL\DOCS\INDEX.TXT">
+<article class="prose">
+<h1 id="jul-documentation">JuL documentation</h1>
+<p>JuL is a hub for <strong>typed decisions</strong>. You ask a question about a text: pick an option (<code>Choice</code>), yes or no
+(<code>Noul</code>), a level on a scale (<code>Score</code>). You get back an answer and a probability per option. One API, the
+one of Jev's SDK, and behind it whatever model fits your constraints: a 4B model on your Mac, a 90 MB encoder
+in an AWS Lambda, an embeddings API, or a bigger decider only for the questions the small one is unsure about.</p>
+<pre><code class="language-python">from jul import TypeSafeClient, Choice
+
+client = TypeSafeClient()
+r = client.system_one(
+    state=&quot;I was charged twice this month.&quot;,
+    questions={&quot;team&quot;: Choice(instructions=&quot;Which team should handle this?&quot;,
+                              criteria={&quot;billing&quot;: &quot;payments, refunds&quot;, &quot;technical&quot;: &quot;bugs, errors&quot;,
+                                        &quot;sales&quot;: &quot;pricing, plans&quot;})},
+)
+r.choices[&quot;team&quot;].choice           # &quot;billing&quot;
+r.choices[&quot;team&quot;].probabilities    # {&quot;billing&quot;: 0.88, &quot;technical&quot;: 0.11, &quot;sales&quot;: 0.01}
+</code></pre>
+<h2 id="where-to-start">Where to start</h2>
+<div class="cards">
+<p><strong>New here?</strong> <a href="quickstart.html">Quickstart</a>: install, a first answer, a first batch, in ten minutes. Then
+<a href="concepts.html">Concepts</a>: the six words that explain the rest.</p>
+<p><strong>Already on Jev?</strong> Change <code>from typesafe_sdk import</code> to <code>from jul import</code>: same classes, same calls, same
+response. <a href="python-api.html">Python API</a> lists what is identical and what JuL adds.</p>
+<p><strong>Picking a model?</strong> <a href="hub.html">The hub</a> maps every model, backend and provider JuL plugs into, and how to
+choose. <a href="models.html">Models</a> has the details, <a href="benchmarks.html">Benchmarks</a> the numbers.</p>
+<p><strong>Going to production?</strong> <a href="serve.html">Serving over HTTP</a>, <a href="deployment.html">Deploying a fixed need</a>,
+<a href="aws-lambda.html">AWS Lambda</a>, and <a href="configuration.html">Configuration</a> for every variable.</p>
+</div>
+<h2 id="every-page">Every page</h2>
+<table>
+<thead>
+<tr>
+<th>I want to…</th>
+<th>Read</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>install it, pick MLX, PyTorch or ONNX</td>
+<td><a href="installation.html">Installation</a></td>
+</tr>
+<tr>
+<td>understand state, question, option, reading, context, head</td>
+<td><a href="concepts.html">Concepts</a></td>
+</tr>
+<tr>
+<td>see every model, backend and provider JuL connects</td>
+<td><a href="hub.html">The hub</a></td>
+</tr>
+<tr>
+<td>write options the model gets right</td>
+<td><a href="questions.html">Writing good questions</a></td>
+</tr>
+<tr>
+<td>answer a file of texts from the shell</td>
+<td><a href="cli.html">Command line</a></td>
+</tr>
+<tr>
+<td>improve accuracy on my own data</td>
+<td><a href="tuning.html">Adapting to your data</a></td>
+</tr>
+<tr>
+<td>call it from another language</td>
+<td><a href="serve.html">Serving over HTTP</a></td>
+</tr>
+<tr>
+<td>send unsure answers to a bigger model</td>
+<td><a href="serve.html#escalation-local-first-a-bigger-decider-when-unsure">Escalation</a></td>
+</tr>
+<tr>
+<td>ship a fixed set of questions</td>
+<td><a href="deployment.html">Deploying a fixed need</a>, <a href="aws-lambda.html">AWS Lambda</a></td>
+</tr>
+<tr>
+<td>use my own model</td>
+<td><a href="models.html#adding-a-model">Models › Adding a model</a></td>
+</tr>
+<tr>
+<td>look up a class, argument or field</td>
+<td><a href="python-api.html">Python API</a></td>
+</tr>
+<tr>
+<td>look up a command or flag</td>
+<td><a href="cli-reference.html">CLI reference</a></td>
+</tr>
+<tr>
+<td>look up an environment variable or a file on disk</td>
+<td><a href="configuration.html">Configuration</a></td>
+</tr>
+<tr>
+<td>fix an error</td>
+<td><a href="troubleshooting.html">FAQ and troubleshooting</a></td>
+</tr>
+<tr>
+<td>look up a word</td>
+<td><a href="glossary.html">Glossary</a></td>
+</tr>
+</tbody>
+</table>
+<p>Keys on every page: <code>/</code> search, <code>D</code> docs home, <code>Q</code> quickstart, <code>A</code>
+Python API, <code>L</code> CLI reference, <code>P</code> phosphor, <code>G</code> GitHub.</p>
+</article>
+<nav class="pager" aria-label="Pages"><span></span><a href="quickstart.html" rel="next">Quickstart ►</a></nav>
+<p class="foot dim"><a href="https://github.com/usejul/jul/edit/main/docs/index.md">Edit this page</a> · JuL, <i>Just use Less</i> · Apache-2.0 · Not affiliated with TypeSafe AI or Jev.</p>
+    </section>
+  </main>
+</div>
+<script src="assets/docs.js"></script>
+</body>
+</html>

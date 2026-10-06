@@ -1,0 +1,1156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Models and readings · JuL docs</title>
+<meta name="description" content="Models Every model measured Jev scores 0.753 on the same benchmark. wemm-4b-4bit and minicpm5-2b are built in; any other is one command away, jul models add &amp;lt">
+<meta name="theme-color" content="#0a0600">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230a0600'/%3E%3Ctext x='2' y='12' font-family='monospace' font-size='11' fill='%23ffb000'%3E%3E_%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/docs.css">
+<script>try{var p=localStorage.getItem("jul-phosphor");if(p)document.documentElement.dataset.phosphor=p}catch(e){}</script>
+</head>
+<body>
+<a class="skip" href="#doc">Skip to the page</a>
+<nav class="menubar" aria-label="Main">
+  <a class="brand" href="../index.html">▓ JuL-DOS 0.5</a>
+  <a href="index.html"><u>D</u>ocs</a>
+  <a href="quickstart.html" class="hide-sm"><u>Q</u>uickstart</a>
+  <a href="python-api.html" class="hide-sm"><u>A</u>PI</a>
+  <a href="cli-reference.html" class="hide-sm">C<u>L</u>I</a>
+  <a href="https://github.com/usejul/jul"><u>G</u>itHub</a>
+  <span class="spacer"></span>
+  <label class="search"><span aria-hidden="true">[/]</span><input id="q" type="search" placeholder="search" autocomplete="off" aria-label="Search the docs"></label>
+  <button id="phosphor" type="button" title="Change phosphor">PHOSPHOR:<span id="ph-name">AMB</span></button>
+</nav>
+<div id="results" class="win results" data-title="SEARCH.EXE" hidden aria-live="polite"></div>
+<div class="layout">
+  <aside class="side">
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="dir">[≡] CONTENTS</button>
+    <section class="win dir" id="dir" data-title="C:\JUL\DOCS">
+<p class="nav-h">START HERE</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="index.html">Docs home</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="quickstart.html">Quickstart</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="concepts.html">Concepts</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="hub.html">The hub</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="questions.html">Writing good questions</a></li>
+</ul>
+<p class="nav-h">GUIDES</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="installation.html">Installation</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="cli.html">Command line</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="tuning.html">Adapting to your data</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="serve.html">Serving over HTTP</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="deployment.html">Deploying a fixed need</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="aws-lambda.html">AWS Lambda, step by step</a></li>
+</ul>
+<p class="nav-h">MODELS</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="models.html" aria-current="page">Models and readings</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="benchmarks.html">Benchmarks</a></li>
+</ul>
+<p class="nav-h">REFERENCE</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="python-api.html">Python API</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="cli-reference.html">CLI reference</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="configuration.html">Configuration</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="troubleshooting.html">FAQ and troubleshooting</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="glossary.html">Glossary</a></li>
+</ul>
+<p class="nav-h">PROJECT</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="development.html">Development</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="publishing.html">Publishing</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="changelog.html">Changelog</a></li>
+</ul>
+    </section>
+    <section class="win toc" data-title="ON_PAGE.LST"><ul><li class="l2"><a href="#every-model-measured">Every model measured</a></li>
+<li class="l2"><a href="#adding-a-model">Adding a model</a></li>
+<li class="l2"><a href="#micro-models-encoders">Micro models: encoders</a></li>
+<li class="l2"><a href="#embeddings-apis---backend-api">Embeddings APIs (--backend api)</a></li>
+<li class="l2"><a href="#cross-models-reading-the-question-and-the-text-together">Cross models: reading the question and the text together</a></li>
+<li class="l3"><a href="#a-cross-model-on-the-presets-own-weights-lora">A cross model on the preset&#x27;s own weights (LoRA)</a></li>
+<li class="l2"><a href="#decision-models">Decision models</a></li>
+<li class="l2"><a href="#laya">Laya</a></li>
+<li class="l2"><a href="#contrastive-heads-any-backbone-clm-8b">Contrastive heads (any backbone; CLM-8B)</a></li>
+<li class="l3"><a href="#clm-8b">CLM-8B</a></li>
+<li class="l2"><a href="#the-built-in-presets">The built-in presets</a></li>
+<li class="l2"><a href="#how-it-answers">How it answers</a></li>
+<li class="l2"><a href="#every-reading-and-every-setting">Every reading, and every setting</a></li></ul></section>
+  </aside>
+  <main id="doc">
+    <section class="win doc" data-title="C:\JUL\DOCS\MODELS.TXT">
+<article class="prose">
+<h1 id="models">Models</h1>
+<h2 id="every-model-measured">Every model measured</h2>
+<p>Jev scores 0.753 on the same benchmark. <code>wemm-4b-4bit</code> and <code>minicpm5-2b</code> are built in; any other is
+one command away,
+<code>jul models add &lt;name&gt; --repo &lt;repository&gt;</code>, which fits it on the dev sets.</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Repository</th>
+<th style="text-align: right;">Memory</th>
+<th style="text-align: right;">Jev bench, zero-shot</th>
+<th style="text-align: right;">+ autotune</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>wemm-4b-4bit</code></td>
+<td><a href="https://huggingface.co/usejul/WeMM-Embedding-4B-mlx-4bit"><code>usejul/WeMM-Embedding-4B-mlx-4bit</code></a></td>
+<td style="text-align: right;">2.6 GB</td>
+<td style="text-align: right;">0.857</td>
+<td style="text-align: right;"><strong>0.897</strong></td>
+</tr>
+<tr>
+<td><code>wemm-4b</code></td>
+<td><a href="https://huggingface.co/tencent/WeMM-Embedding-4B"><code>tencent/WeMM-Embedding-4B</code></a></td>
+<td style="text-align: right;">4.5 GB</td>
+<td style="text-align: right;"><strong>0.877</strong></td>
+<td style="text-align: right;">0.862</td>
+</tr>
+<tr>
+<td><code>wemm-9b</code></td>
+<td><a href="https://huggingface.co/tencent/WeMM-Embedding-9B"><code>tencent/WeMM-Embedding-9B</code></a></td>
+<td style="text-align: right;">9.0 GB</td>
+<td style="text-align: right;">0.863</td>
+<td style="text-align: right;">0.857</td>
+</tr>
+<tr>
+<td><code>wemm-2b</code></td>
+<td><a href="https://huggingface.co/hfadam/WeMM-Embedding-2B-MLX-4bit"><code>hfadam/WeMM-Embedding-2B-MLX-4bit</code></a></td>
+<td style="text-align: right;">1.5 GB</td>
+<td style="text-align: right;">0.777</td>
+<td style="text-align: right;">0.805</td>
+</tr>
+<tr>
+<td><code>f2llm-8b</code></td>
+<td>converted locally, not published</td>
+<td style="text-align: right;">4.5 GB</td>
+<td style="text-align: right;">0.820</td>
+<td style="text-align: right;">0.850</td>
+</tr>
+<tr>
+<td><code>f2llm-4b</code></td>
+<td><a href="https://huggingface.co/fcmeyer/F2LLM-v2-4B-mlx-6bit"><code>fcmeyer/F2LLM-v2-4B-mlx-6bit</code></a></td>
+<td style="text-align: right;">3.0 GB</td>
+<td style="text-align: right;">0.840</td>
+<td style="text-align: right;">0.853</td>
+</tr>
+<tr>
+<td><code>f2llm-1.7b</code></td>
+<td>converted locally, not published</td>
+<td style="text-align: right;">1.0 GB</td>
+<td style="text-align: right;">0.817</td>
+<td style="text-align: right;">0.833</td>
+</tr>
+<tr>
+<td><code>f2llm-0.6b</code></td>
+<td><a href="https://huggingface.co/fcmeyer/F2LLM-v2-0.6B-bf16-mlx"><code>fcmeyer/F2LLM-v2-0.6B-bf16-mlx</code></a></td>
+<td style="text-align: right;">1.1 GB</td>
+<td style="text-align: right;">0.623</td>
+<td style="text-align: right;">0.817</td>
+</tr>
+<tr>
+<td><code>qwen3-embedding-8b</code></td>
+<td><a href="https://huggingface.co/mlx-community/Qwen3-Embedding-8B-4bit-DWQ"><code>mlx-community/Qwen3-Embedding-8B-4bit-DWQ</code></a></td>
+<td style="text-align: right;">4.0 GB</td>
+<td style="text-align: right;">0.773</td>
+<td style="text-align: right;">0.806</td>
+</tr>
+<tr>
+<td><code>qwen3-embedding-4b</code></td>
+<td><a href="https://huggingface.co/mlx-community/Qwen3-Embedding-4B-4bit-DWQ"><code>mlx-community/Qwen3-Embedding-4B-4bit-DWQ</code></a></td>
+<td style="text-align: right;">2.1 GB</td>
+<td style="text-align: right;">0.733</td>
+<td style="text-align: right;">0.775</td>
+</tr>
+<tr>
+<td><code>qwen3-embedding-0.6b</code></td>
+<td><a href="https://huggingface.co/mlx-community/Qwen3-Embedding-0.6B-4bit-DWQ"><code>mlx-community/Qwen3-Embedding-0.6B-4bit-DWQ</code></a></td>
+<td style="text-align: right;">0.32 GB</td>
+<td style="text-align: right;">0.637</td>
+<td style="text-align: right;">0.760</td>
+</tr>
+<tr>
+<td><code>harrier-0.6b</code></td>
+<td><a href="https://huggingface.co/majentik/harrier-oss-v1-0.6b-MLX-4bit"><code>majentik/harrier-oss-v1-0.6b-MLX-4bit</code></a></td>
+<td style="text-align: right;"><strong>0.31 GB</strong></td>
+<td style="text-align: right;">0.667</td>
+<td style="text-align: right;">0.814</td>
+</tr>
+<tr>
+<td><code>minicpm5-2b</code></td>
+<td><a href="https://huggingface.co/openbmb/MiniCPM5-2B-MLX"><code>openbmb/MiniCPM5-2B-MLX</code></a></td>
+<td style="text-align: right;">2.7 GB</td>
+<td style="text-align: right;">0.617</td>
+<td style="text-align: right;">0.757</td>
+</tr>
+<tr>
+<td><code>jul-decision-minicpm5-2b</code> (v1.0)</td>
+<td><a href="https://huggingface.co/usejul/jul-decision-minicpm5-2b-mlx-4bit"><code>usejul/jul-decision-minicpm5-2b-mlx-4bit</code></a></td>
+<td style="text-align: right;">1.3 GB</td>
+<td style="text-align: right;">0.796</td>
+<td style="text-align: right;"></td>
+</tr>
+<tr>
+<td><code>ternary-bonsai-1.7b</code></td>
+<td><a href="https://huggingface.co/prism-ml/Ternary-Bonsai-1.7B-mlx-2bit"><code>prism-ml/Ternary-Bonsai-1.7B-mlx-2bit</code></a></td>
+<td style="text-align: right;">0.46 GB</td>
+<td style="text-align: right;">0.640</td>
+<td style="text-align: right;">0.760</td>
+</tr>
+<tr>
+<td><code>ternary-bonsai-8b</code></td>
+<td><a href="https://huggingface.co/prism-ml/Ternary-Bonsai-8B-mlx-2bit"><code>prism-ml/Ternary-Bonsai-8B-mlx-2bit</code></a></td>
+<td style="text-align: right;">1.75 GB</td>
+<td style="text-align: right;">0.563</td>
+<td style="text-align: right;">0.753</td>
+</tr>
+<tr>
+<td><code>bitnet-2b</code></td>
+<td><a href="https://huggingface.co/mlx-community/bitnet-b1.58-2B-4T"><code>mlx-community/bitnet-b1.58-2B-4T</code></a></td>
+<td style="text-align: right;">1.1 GB</td>
+<td style="text-align: right;">0.617</td>
+<td style="text-align: right;">0.723</td>
+</tr>
+<tr>
+<td><code>e5-small</code></td>
+<td><a href="https://huggingface.co/intfloat/multilingual-e5-small"><code>intfloat/multilingual-e5-small</code></a>, onnx 8-bit</td>
+<td style="text-align: right;"><strong>0.09 GB</strong></td>
+<td style="text-align: right;">0.543</td>
+<td style="text-align: right;">0.713 (<strong>0.790</strong> hybrid)</td>
+</tr>
+</tbody>
+</table>
+<p><code>+ autotune</code> is a head on the vectors (<code>features="vector"</code>). With a hybrid head (vectors + TF-IDF, see
+<a href="tuning.html#what-the-head-reads-features"><code>features=</code></a>), <code>e5-small</code> — an encoder, see <a href="#micro-models-encoders">Micro models</a> —
+reaches <strong>0.790</strong>, above Jev's 0.753 (AG News 0.95, Banking77 0.88, Emotion 0.54), at 6 ms per text on
+an M4 Pro. The other models were not measured with a hybrid head.</p>
+<h2 id="adding-a-model">Adding a model</h2>
+<pre><code class="language-bash">jul models add my-model --repo org/Some-Instruct-3B            # on the default backend
+jul models add minicpm5-2b --backend torch                     # a known preset, on another backend
+</code></pre>
+<p>One command runs the protocol that produced the built-in presets, on the dev datasets only (never on
+the Jev benchmark):</p>
+<ol>
+<li><strong>checks</strong> — the model loads, the prefix cache leaves the vectors unchanged, a call does not
+   disturb the next one, the letters reading (Noul, Score) has single-token markers;</li>
+<li><strong>extraction</strong> — 4 dev sets x 50 examples and 200 generic texts, every layer of the upper half
+   read in the same pass;</li>
+<li><strong>choice</strong> — layers and center by dev accuracy averaged over neighbouring layers (a plateau, not a
+   lucky peak), then tau by pooled NLL;</li>
+<li><strong>output</strong> — <code>~/.jul/presets/&lt;name&gt;@&lt;backend&gt;.json</code> and its generic center, used from then on by
+   <code>--model &lt;name&gt;</code> on that backend. <code>jul models</code> lists it with what was measured.</li>
+</ol>
+<p>The calibration data is downloaded once from BTZSC into <code>~/.jul/calibration-data</code> (needs
+<code>pip install "jul[calibrate]"</code>), or taken from <code>--data &lt;dir&gt;</code>. The dev accuracy it reports comes
+with its standard error (±3.5 points at n=200): it orients, it does not rank close models. Measure
+on the Jev bench separately, once.</p>
+<h2 id="micro-models-encoders">Micro models: encoders</h2>
+<p>An encoder (BERT, XLM-R, multilingual-e5…) is a backbone like any other: <code>jul models add</code>,
+<code>autotune</code> and <code>jul pack</code> run on it unchanged, on the torch and onnx backends. JuL recognizes one by
+its <code>model_type</code>, or by <code>use_bidirectional_attention</code> in its config (a decoder turned into an embedding
+model, as <a href="https://huggingface.co/google/embeddinggemma-300m">EmbeddingGemma</a>; torch backend only for now),
+and reads it as it was trained, not as a decoder (<code>lib/jul/encoder.py</code>):</p>
+<ul>
+<li>the vector is the mean of the layer over the whole sequence (the sentence embedding e5 was trained to
+  produce), not a last token; zero-shot is plain embedding similarity between state and options;</li>
+<li>the prompts are the model's own input convention (<code>query: {state}</code> for e5), no chat template and no
+  "in one word" cue (<code>Backbone.templates</code>). A model declares it in its <code>config_sentence_transformers.json</code>
+  (<code>"prompts": {"query": "query: "}</code>); for repos that do not, the official e5 ones included, JuL
+  reads it from a list by repo name, <code>lib/jul/assets/text_prefixes.json</code>, which
+  <code>$JUL_HOME/text_prefixes.json</code> extends or overrides;</li>
+<li>attention is bidirectional, so no prefix can be cached: the prefix runs again with each query, and a
+  sequence is cut to the model's positions (512), the input first, then the prefix;</li>
+<li>no logits: the letters reading and decision models need a decoder.</li>
+</ul>
+<pre><code class="language-bash">python -m jul.backends.onnx_export intfloat/multilingual-e5-small models/e5-small-onnx
+python -m jul.backends.onnx_export models/e5-small-onnx models/e5-small-onnx-w8 --int8   # 86 MB
+jul models add e5-small --repo models/e5-small-onnx-w8 --backend onnx
+</code></pre>
+<p>Why bother: on a support-triage task (jul-lambda, 2026-09-25), multilingual-e5-small (21 M
+parameters outside its embedding) with a hybrid head matched Harrier 0.6B (440 M) — emotion 0.787
+against 0.791, Banking77 0.890 against 0.890 — in <strong>4 ms per message against 37 ms</strong> on an M4 Pro,
+and 17 ms on a 1,769 MB AWS Lambda ($0.59 per million calls, cold start 2.4 s). Zero-shot, on the
+calibration dev sets, it scored 0.590 against 0.475 for Harrier 0.6B. The heads carry it: alone,
+zero-shot, a small encoder is no match for a 4B embedding model.</p>
+<h2 id="embeddings-apis---backend-api">Embeddings APIs (<code>--backend api</code>)</h2>
+<p>Any embeddings endpoint is read like an encoder: the state's vector is the embedding of the prompt that holds
+it, the options' are the embeddings of the options. Nothing is downloaded; <code>jul models add</code> fits the center
+and tau on the calibration sets, as for a local model.</p>
+<pre><code class="language-bash">jul models add qwen3-emb --repo ollama:qwen3-embedding:0.6b --backend api      # Ollama, no key
+OPENAI_API_KEY=... jul models add oai-small --repo openai:text-embedding-3-small --backend api
+jul models add my-emb --repo http://localhost:8000/v1#bge-m3 --backend api     # any OpenAI-compatible server
+jul ask choice &quot;Which team?&quot; -o billing -o technical --state &quot;I was charged twice&quot; --model qwen3-emb --backend api
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>repo</th>
+<th>endpoint</th>
+<th>key</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ollama:MODEL</code></td>
+<td><code>$OLLAMA_HOST</code> or <code>http://localhost:11434</code>, <code>/v1/embeddings</code></td>
+<td>none</td>
+</tr>
+<tr>
+<td><code>openai:MODEL</code></td>
+<td><code>https://api.openai.com/v1/embeddings</code></td>
+<td><code>OPENAI_API_KEY</code></td>
+</tr>
+<tr>
+<td><code>mistral:MODEL</code></td>
+<td><code>https://api.mistral.ai/v1/embeddings</code></td>
+<td><code>MISTRAL_API_KEY</code></td>
+</tr>
+<tr>
+<td><code>voyage:MODEL</code></td>
+<td><code>https://api.voyageai.com/v1/embeddings</code></td>
+<td><code>VOYAGE_API_KEY</code></td>
+</tr>
+<tr>
+<td><code>http(s)://host/v1#MODEL</code></td>
+<td>that server's <code>/embeddings</code></td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<p>Against a local model: one layer (the API's output), no prefix cache (each state is one call per formulation;
+the options are embedded once per question), no logits (Noul and Score are read as vectors, their default;
+letters and pointer need the weights), and <code>usage</code> counts characters. With a hosted provider the state leaves
+the machine.</p>
+<p>Texts are sent in requests of <code>JUL_API_BATCH</code> (16), each cut to <code>JUL_API_MAX_CHARS</code> (8000) characters with a
+warning, with a timeout of <code>JUL_API_TIMEOUT</code> (300 s). Only Ollama has been run for real; OpenAI, Mistral and
+Voyage use the same OpenAI-format request (Voyage's <code>input_type</code> is not sent; Mistral caps a request's size).</p>
+<h2 id="cross-models-reading-the-question-and-the-text-together">Cross models: reading the question and the text together</h2>
+<p>The vector reading encodes the text and each option apart: the model never sees both at once. That is
+what makes it fast and cacheable, and also why a question about how two things relate — is this a
+paraphrase of that sentence, does it follow that…, does the request mention a place and not a date — is
+answered near chance by an embedding model of any size. A <em>cross model</em> is a second small encoder,
+fine-tuned on pairs: <code>&lt;s&gt; query: question &lt;/s&gt;&lt;/s&gt; text &lt;/s&gt;</code> goes through it once, and the mean of its
+last layer feeds a head chosen by the question type (<code>lib/jul/cross.py</code>):</p>
+<ul>
+<li><code>Noul</code>: one pass, three logits (yes, no, unknown); <code>noul = p(yes) + p(unknown) / 2</code>. Its own descriptions
+  of true and false, when given, are appended to the question;</li>
+<li><code>Score</code>: one pass per level, one logit each;</li>
+<li><code>Choice</code>: supported, not routed by default (the vector reading classifies as well and reads each option
+  once for every call).</li>
+</ul>
+<p>It sits next to a vector preset, not in place of it. <code>jul models add</code> attaches one; the types its
+<code>cross.json</code> declares (Noul and Score) are then read by it, and everything else by the vectors. A
+question with a tuned head or a calibration from <code>autotune</code> keeps the vector reading those were fitted on,
+and <code>method="vector"</code> or <code>method="cross"</code> forces one reading for a call.</p>
+<pre><code class="language-bash">jul models add jul-decision-e5-small --repo usejul/jul-decision-e5-small-onnx --backend onnx   # cross/ attached
+# a cross model of your own: export it like any encoder, then attach it
+python -m jul.backends.onnx_export &lt;cross model&gt; models/cross-onnx --layers 11
+python -m jul.backends.onnx_export models/cross-onnx models/cross-onnx-w8 --int8 --embedding-bits 4   # 98 MB
+cp &lt;cross model&gt;/cross.json &lt;cross model&gt;/cross_heads.npz models/cross-onnx-w8/
+jul models add jul-decision-e5-small --backend onnx --cross models/cross-onnx-w8
+</code></pre>
+<p><code>cross.json</code> holds the input prefix, the length the pairs are cut to (as in training), the layer, the
+separator between the two segments and the types; <code>jul.cross.write_spec</code> writes it from a trained model.</p>
+<p>Which reading answers what:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>no labeled examples</th>
+<th>labeled examples (<code>autotune</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Choice</code></td>
+<td>vectors</td>
+<td>a head on the vectors</td>
+</tr>
+<tr>
+<td><code>Noul</code>, <code>Score</code></td>
+<td>the cross model</td>
+<td>the cross model, unless a head on the vectors beats it on those examples</td>
+</tr>
+</tbody>
+</table>
+<p><code>autotune</code> judges a head for a Noul or Score against the cross model's zero-shot answers on the same
+examples, not against the vectors' (which are weaker there): if the head wins, the question is answered
+by it; otherwise it stays with the cross model. Choice stays on vectors because they carry to labels the
+models never saw — read through a cross model trained on the same data, tool routing went from 0.54 to
+0.76 and classification from 0.82 to 0.86, but the zero-shot Jev bench fell from 0.557 to 0.460
+(Banking77, 77 intents, 0.59 to 0.35) — and because a vector reading is what heads are trained on. Its
+own vectors do not survive the cross training (0.61 to 0.39 on the dev sets), which is why the cross model
+is a second set of weights.</p>
+<p><code>jul pack</code> ships only what its questions need: a bundle of Noul and Score questions (with no tuned head)
+needs the cross model alone, a bundle of Choice questions the vector model alone (<code>bundle.json</code>, <code>models</code>).
+On onnx, <code>JUL_ONNX_CROSS_MODEL</code> points the cross graph at S3 as <code>JUL_ONNX_MODEL</code> does the vector one.</p>
+<p>Measured on <code>jul-decision-e5-small</code> (its vectors and its cross model, both ONNX 8-bit, M4 Pro), on Kev's
+typed-decision questions it never trained on (<code>transfer-v9</code> development split, clean questions):</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th style="text-align: right;">Noul</th>
+<th style="text-align: right;">Choice</th>
+<th style="text-align: right;">Score</th>
+<th style="text-align: right;">all</th>
+<th style="text-align: right;">Noul p50</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>vectors only</td>
+<td style="text-align: right;">0.579</td>
+<td style="text-align: right;">0.401</td>
+<td style="text-align: right;">0.275</td>
+<td style="text-align: right;">0.460</td>
+<td style="text-align: right;">19 ms</td>
+</tr>
+<tr>
+<td>with the cross model</td>
+<td style="text-align: right;"><strong>0.726</strong></td>
+<td style="text-align: right;">0.401</td>
+<td style="text-align: right;"><strong>0.500</strong></td>
+<td style="text-align: right;"><strong>0.524</strong></td>
+<td style="text-align: right;"><strong>7 ms</strong></td>
+</tr>
+<tr>
+<td>Jev (published)</td>
+<td style="text-align: right;">0.847</td>
+<td style="text-align: right;">0.833</td>
+<td style="text-align: right;">0.950</td>
+<td style="text-align: right;">0.854</td>
+<td style="text-align: right;">—</td>
+</tr>
+</tbody>
+</table>
+<p>Paraphrase goes from 0.50 to 0.79, QNLI from 0.55 to 0.70, offensive posts from 0.725 to 0.80. The cross
+model was trained on relational yes/no (paraphrase, inference, compositions, dates), single-text
+decisions and questions about the writer's tone: "is the customer angry?" gets 0.84–0.99 on angry
+support messages and 0.00–0.02 on calm ones. What it does not do well yet: urgency (no training data
+under a commercial license), hard but polite complaints read as offensive, sentences with the same words
+in another order, and knowledge questions (MMLU does not move — that needs a larger model, not another
+reading).</p>
+<h3 id="a-cross-model-on-the-presets-own-weights-lora">A cross model on the preset's own weights (LoRA)</h3>
+<p>A cross model can also be a set of adapters on the vector model itself instead of a second encoder: one
+model in memory for both readings. Its <code>cross.json</code> says <code>"method": "lora"</code> and names LoRA adapters (A and
+B for each Linear layer, by module path, as transformers and mlx-lm name them) and the heads. The engine
+attaches them to the backbone it already holds and switches them on only while it reads a Noul or a
+Score, so the vector reading is unchanged: the features are the same with the adapters attached
+(<code>tests/test_cross.py</code>). The prompt is <code>Text: "&lt;text&gt;"</code>, then <code>Question: &lt;question&gt;</code> (and, for a Score,
+<code>Candidate answer: &lt;level&gt;</code>), then <code>Verdict:</code>, read on the last token of the last layer after the final
+norm: one pass for a Noul, one per level for a Score. MLX and PyTorch.</p>
+<pre><code class="language-bash"># a directory with cross.json, adapter.npz and cross_heads.npz, on top of the default model
+jul models add wemm-4b-4bit --backend mlx --cross models/jul-decision-wemm-4b-4bit
+jul ask noul &quot;Was it paid on time?&quot; --state &quot;Invoice due May 9; paid May 3.&quot;
+</code></pre>
+<p><code>jul-decision-wemm-4b-4bit</code> is WeMM-Embedding-4B with such a cross model (rank-16 adapters on its 248 Linear layers: 32.5M parameters, 65 MB in
+float16; trained on relational yes/no, single-text decisions and scores). Measured on the same Kev
+questions as above, never trained on:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th style="text-align: right;">Noul</th>
+<th style="text-align: right;">Score</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>wemm-4b-4bit</code>, vectors only (PyTorch bf16)</td>
+<td style="text-align: right;">0.762</td>
+<td style="text-align: right;">0.325</td>
+</tr>
+<tr>
+<td><code>jul-decision-wemm-4b-4bit</code>, PyTorch bf16</td>
+<td style="text-align: right;"><strong>0.859</strong></td>
+<td style="text-align: right;"><strong>0.550</strong></td>
+</tr>
+<tr>
+<td><code>jul-decision-wemm-4b-4bit</code>, MLX 4-bit (M4 Pro, ~115 ms per Noul)</td>
+<td style="text-align: right;">0.841</td>
+<td style="text-align: right;">0.300</td>
+</tr>
+</tbody>
+</table>
+<p>Paraphrase goes from 0.69 to 0.93 and QNLI from 0.79 to 0.87 (MLX), and Noul's calibration error from 0.126
+to 0.043. On date questions worded freely (warranties, trials, bookings, ages, deadlines: 390 cases in
+English and French), comparing two dates is solved — which comes first, same month, on time: 1.00, against
+0.62–0.90 for the vectors — but a gap to compute (an age, a warranty in months, a trial in days) stays near
+chance, with or without the adapters. That is also why Score barely moves in 4-bit: its questions here are
+deadlines, close calls that 4-bit weights flip. Choice questions keep the vectors, so the Jev benchmark
+(0.857 zero-shot) is untouched by construction.</p>
+<p>A LoRA cross model can also read a Choice, when its <code>cross.json</code> has a <code>choice</code> entry: the text, the
+question and every option in one prompt, one pass for any number of options.</p>
+<pre><code>Text: &quot;&lt;text&gt;&quot;
+Question: &lt;question&gt;
+Options:
+- &lt;option 1&gt;
+- &lt;option 2&gt;
+Answer:
+</code></pre>
+<p>Each option is read on the newline that closes it (it has seen the text, the question and the options
+before it), the answer on <code>Answer:</code>; a bilinear head (<code>choice_q</code>, <code>choice_k</code> in the heads file) scores
+each option against the answer. jul adds that score to the vector reading, <code>log p = log p_vector + mix · log
+p_listwise</code> (<code>mix</code> in <code>cross.json</code>, 3 for the default model), because each fixes the other's errors: on
+the four label sets of the dev, never trained on, the vectors score 0.707, the listwise reading alone
+0.723 and both 0.730.</p>
+<p><code>jul-decision-wemm-4b</code>, the default model, is WeMM-Embedding-4B with such adapters for Noul and Choice
+(<a href="https://huggingface.co/usejul/jul-decision-wemm-4b">usejul/jul-decision-wemm-4b</a>, 65 MB); Score is read by the
+vectors. They
+were trained on the bf16 weights and are attached on PyTorch; on MLX the preset reads as <code>wemm-4b-4bit</code>
+until they are measured in 4-bit. Decision bench, PyTorch on an A10G (2,108 questions, 12 task families,
+English and French):</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th style="text-align: right;">All</th>
+<th style="text-align: right;">Choice</th>
+<th style="text-align: right;">Noul</th>
+<th style="text-align: right;">Score</th>
+<th style="text-align: right;">p50</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>wemm-4b-4bit</code> vectors + the adapters above for Noul and Score</td>
+<td style="text-align: right;">0.757</td>
+<td style="text-align: right;">0.700</td>
+<td style="text-align: right;">0.850</td>
+<td style="text-align: right;">0.652</td>
+<td style="text-align: right;">95 ms</td>
+</tr>
+<tr>
+<td><code>jul-decision-wemm-4b</code></td>
+<td style="text-align: right;"><strong>0.849</strong></td>
+<td style="text-align: right;"><strong>0.883</strong></td>
+<td style="text-align: right;"><strong>0.872</strong></td>
+<td style="text-align: right;"><strong>0.672</strong></td>
+<td style="text-align: right;">97 ms</td>
+</tr>
+<tr>
+<td>Jev (API)</td>
+<td style="text-align: right;">0.873</td>
+<td style="text-align: right;">0.924</td>
+<td style="text-align: right;">0.878</td>
+<td style="text-align: right;">0.699</td>
+<td style="text-align: right;">655 ms</td>
+</tr>
+</tbody>
+</table>
+<p>Per family: <a href="https://github.com/usejul/jul#decision-bench-against-jev">README</a>. The decision bench keeps the
+questions and label sets of the adapters' training data (only its texts are new). On a bench of 300 typed questions written from scratch for it (sentiment, finance, support, agent routing,
+moderation), Score
+read by the adapters fell behind the vectors of the same weights, so since adapter <code>1525e34</code> their <code>cross.json</code>
+no longer lists <code>score</code>:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th style="text-align: right;">All</th>
+<th style="text-align: right;">Choice</th>
+<th style="text-align: right;">Noul</th>
+<th style="text-align: right;">Score</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>wemm-4b-4bit</code> vectors</td>
+<td style="text-align: right;">0.657</td>
+<td style="text-align: right;">0.78</td>
+<td style="text-align: right;">0.78</td>
+<td style="text-align: right;">0.41</td>
+</tr>
+<tr>
+<td>adapters for Noul, Score and Choice</td>
+<td style="text-align: right;">0.627</td>
+<td style="text-align: right;">0.82</td>
+<td style="text-align: right;">0.79</td>
+<td style="text-align: right;">0.27</td>
+</tr>
+<tr>
+<td><strong><code>jul-decision-wemm-4b</code></strong> (adapters for Noul and Choice)</td>
+<td style="text-align: right;"><strong>0.677</strong></td>
+<td style="text-align: right;">0.83</td>
+<td style="text-align: right;">0.79</td>
+<td style="text-align: right;">0.41</td>
+</tr>
+</tbody>
+</table>
+<h2 id="decision-models">Decision models</h2>
+<p>A <em>decision model</em> is a model trained to answer questions about a state, rather than to write text. It
+reads the state and the options through delimiter tokens it learned, and a small head scores each
+option against the question. <code>jul</code> runs one with no code of its own: everything that model needs sits
+next to its weights, in a <code>decision.json</code> (delimiters, layout, readout, head file, temperature, and the
+longest state and question it was trained on).</p>
+<pre><code class="language-bash">jul models add jul-decision-minicpm5-2b --repo usejul/jul-decision-minicpm5-2b-mlx-4bit   # MLX, 1.4 GB
+jul models add jul-decision-minicpm5-2b --repo usejul/jul-decision-minicpm5-2b --backend torch
+jul ask choice &quot;Which team should handle this ticket?&quot; -o billing -o shipping -o access \
+    --state &quot;I was charged twice for order 4411&quot; --model jul-decision-minicpm5-2b
+</code></pre>
+<p><code>jul-decision-minicpm5-2b</code> is built in (alias <code>fast</code>): <code>TypeSafeClient(model="fast")</code> needs nothing else. Another
+repo (or a local directory) holding a <code>decision.json</code> brings its own format: no layer to choose and no tau
+for the pointer head. <code>jul models add</code> still fits the vector reading of the same weights, which long questions
+(<a href="#every-reading-and-every-setting">routing by option count</a>) and the types the model routes (<code>routing.types</code>) are read with;
+<code>--no-routing</code> skips it. The API is the same as for any other model.</p>
+<p><code>jul-decision-minicpm5-2b</code> is MiniCPM5-2B with a merged LoRA and a pointer head (Kev's architecture), trained
+on human-written typed decisions; its pointer head reads Choice and Noul, and its <code>decision.json</code> routes Score
+to the vectors, which read it better. On a bench of 300 typed questions written from scratch for it (sentiment, finance, support, agent routing,
+moderation), PyTorch on an A10G:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th style="text-align: right;">All</th>
+<th style="text-align: right;">Choice</th>
+<th style="text-align: right;">Noul</th>
+<th style="text-align: right;">Score</th>
+<th style="text-align: right;">p50</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>minicpm5-2b</code>, untrained (vectors)</td>
+<td style="text-align: right;">0.630</td>
+<td style="text-align: right;">0.75</td>
+<td style="text-align: right;">0.66</td>
+<td style="text-align: right;">0.48</td>
+<td style="text-align: right;">142 ms</td>
+</tr>
+<tr>
+<td><code>jul-decision-minicpm5-2b</code> v1.1 (Kev's decision mix)</td>
+<td style="text-align: right;">0.637</td>
+<td style="text-align: right;">0.82</td>
+<td style="text-align: right;">0.66</td>
+<td style="text-align: right;">0.43</td>
+<td style="text-align: right;">85 ms</td>
+</tr>
+<tr>
+<td>v2, the pointer head for every type</td>
+<td style="text-align: right;">0.647</td>
+<td style="text-align: right;">0.87</td>
+<td style="text-align: right;">0.76</td>
+<td style="text-align: right;">0.31</td>
+<td style="text-align: right;">85 ms</td>
+</tr>
+<tr>
+<td><strong><code>jul-decision-minicpm5-2b</code> v2</strong> (Score on the vectors)</td>
+<td style="text-align: right;"><strong>0.680</strong></td>
+<td style="text-align: right;"><strong>0.87</strong></td>
+<td style="text-align: right;"><strong>0.76</strong></td>
+<td style="text-align: right;">0.41</td>
+<td style="text-align: right;">85 ms</td>
+</tr>
+<tr>
+<td><code>jul-decision-wemm-4b</code>, for comparison</td>
+<td style="text-align: right;">0.677</td>
+<td style="text-align: right;">0.83</td>
+<td style="text-align: right;">0.79</td>
+<td style="text-align: right;">0.41</td>
+<td style="text-align: right;">86–439 ms</td>
+</tr>
+</tbody>
+</table>
+<p>The older versions stay on the Hub as <code>revision="v1.0"</code> and <code>"v1.1"</code>; the old repo names redirect. The state is encoded once per call and every question
+continues from it, so questions never see each other.</p>
+<p>The state is paid once per call: a ticket with four questions (two <code>Choice</code>, a <code>Noul</code> and a <code>Score</code>)
+answers in <strong>180 ms</strong> on an M4 Pro, against 65 ms for the first question alone. What costs is the
+options — they are re-read on every request — so a three-option question runs in 64 ms where a
+fifty-nine-option one takes 596 ms (v1, M4 Pro). Weights: <a href="https://huggingface.co/usejul/jul-decision-minicpm5-2b-mlx-4bit"><code>usejul/jul-decision-minicpm5-2b-mlx-4bit</code></a>
+(MLX, 1.4 GB) and <a href="https://huggingface.co/usejul/jul-decision-minicpm5-2b"><code>usejul/jul-decision-minicpm5-2b</code></a>
+(PyTorch, bf16).</p>
+<p><code>autotune(...)</code> works on a decision model through that same vector reading. The head is trained on its
+vectors, and a question with an active head is read through the vectors plus the head. Questions without
+a head keep the pointer head. The safety net judges the head against what the question gets without one:
+the pointer head for Choice and Noul, the vector reading for a routed question (Score on
+<code>jul-decision-minicpm5-2b</code>). A head that does not beat it stays inactive. A decision model added with
+<code>--no-routing</code> has no vector reading, and <code>autotune</code> says so.</p>
+<p>A state longer than the limit in its <code>decision.json</code> is truncated rather than stretched.</p>
+<h2 id="laya">Laya</h2>
+<p><a href="https://huggingface.co/convaiinnovations/laya">Laya</a> (ConvAI Innovations, Apache-2.0) is a decision model
+with its own format and its own runtime, the <code>laya</code> package (PyTorch). JuL does not read its weights: it
+hands the questions to Laya and returns its answers as JuL's, so Laya takes the same calls, the same
+response and the same commands as any other model (<code>jul ask</code>, <code>run</code>, <code>serve</code>, <code>bench</code>, an <code>Escalation</code> tier).</p>
+<pre><code class="language-bash">pip install &quot;jul[laya]&quot;            # or: jul setup --model laya
+jul ask choice &quot;Which team should handle this ticket?&quot; -o billing -o technical \
+    --state &quot;I was charged twice&quot; --model laya
+</code></pre>
+<table>
+<thead>
+<tr>
+<th><code>--model</code></th>
+<th>Checkpoint</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>laya</code> (or <code>laya:english</code>)</td>
+<td>the repo root, English</td>
+</tr>
+<tr>
+<td><code>laya:multilingual</code></td>
+<td>the <code>multilingual/</code> subfolder</td>
+</tr>
+<tr>
+<td><code>laya:typed-decisions</code></td>
+<td>the <code>typed-decisions/</code> subfolder</td>
+</tr>
+<tr>
+<td><code>laya:&lt;hub repo or directory&gt;</code></td>
+<td>any other Laya checkpoint</td>
+</tr>
+</tbody>
+</table>
+<p>Laya picks the device (CUDA, MPS, then CPU) and pins the Hub revision it downloads; the first call
+downloads the checkpoint. What JuL adds on its own readings does not apply: no <code>method</code>, no heads or
+calibration from a context, no <code>autotune</code>, no <code>pack</code> (each raises a <code>ValueError</code> saying so), and
+<code>--backend</code> other than <code>torch</code> is refused. The answers are Laya's own: its Choice and Score <code>confidence</code>
+is calibrated by Laya, not the top probability JuL's readings report, so a bar set for one model in an
+<code>Escalation</code> does not carry over to the other.</p>
+<h2 id="contrastive-heads-any-backbone-clm-8b">Contrastive heads (any backbone; CLM-8B)</h2>
+<p>A contrastive preset reads a <strong>frozen</strong> backbone through two small projection heads: the state (with the
+question's instructions after a blank line) goes through the state head, each option through the action
+head, the score is <code>scale * cosine</code> and a softmax gives the answer. It is a way of reading a model, not
+a model: the backbone is any repo jul loads (MLX, torch or onnx, decoders and encoders), and
+<code>contrastive.json</code> says how it is read:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Values</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>backbone</code></td>
+<td>repo per backend</td>
+</tr>
+<tr>
+<td><code>layer</code></td>
+<td><code>"final"</code> (last layer after the final norm, decoders on MLX/torch) or a layer index (any backend)</td>
+</tr>
+<tr>
+<td><code>pooling</code></td>
+<td><code>"last"</code> token or <code>"mean"</code> (an encoder is always read as its mean)</td>
+</tr>
+<tr>
+<td><code>render</code></td>
+<td><code>"fields"</code> (<code>key: value</code>, CLM's) or <code>"json"</code> (jul's) for a structured state</td>
+</tr>
+<tr>
+<td><code>noul</code>, <code>prefix</code></td>
+<td>Noul texts when the question gives none; the model's input convention (<code>query:</code>)</td>
+</tr>
+<tr>
+<td><code>max_tokens</code>, <code>scale</code></td>
+<td>tail kept; the learnt scale</td>
+</tr>
+</tbody>
+</table>
+<p>The heads only mean something on the backbone they were trained on. Train them on any backbone from
+labeled rows (<code>{state, type, question, options, answer}</code>, or autotune's <code>{state, answers}</code> with
+<code>--questions</code>); the backbone stays frozen and torch is needed for the training only:</p>
+<pre><code class="language-bash">jul models add my-heads --repo Qwen/Qwen3-0.6B --backend torch --train-heads rows.jsonl
+python -m jul.contrastive train Qwen/Qwen3-0.6B rows.jsonl out/   # same, without a preset
+</code></pre>
+<p>The loss is CLM's InfoNCE (the question's own options, plus the batch's other options as negatives), the
+epoch kept is the best on held-out rows, and the plain cosine of the same embeddings is reported next to
+it (<code>training.json</code>).</p>
+<p>Measured once (decision-bench v1, 2,108 scored items, torch CPU): heads trained on a frozen Qwen3-0.6B from
+5,974 rows of the decision dataset's train split score 0.378, against 0.337 for the plain cosine of the
+same embeddings (choice 0.218 / 0.151, noul 0.570 / 0.542, score 0.294 / 0.297), 542 ms p50. That is a real
+gain over the cosine but far below the fitted presets (<code>wemm-4b-4bit</code> 0.682): the mode works on any
+backbone, it has not yet been measured on an embedding model or with more data.</p>
+<p>Known limits:</p>
+<ul>
+<li><strong>Reading without <code>last_hidden</code></strong>: <code>default_reading</code> probes <code>last_hidden</code> on one token. A backend that
+  does not expose the final-norm hidden states (onnx) or returns something unusable is read at its last
+  layer before the final norm, with a warning in the <code>jul.contrastive</code> log. Heads trained that way only fit
+  that reading; heads that need <code>"final"</code> on such a backend fail with an error naming the backend.</li>
+<li><strong>In-batch negatives</strong>: the other questions' options in a batch count as negatives with weight 0.5
+  (<code>train_heads(in_batch=...)</code>), CLM's choice. Equivalent texts across questions become false negatives;
+  the weight is not exposed in the CLI.</li>
+<li><strong><code>--train-heads</code> with <code>--cross</code></strong>: the cross model is not attached to the trained preset.</li>
+<li><strong>Overwrite</strong>: <code>~/.jul/heads/&lt;name&gt;</code> is replaced without warning when the same name is trained again.</li>
+</ul>
+<h3 id="clm-8b">CLM-8B</h3>
+<p><a href="https://huggingface.co/Contrastive-LM/CLM-v0.1-8B">CLM-8B</a> is not a model of its own: two small
+projection heads (19 M parameters, 75 MB) trained with InfoNCE on top of a <strong>frozen</strong> Qwen3-8B, read at
+its last token. The state, with the question's instructions after a blank line, goes through the state
+head; each option through the action head; the score is <code>scale * cosine</code> and a softmax gives the answer.
+The heads mean nothing without that exact backbone, so <code>jul</code> runs Qwen3-8B itself and reads the heads
+in numpy (no torch at inference, no vLLM server):</p>
+<pre><code class="language-bash">jul models add clm-8b --repo Contrastive-LM/CLM-v0.1-8B    # converts the .pt once (needs torch)
+jul ask choice &quot;Which team should handle this?&quot; -o &quot;billing:Charges, invoices, refunds&quot; \
+    -o &quot;technical:Bugs and outages&quot; --state &quot;my invoice was charged twice&quot; --model clm-8b
+</code></pre>
+<p><code>jul models add</code> recognises a CLM repo by its <code>config.json</code> (<code>"model_type": "clm"</code>), converts the
+checkpoint into <code>~/.jul/heads/&lt;name&gt;/</code> (<code>contrastive.json</code> + <code>heads.npz</code>) and writes a preset whose
+repos are the backbone's: <code>Qwen/Qwen3-8B</code> (bf16, 16 GB) on torch, <code>mlx-community/Qwen3-8B-8bit</code>
+(8.7 GB) on MLX. <code>python -m jul.contrastive convert &lt;.pt or repo&gt; &lt;dir&gt; --backbone-mlx &lt;repo&gt;</code> picks
+another backbone; <code>jul models add &lt;name&gt; --repo &lt;dir&gt;</code> then registers that directory.</p>
+<p>The texts are CLM's own (<code>schema.build_pairs</code>), not jul's formulations: objects rendered as <code>key: value</code>
+fields, options verbatim, a Noul without descriptions read as CLM's <code>"true: Yes. This is true: &lt;question&gt;"</code>.
+On CLM's reference requests the MLX 8-bit backbone answers as its bf16 vLLM server does (M1 Pro):</p>
+<table>
+<thead>
+<tr>
+<th>Request</th>
+<th style="text-align: right;">CLM, bf16 vLLM</th>
+<th style="text-align: right;">jul, MLX 8-bit</th>
+<th style="text-align: right;">jul, MLX 4-bit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"charged twice…", Noul urgent</td>
+<td style="text-align: right;">0.840-0.848</td>
+<td style="text-align: right;">0.865</td>
+<td style="text-align: right;">0.713</td>
+</tr>
+<tr>
+<td>same, Choice billing</td>
+<td style="text-align: right;">0.987-0.989</td>
+<td style="text-align: right;">0.991</td>
+<td style="text-align: right;">0.985</td>
+</tr>
+<tr>
+<td>same, Score frustration (0-2)</td>
+<td style="text-align: right;">2.000</td>
+<td style="text-align: right;">2.000</td>
+<td style="text-align: right;">2.000</td>
+</tr>
+<tr>
+<td>"I'm very calm.", Score frustration</td>
+<td style="text-align: right;">1.999 (<a href="https://github.com/Contrastive-LM/CLM/issues/3">issue #3</a>)</td>
+<td style="text-align: right;">1.998</td>
+<td style="text-align: right;">1.999</td>
+</tr>
+<tr>
+<td>tides, Choice "the Moon"</td>
+<td style="text-align: right;">0.993</td>
+<td style="text-align: right;">0.993</td>
+<td style="text-align: right;">0.994</td>
+</tr>
+</tbody>
+</table>
+<p>4-bit keeps every argmax but moves the Noul by 0.13, hence 8-bit by default. A warm call with the
+options cached takes ~210 ms on an M1 Pro: every question embeds <code>state + instructions</code> once, since the
+state head reads the question too.</p>
+<p><code>autotune</code> works: the head is trained on the encoder embedding of <code>state + instructions</code> (the vector the
+state head reads), judged against the CLM heads' own answers, and a question keeps CLM's answer when the
+head does not beat it. <code>jul pack</code> does not apply (vector method only).</p>
+<p>On the Jev bench (<code>scripts/bench_jul.py clm-8b zero-shot,tuned</code>, M1 Pro, MLX 8-bit):</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th style="text-align: right;">AG News</th>
+<th style="text-align: right;">Banking77</th>
+<th style="text-align: right;">Emotion</th>
+<th style="text-align: right;">Mean acc</th>
+<th style="text-align: right;">Mean ECE</th>
+<th style="text-align: right;">p50</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>clm-8b</code> zero-shot</td>
+<td style="text-align: right;">0.55</td>
+<td style="text-align: right;">0.08</td>
+<td style="text-align: right;">0.22</td>
+<td style="text-align: right;">0.283</td>
+<td style="text-align: right;">0.208</td>
+<td style="text-align: right;">217 ms</td>
+</tr>
+<tr>
+<td><code>clm-8b</code> + autotune (1000 labels)</td>
+<td style="text-align: right;">0.92</td>
+<td style="text-align: right;">0.58</td>
+<td style="text-align: right;">0.45</td>
+<td style="text-align: right;">0.650</td>
+<td style="text-align: right;">0.117</td>
+<td style="text-align: right;">217 ms</td>
+</tr>
+</tbody>
+</table>
+<p>Zero-shot it collapses onto a few labels (Banking77's 77 options, Emotion), as it does behind its own
+vLLM server (0.53 / 0.08 / 0.23 measured there, torch bf16 on CPU): the port is faithful, the heads are
+what they are. Jev scores 0.753, <code>wemm-4b-4bit</code> 0.857.</p>
+<h2 id="the-built-in-presets">The built-in presets</h2>
+<table>
+<thead>
+<tr>
+<th>Preset</th>
+<th>Model</th>
+<th>Layers</th>
+<th style="text-align: right;">tau</th>
+<th style="text-align: right;">p50, M4 Pro</th>
+<th style="text-align: right;">p50, M5 Max</th>
+<th>Jev bench, zero-shot</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>jul-decision-wemm-4b</code> (alias <code>accurate</code>, default)</td>
+<td><code>usejul/WeMM-Embedding-4B-mlx-4bit</code></td>
+<td>31 / 31</td>
+<td style="text-align: right;">0.0553</td>
+<td style="text-align: right;">146 ms</td>
+<td style="text-align: right;">55 ms</td>
+<td><strong>0.857</strong> (MLX)</td>
+</tr>
+<tr>
+<td><code>wemm-4b-4bit</code></td>
+<td><code>usejul/WeMM-Embedding-4B-mlx-4bit</code></td>
+<td>31 / 31</td>
+<td style="text-align: right;">0.0553</td>
+<td style="text-align: right;">146 ms</td>
+<td style="text-align: right;">55 ms</td>
+<td><strong>0.857</strong></td>
+</tr>
+<tr>
+<td><code>minicpm5-2b</code></td>
+<td><code>openbmb/MiniCPM5-2B-MLX</code></td>
+<td>39 / 40</td>
+<td style="text-align: right;">0.0413</td>
+<td style="text-align: right;"><strong>64 ms</strong></td>
+<td style="text-align: right;"></td>
+<td>0.617</td>
+</tr>
+<tr>
+<td><code>jul-decision-minicpm5-2b</code> (alias <code>fast</code>)</td>
+<td><code>usejul/jul-decision-minicpm5-2b-mlx-4bit</code></td>
+<td>pointer; Score 38 / 37</td>
+<td style="text-align: right;">0.0474</td>
+<td style="text-align: right;">~90 ms</td>
+<td style="text-align: right;"></td>
+<td>— (0.680 on our 300-question bench)</td>
+</tr>
+</tbody>
+</table>
+<p><code>wemm-4b-4bit</code> is the most accurate vector reading: 10 points above Jev with no training. The default,
+<code>jul-decision-wemm-4b</code>, is the same preset plus <a href="#a-cross-model-on-the-presets-own-weights-lora">LoRA adapters</a>
+that read Noul and Choice with the question and the text together; they are attached on PyTorch, and
+on MLX it reads exactly as <code>wemm-4b-4bit</code> until they are measured in 4-bit.
+On the same M4 Pro it is 2.3 times slower than <code>minicpm5-2b</code>.</p>
+<p>A third option does not read a general model at all: <code>jul-decision-minicpm5-2b</code> is MiniCPM5-2B <em>trained</em>
+to answer typed questions (a merged LoRA and a pointer head), built in as the alias <code>fast</code>: as accurate as the
+default on our 300-question bench (0.680 against 0.677) at half its size. Its pointer head brings its own format;
+Score goes to the vector reading of the same weights, shipped fitted per backend (the layers and tau in the table
+are that reading's, on MLX). <code>autotune(...)</code> trains its heads on that same vector reading: a question with an
+active head is read through it, the others keep the pointer head (see <a href="#decision-models">Decision models</a>).</p>
+<h2 id="how-it-answers">How it answers</h2>
+<p>For each formulation of the preset, the state and every option go through the same prompt; the answer
+is the option whose vector is closest (cosine, after subtracting a center). The scores of the two
+formulations are averaged, then <code>softmax(cosine / tau)</code>.</p>
+<pre><code>1.  This text: &quot;{state}&quot; means in one word: &quot;
+2.  {instructions}\nPossible answers: {options}.\nText: &quot;{state}&quot;\nIn one word, the answer is: &quot;
+</code></pre>
+<p>The model never writes anything. Everything state-independent — the prompt prefix, the option vectors,
+the center — is computed once, so a call only pays for its own tokens.</p>
+<h2 id="every-reading-and-every-setting">Every reading, and every setting</h2>
+<p>Four ways to read a model. A preset picks one; a call may override it.</p>
+<table>
+<thead>
+<tr>
+<th>Reading</th>
+<th>What it compares</th>
+<th>Chosen by</th>
+<th>Available on</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>vector</strong> (default)</td>
+<td>cosine between the state's hidden state and each option's, <code>softmax(cos / tau)</code></td>
+<td>preset <code>method: "vector"</code></td>
+<td>any model</td>
+</tr>
+<tr>
+<td><strong>letters</strong></td>
+<td>the logits of the option letters (A, B, C…) at the next position</td>
+<td><code>method="letters"</code>, per call or per client</td>
+<td>any model; a tuned head overrides it</td>
+</tr>
+<tr>
+<td><strong>pointer</strong></td>
+<td>a trained pointer head, at the delimiter tokens of the format in <code>decision.json</code></td>
+<td>preset <code>method: "pointer"</code></td>
+<td>decision models only</td>
+</tr>
+<tr>
+<td><strong>tuned head</strong></td>
+<td>a logistic head fitted by <code>autotune</code> on vector features</td>
+<td><code>autotune()</code> plus a <code>Context</code></td>
+<td>pins the reading to vectors (on a decision model, its vector fallback)</td>
+</tr>
+</tbody>
+</table>
+<p>A decision model may also <strong>route by option count</strong>: below the threshold the pointer head answers, above
+it the vector reading does. The pointer reads every option on every call, so its cost grows with the option
+list (65 ms at 3 options, 868 ms at 59) while the vector reading is flat; past ~30 options it stops earning
+that latency. Routing is per question, so one call can mix both. Measured on <code>massive</code>, 59 options, same
+weights: <strong>868 ms → 77 ms at equal accuracy</strong>.</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Where it lives</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>formulations</code></td>
+<td>preset</td>
+<td>2 built in</td>
+<td>the prompts, and the layer each is read at</td>
+</tr>
+<tr>
+<td><code>tau</code></td>
+<td>preset</td>
+<td>per model</td>
+<td>temperature of <code>softmax(cos / tau)</code></td>
+</tr>
+<tr>
+<td><code>center</code></td>
+<td>preset</td>
+<td><code>"options"</code></td>
+<td>what is subtracted before the cosine: <code>options</code>, <code>generic</code>, <code>none</code></td>
+</tr>
+<tr>
+<td><code>one_word</code></td>
+<td>preset</td>
+<td>—</td>
+<td>layer and tau of the single-formulation variant (<code>one_word_only=True</code>)</td>
+</tr>
+<tr>
+<td><code>head.temperature</code></td>
+<td><code>decision.json</code></td>
+<td>1.954 for ours</td>
+<td>divides the pointer logits; never changes an answer</td>
+</tr>
+<tr>
+<td><code>limits.max_state_tokens</code> / <code>max_branch_tokens</code></td>
+<td><code>decision.json</code></td>
+<td>384 / 1024</td>
+<td>where a too-long state or question is cut</td>
+</tr>
+<tr>
+<td><code>routing.above_options</code></td>
+<td>preset, measured by <code>jul models add</code></td>
+<td>measured</td>
+<td>option count above which the vector reading answers</td>
+</tr>
+<tr>
+<td><code>routing</code> formulations, <code>tau</code>, <code>center</code></td>
+<td>preset, fitted by <code>jul models add</code></td>
+<td>—</td>
+<td>the fallback reading, fitted on these very weights</td>
+</tr>
+<tr>
+<td><code>routing.types</code></td>
+<td><code>decision.json</code></td>
+<td>none</td>
+<td>question types the vector reading answers at any option count (e.g. <code>["score"]</code>)</td>
+</tr>
+<tr>
+<td><code>route_above=N</code></td>
+<td>per call</td>
+<td>the model's value</td>
+<td>overrides that threshold; <code>0</code> disables routing</td>
+</tr>
+<tr>
+<td><code>method=</code></td>
+<td>per call or client</td>
+<td><code>"vector"</code></td>
+<td><code>vector</code> or <code>letters</code>; ignored on a pointer preset</td>
+</tr>
+<tr>
+<td><code>one_word_only=</code></td>
+<td>client</td>
+<td><code>False</code></td>
+<td>one formulation instead of two: faster, a little less accurate</td>
+</tr>
+<tr>
+<td><code>backend=</code></td>
+<td>client, or <code>JUL_BACKEND</code></td>
+<td>auto</td>
+<td><code>mlx</code> or <code>torch</code>; <code>onnx</code> only when asked</td>
+</tr>
+<tr>
+<td><code>JUL_BATCH_TOKENS</code> / <code>JUL_BATCH_SIZE</code></td>
+<td>environment</td>
+<td>per backend</td>
+<td>how many rows the backbone batches at once</td>
+</tr>
+<tr>
+<td><code>features=</code></td>
+<td><code>autotune</code></td>
+<td><code>"vector"</code></td>
+<td>what a tuned head reads: <code>vector</code>, <code>lexical</code> (TF-IDF) or <code>hybrid</code></td>
+</tr>
+<tr>
+<td><code>formulations=</code></td>
+<td><code>autotune</code></td>
+<td>the preset's</td>
+<td>the prompts a question is read with, by name, per question if a dict</td>
+</tr>
+<tr>
+<td><code>JUL_HOME</code></td>
+<td>environment</td>
+<td><code>~/.jul</code></td>
+<td>where presets, contexts and calibration data live</td>
+</tr>
+<tr>
+<td><code>JUL_ONNX_MODEL</code></td>
+<td>environment</td>
+<td>the export's graph</td>
+<td>another graph for the onnx backend: a path or <code>s3://bucket/key</code></td>
+</tr>
+<tr>
+<td><code>JUL_ONNX_THREADS</code></td>
+<td>environment</td>
+<td>ONNX Runtime's</td>
+<td>intra-op threads (on Lambda: one per whole vCPU)</td>
+</tr>
+<tr>
+<td><code>JUL_ONNX_MAX_TOKENS</code> / <code>JUL_ONNX_BATCH_TOKENS</code></td>
+<td>environment</td>
+<td>2048 / 2048</td>
+<td>longest row, and rows × longest per run, on onnx</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Routing trades accuracy for speed, and the trade is not free.</strong> Measured on massive by subsampling one
+set's own options — so the option count is not confounded with the task — the pointer head is better at
+<em>every</em> count, by about 5 points, while costing 105 ms at 3 options and 832 ms at 59. There is no count
+above which it stops earning its answer; there is only a count above which its speed stops being worth
+those points.</p>
+<p>So <code>jul models add</code> <strong>measures</strong> the threshold rather than guessing one: it takes the smallest option
+count at which the vector reading is three times faster, and records in the preset what that costs in
+accuracy. A model where that never happens gets no routing at all. <code>--route-above N</code> sets it by hand and
+<code>--no-routing</code> skips the whole fitting; the model's own <code>decision.json</code> may also carry a threshold.</p>
+<p>A decision model may also <strong>route by question type</strong>: its <code>decision.json</code> lists in <code>routing.types</code> the
+types its pointer head reads worse than the vector reading of the same weights, and those questions go to
+the vectors at any option count (<code>route_above=0</code> does not change that). The fallback is the one <code>jul models
+add</code> fits anyway.</p>
+<p><strong>For maximum accuracy, pass <code>route_above=0</code></strong> on the call: every question then goes to the pointer head,
+whatever its option count, and you pay the latency in the table above. The default is a compromise, and
+<code>jul models add</code> prints exactly what it costs on the dev set it measured.</p>
+</article>
+<nav class="pager" aria-label="Pages"><a href="aws-lambda.html" rel="prev">◄ AWS Lambda, step by step</a><a href="benchmarks.html" rel="next">Benchmarks ►</a></nav>
+<p class="foot dim"><a href="https://github.com/usejul/jul/edit/main/docs/models.md">Edit this page</a> · JuL, <i>Just use Less</i> · Apache-2.0 · Not affiliated with TypeSafe AI or Jev.</p>
+    </section>
+  </main>
+</div>
+<script src="assets/docs.js"></script>
+</body>
+</html>

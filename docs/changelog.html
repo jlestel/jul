@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Changelog · JuL docs</title>
+<meta name="description" content="Changelog Versions come from git tags (see publishing): a v* tag releases to PyPI, every push to main publishes a dev build to TestPyPI. 0.5.0 — 2026-10-06 Adde">
+<meta name="theme-color" content="#0a0600">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230a0600'/%3E%3Ctext x='2' y='12' font-family='monospace' font-size='11' fill='%23ffb000'%3E%3E_%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/docs.css">
+<script>try{var p=localStorage.getItem("jul-phosphor");if(p)document.documentElement.dataset.phosphor=p}catch(e){}</script>
+</head>
+<body>
+<a class="skip" href="#doc">Skip to the page</a>
+<nav class="menubar" aria-label="Main">
+  <a class="brand" href="../index.html">▓ JuL-DOS 0.5</a>
+  <a href="index.html"><u>D</u>ocs</a>
+  <a href="quickstart.html" class="hide-sm"><u>Q</u>uickstart</a>
+  <a href="python-api.html" class="hide-sm"><u>A</u>PI</a>
+  <a href="cli-reference.html" class="hide-sm">C<u>L</u>I</a>
+  <a href="https://github.com/usejul/jul"><u>G</u>itHub</a>
+  <span class="spacer"></span>
+  <label class="search"><span aria-hidden="true">[/]</span><input id="q" type="search" placeholder="search" autocomplete="off" aria-label="Search the docs"></label>
+  <button id="phosphor" type="button" title="Change phosphor">PHOSPHOR:<span id="ph-name">AMB</span></button>
+</nav>
+<div id="results" class="win results" data-title="SEARCH.EXE" hidden aria-live="polite"></div>
+<div class="layout">
+  <aside class="side">
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="dir">[≡] CONTENTS</button>
+    <section class="win dir" id="dir" data-title="C:\JUL\DOCS">
+<p class="nav-h">START HERE</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="index.html">Docs home</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="quickstart.html">Quickstart</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="concepts.html">Concepts</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="hub.html">The hub</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="questions.html">Writing good questions</a></li>
+</ul>
+<p class="nav-h">GUIDES</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="installation.html">Installation</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="cli.html">Command line</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="tuning.html">Adapting to your data</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="serve.html">Serving over HTTP</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="deployment.html">Deploying a fixed need</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="aws-lambda.html">AWS Lambda, step by step</a></li>
+</ul>
+<p class="nav-h">MODELS</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="models.html">Models and readings</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="benchmarks.html">Benchmarks</a></li>
+</ul>
+<p class="nav-h">REFERENCE</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="python-api.html">Python API</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="cli-reference.html">CLI reference</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="configuration.html">Configuration</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="troubleshooting.html">FAQ and troubleshooting</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="glossary.html">Glossary</a></li>
+</ul>
+<p class="nav-h">PROJECT</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="development.html">Development</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="publishing.html">Publishing</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="changelog.html" aria-current="page">Changelog</a></li>
+</ul>
+    </section>
+    <section class="win toc" data-title="ON_PAGE.LST"><ul><li class="l2"><a href="#050--2026-10-06">0.5.0 — 2026-10-06</a></li>
+<li class="l3"><a href="#added">Added</a></li>
+<li class="l3"><a href="#changed">Changed</a></li>
+<li class="l3"><a href="#fixed">Fixed</a></li>
+<li class="l2"><a href="#040--2026-10-05">0.4.0 — 2026-10-05</a></li>
+<li class="l3"><a href="#added_1">Added</a></li>
+<li class="l2"><a href="#030--2026-09-28">0.3.0 — 2026-09-28</a></li>
+<li class="l3"><a href="#added_2">Added</a></li>
+<li class="l3"><a href="#changed_1">Changed</a></li>
+<li class="l3"><a href="#fixed_1">Fixed</a></li>
+<li class="l2"><a href="#020--2026-09-26">0.2.0 — 2026-09-26</a></li>
+<li class="l3"><a href="#added_3">Added</a></li>
+<li class="l3"><a href="#changed_2">Changed</a></li>
+<li class="l2"><a href="#011--2026-09-24">0.1.1 — 2026-09-24</a></li>
+<li class="l3"><a href="#changed_3">Changed</a></li>
+<li class="l2"><a href="#010--2026-09-24">0.1.0 — 2026-09-24</a></li></ul></section>
+  </aside>
+  <main id="doc">
+    <section class="win doc" data-title="C:\JUL\DOCS\CHANGELO.TXT">
+<article class="prose">
+<h1 id="changelog">Changelog</h1>
+<p>Versions come from git tags (see <a href="publishing.html">publishing</a>): a <code>v*</code> tag releases to PyPI, every push to
+<code>main</code> publishes a dev build to TestPyPI.</p>
+<h2 id="050--2026-10-06">0.5.0 — 2026-10-06</h2>
+<h3 id="added">Added</h3>
+<ul>
+<li><strong><code>jul bench</code> compares JuL with remote servers</strong>: <code>--models</code> also takes <code>typesafe</code> (Jev), <code>ollama[:model]</code>,
+  <code>cloudflare:clef|clef-flash</code> and any <code>/v1/systemone</code> URL as <code>URL#model</code> (Kev, a hosted Laya…), each with the
+  user's own key (<code>--remote-key-env</code> for a URL). Zero-shot only, network latency included, the report says the
+  rows were sent there; a missing key fails that target alone, before anything is sent.</li>
+<li><strong><code>jul bench --escalate-to TARGET</code></strong> measures each local model as a cascade (itself, then the remote server for
+  the answers below <code>--min-confidence</code>, as <code>jul serve --escalate-to</code>): the accuracy of the pair and the share of
+  rows sent to the server, also on the verdict line when the cascade is picked. The server's failures are
+  counted on the row, and a server that failed on every escalated row (a rejected key) makes the row <code>n/a</code>.</li>
+<li><strong><code>autotune</code> works on decision models</strong> (<code>fast</code>, <code>jul-decision-minicpm5-2b</code>). The head is trained on the
+  vectors of the model's vector fallback (the preset's <code>routing</code> block, fitted on the same weights). A
+  question with an active head is read through that fallback plus the head, and the others keep the pointer
+  head. The safety net compares the head with the pointer head for Choice and Noul, and with the vector
+  reading for a routed type such as Score. <code>jul bench</code> now autotunes decision models too.</li>
+<li>A decision model can <strong>route question types to its vector reading</strong>: <code>"routing": {"types": ["score"]}</code> in its
+  <code>decision.json</code> sends those questions to the vectors fitted by <code>jul models add</code> on the same weights, at any
+  option count. For pointer heads that read Score worse than the vectors do.</li>
+</ul>
+<h3 id="changed">Changed</h3>
+<ul>
+<li><strong>The alias <code>fast</code> is now <code>jul-decision-minicpm5-2b</code></strong>, built in (it was <code>minicpm5-2b</code>, read with vectors):
+  0.680 against 0.630 on the bench below, at the same speed. Its Score reading is shipped fitted per backend
+  (<code>assets/presets/jul-decision-minicpm5-2b@{mlx,torch}.json</code>). <code>one_word_only=True</code> leaves it as it is (it
+  already reads in one pass). On MLX, Choice questions above 20 options go to the vectors (4 to 8x faster, a few
+  points less accurate, see the preset's notes); <code>route_above=0</code> keeps the pointer head.</li>
+<li><strong><code>jul-decision-wemm-4b</code> reads Score with the vectors.</strong> Its adapters (<a href="https://huggingface.co/usejul/jul-decision-wemm-4b"><code>usejul/jul-decision-wemm-4b</code></a>
+  <code>1525e34</code>) keep Noul and Choice; their Score reading was worse than the vector reading of the same weights.
+  On a bench of 300 typed questions written from scratch for it (sentiment, finance, support, agent routing,
+  moderation): 0.627 → 0.677 (Score 0.27 → 0.41). It is a change of the adapters' <code>cross.json</code>, so jul 0.4.0
+  gets it too.</li>
+<li><strong><code>minicpm5-2b-decision</code> is now <a href="https://huggingface.co/usejul/jul-decision-minicpm5-2b"><code>usejul/jul-decision-minicpm5-2b</code></a></strong>
+  (and <code>-mlx-4bit</code>), the old names redirect. <strong>v2</strong>: trained on human-written typed decisions, Score routed to its
+  vector reading; 0.680 on that bench at 85 ms, against 0.637 for v1.1 (<code>revision="v1.1"</code>).</li>
+</ul>
+<h3 id="fixed">Fixed</h3>
+<ul>
+<li>A decision model's questions routed to its vector fallback were read at the pointer preset's temperature
+  (1.0) instead of the fallback's own tau, which flattened their probabilities to near uniform (same answer,
+  wrong confidence; a Score's expected level collapsed to the middle).</li>
+<li><strong>EmbeddingGemma read as an encoder.</strong> A model whose config sets <code>use_bidirectional_attention</code>
+  (<code>google/embeddinggemma-300m</code>, a bidirectional <code>gemma3_text</code>) is now read like the encoders: mean over the
+  text, its declared <code>query</code> prompt, no prefix cache. It was read as a decoder (last token, cached prefix):
+  0.160 dev accuracy after <code>jul models add</code>, 0.655 now (multilingual-e5-small: 0.585, same data). Torch backend.</li>
+</ul>
+<h2 id="040--2026-10-05">0.4.0 — 2026-10-05</h2>
+<h3 id="added_1">Added</h3>
+<ul>
+<li><strong>Laya</strong> as a model: <code>TypeSafeClient(model="laya")</code>, <code>--model laya</code> (also <code>laya:multilingual</code>,
+  <code>laya:typed-decisions</code> or <code>laya:&lt;hub repo or directory&gt;</code>), with <code>pip install "jul[laya]"</code> or
+  <code>jul setup --model laya</code>. Laya runs on its own package; JuL hands it the questions and returns its answers
+  as JuL's, so <code>ask</code>, <code>run</code>, <code>serve</code>, <code>bench</code> and <code>Escalation</code> take it. JuL's readings, <code>autotune</code> and
+  <code>pack</code> do not apply to it. See <a href="models.html#laya">Models &gt; Laya</a>.</li>
+<li><strong><code>jul bench</code>: pick a model on your own data.</strong> <code>jul bench test.jsonl --train train.jsonl --models
+  jul-decision-e5-small@onnx,minicpm5-2b@torch -O results.json</code> answers every test row with each model and
+  reports, per question, accuracy with its 95% interval, latency (p50/p95) and the model to pick: the fastest
+  whose interval reaches the best. Each row carries its question (<code>question, options, state, answer</code>), so one
+  file can mix questions and types. With <code>--train</code> (a separate file) each model is also autotuned and measured
+  again on the same test rows; train and test are checked for overlap first (exact duplicates after folding
+  case, punctuation and digits stop the bench, near duplicates are reported, <code>--drop-overlap</code> removes them).
+  <code>--method</code> / <code>--features</code> (or <code>auto</code>) compare the zero-shot readings and autotune heads of each model, one
+  row each. Tables in the site's amber on a terminal, <code>--json</code> or <code>-O file</code> for the full results.</li>
+<li><strong>Embeddings APIs as a backend</strong> (<code>--backend api</code>): the vector reading over any embeddings endpoint, local or
+  hosted, without the model's weights. <code>jul models add NAME --repo ollama:qwen3-embedding:0.6b --backend api</code>
+  (also <code>openai:</code>, <code>mistral:</code>, <code>voyage:</code>, or <code>http(s)://host/v1#model</code> for any OpenAI-compatible server) fits
+  the center and tau as for a local model. One layer, no logits (Noul and Score are read as vectors).</li>
+<li><strong>Escalation on confidence</strong>: <code>jul.Escalation</code> chains deciders (a local client, then <code>SystemOneHTTP</code> for
+  any <code>/v1/systemone</code> server: Jev, Ollama's Nimble, Kev, another <code>jul serve</code>); only the questions answered
+  below the bar go on to the next one, and the response says per question which tier answered.
+  <code>jul serve --escalate-to typesafe|ollama[:model]|URL --min-confidence 0.8</code> does the same over HTTP, with each
+  provider's usual key variable (<code>TYPESAFE_API_KEY</code>).</li>
+<li><strong>Clef on Cloudflare Workers AI</strong> as an escalation tier: <code>--escalate-to cloudflare:clef-flash</code> (or <code>:clef</code>),
+  <code>jul.escalate.cloudflare_tier()</code> in Python, with <code>CLOUDFLARE_ACCOUNT_ID</code> and <code>CLOUDFLARE_API_TOKEN</code>.</li>
+<li><strong><code>jul-decision-wemm-4b</code> is the default model</strong> (alias <code>accurate</code>): <code>wemm-4b-4bit</code> plus LoRA adapters
+  (<a href="https://huggingface.co/usejul/jul-decision-wemm-4b"><code>usejul/jul-decision-wemm-4b</code></a>) that read Noul,
+  Score and Choice with the question and the text together. Decision bench (2,108 questions, PyTorch): 0.849,
+  Jev 0.873. Attached on PyTorch; on MLX it reads as <code>wemm-4b-4bit</code> until the adapters are measured in
+  4-bit. <code>wemm-4b-4bit</code> stays, vectors only.</li>
+<li>LoRA cross models read a Choice listwise when their <code>cross.json</code> has a <code>choice</code> entry (text, question and
+  every option in one pass), mixed with the vector reading (<code>mix</code>).</li>
+<li>A preset's <code>cross</code> entry may name a repo for some backends only (<code>{"torch": ...}</code>); the others read with
+  the vectors.</li>
+<li><strong>Contrastive heads on any backbone</strong>: a reading mode where two projection heads (InfoNCE) read a frozen
+  backbone, set by <code>contrastive.json</code> (layer, pooling, rendering, Noul texts, prefix), on MLX, torch or onnx,
+  decoders and encoders. <code>jul models add &lt;name&gt; --repo &lt;backbone&gt; --train-heads rows.jsonl</code> trains them;
+  <code>autotune</code> trains its usual head on the same embedding.</li>
+<li>CLM-8B is one profile of it: <code>jul models add clm-8b --repo Contrastive-LM/CLM-v0.1-8B</code> converts CLM's heads
+  and runs them on their frozen Qwen3-8B (MLX 8-bit or torch bf16), without vLLM; CLM's reference answers
+  reproduced within 0.025. docs/models.md#contrastive-heads-any-backbone-clm-8b.</li>
+</ul>
+<h2 id="030--2026-09-28">0.3.0 — 2026-09-28</h2>
+<h3 id="added_2">Added</h3>
+<ul>
+<li><strong>Cross models</strong>: a second reading that takes the question and the text together, for the questions an
+  embedding model answers near chance (paraphrase, inference, compositions, dates, "is it late?"). A preset
+  gets one with <code>jul models add --cross</code>, or by itself from a repo that carries a <code>cross/</code> folder; its
+  <code>cross.json</code> declares the types it reads (Noul and Score), the vectors read everything else.
+  <code>method="vector"</code> or <code>method="cross"</code> forces one reading for a call.</li>
+<li><strong>LoRA cross models</strong>: the cross reading as adapters on the preset's own model instead of a second
+  encoder (<code>"method": "lora"</code> in <code>cross.json</code>), switched on only while a Noul or a Score is read, so one model
+  sits in memory and the vector reading is unchanged. MLX and PyTorch.
+  <a href="https://huggingface.co/usejul/jul-decision-wemm-4b-4bit-mlx"><code>usejul/jul-decision-wemm-4b-4bit-mlx</code></a>:
+  yes/no 0.841 on Kev's typed decisions, against 0.762 for the vectors of the default model.</li>
+<li><code>jul pack</code> ships only the models a bundle's questions read with (vectors, cross, or both);
+  <code>JUL_ONNX_CROSS_MODEL</code> points the cross graph at S3 as <code>JUL_ONNX_MODEL</code> does the vector one.</li>
+<li>Encoders read their input prefixes from the model's <code>config_sentence_transformers.json</code>, else from
+  <code>assets/text_prefixes.json</code> (<code>$JUL_HOME/text_prefixes.json</code> extends it).</li>
+<li>Models: <a href="https://huggingface.co/usejul/jul-decision-e5-small"><code>usejul/jul-decision-e5-small</code></a> and its ONNX
+  8-bit build, e5-small trained on jul decisions, with a cross model; a step-by-step AWS Lambda guide.</li>
+</ul>
+<h3 id="changed_1">Changed</h3>
+<ul>
+<li><code>autotune</code>: a head for a Noul or a Score must beat the cross model on the labeled examples to take the
+  question; otherwise the question stays with the cross model.</li>
+<li>PyTorch: texts behind a cached prefix that cannot be repeated over a batch (the recurrent state of
+  Qwen3.5 and WeMM-Embedding) are read in one batch, the prefix run again with each: about 150 texts/s
+  instead of 12 for WeMM-Embedding-4B on an A10G. MLX keeps one at a time.</li>
+</ul>
+<h3 id="fixed_1">Fixed</h3>
+<ul>
+<li><code>jul models add &lt;built-in preset&gt; --cross ...</code> saved the preset as <code>&lt;name&gt;@None.json</code>.</li>
+</ul>
+<h2 id="020--2026-09-26">0.2.0 — 2026-09-26</h2>
+<h3 id="added_3">Added</h3>
+<ul>
+<li><strong>onnx backend</strong> (ONNX Runtime on CPU, no torch) and <strong>encoders as backbones</strong> (BERT, XLM-R,
+  multilingual-e5): read as they were trained, mean-pooled, with their own input prefix. <code>JUL_HOME</code> moves
+  everything jul writes.</li>
+<li><code>jul pack</code> (first named <code>jul compile</code>): a fixed set of questions and its models as a bundle, for a
+  deployment such as AWS Lambda; per-question formulations.</li>
+<li><code>autotune</code> with lexical and hybrid heads (<code>features=</code>): e5-small reaches 0.790 on the Jev benchmark with a
+  hybrid head, at 6 ms per text.</li>
+<li><code>jul serve</code>: a local HTTP server that speaks the Jev protocol (<code>/v1/models</code> included), so the official SDK
+  talks to it; single-option Choice.</li>
+</ul>
+<h3 id="changed_2">Changed</h3>
+<ul>
+<li>The version comes from git (setuptools-scm): <code>main</code> publishes dev builds to TestPyPI, tags release.</li>
+</ul>
+<h2 id="011--2026-09-24">0.1.1 — 2026-09-24</h2>
+<h3 id="changed_3">Changed</h3>
+<ul>
+<li><code>wemm-4b-4bit</code> (WeMM-Embedding-4B, MLX 4-bit) is the new default model, in place of <code>minicpm5-2b</code>;
+  <code>qwen3.5-9b</code> is dropped.</li>
+<li>Project links move to the <code>usejul</code> organization.</li>
+</ul>
+<h2 id="010--2026-09-24">0.1.0 — 2026-09-24</h2>
+<p>First release: typed decisions (<code>Choice</code>, <code>Noul</code>, <code>Score</code>) with calibrated probabilities from one forward
+pass of a local model, behind the interface of TypeSafe's (Jev) Python SDK.</p>
+<ul>
+<li>MLX and PyTorch backends; presets for <code>minicpm5-2b</code> (the default) and <code>qwen3.5-9b</code>; <code>jul models add</code> fits
+  a preset for any model on the dev sets.</li>
+<li>Decision models read with their own pointer format, with a vector fallback and a measured routing
+  threshold.</li>
+<li><code>Context</code>, <code>autotune</code> (per-task heads), <code>jul synth</code> (synthetic labeled data), <code>jul setup</code>.</li>
+<li>Apache-2.0.</li>
+</ul>
+</article>
+<nav class="pager" aria-label="Pages"><a href="publishing.html" rel="prev">◄ Publishing</a><span></span></nav>
+<p class="foot dim"><a href="https://github.com/usejul/jul/edit/main/CHANGELOG.md">Edit this page</a> · JuL, <i>Just use Less</i> · Apache-2.0 · Not affiliated with TypeSafe AI or Jev.</p>
+    </section>
+  </main>
+</div>
+<script src="assets/docs.js"></script>
+</body>
+</html>

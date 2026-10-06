@@ -1,0 +1,845 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CLI reference · JuL docs</title>
+<meta name="description" content="CLI reference Every command and every flag, generated from the parser jul runs (jul &amp;lt;command&amp;gt; --help prints the same). For what the commands are for, with">
+<meta name="theme-color" content="#0a0600">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230a0600'/%3E%3Ctext x='2' y='12' font-family='monospace' font-size='11' fill='%23ffb000'%3E%3E_%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/docs.css">
+<script>try{var p=localStorage.getItem("jul-phosphor");if(p)document.documentElement.dataset.phosphor=p}catch(e){}</script>
+</head>
+<body>
+<a class="skip" href="#doc">Skip to the page</a>
+<nav class="menubar" aria-label="Main">
+  <a class="brand" href="../index.html">▓ JuL-DOS 0.5</a>
+  <a href="index.html"><u>D</u>ocs</a>
+  <a href="quickstart.html" class="hide-sm"><u>Q</u>uickstart</a>
+  <a href="python-api.html" class="hide-sm"><u>A</u>PI</a>
+  <a href="cli-reference.html" class="hide-sm">C<u>L</u>I</a>
+  <a href="https://github.com/usejul/jul"><u>G</u>itHub</a>
+  <span class="spacer"></span>
+  <label class="search"><span aria-hidden="true">[/]</span><input id="q" type="search" placeholder="search" autocomplete="off" aria-label="Search the docs"></label>
+  <button id="phosphor" type="button" title="Change phosphor">PHOSPHOR:<span id="ph-name">AMB</span></button>
+</nav>
+<div id="results" class="win results" data-title="SEARCH.EXE" hidden aria-live="polite"></div>
+<div class="layout">
+  <aside class="side">
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="dir">[≡] CONTENTS</button>
+    <section class="win dir" id="dir" data-title="C:\JUL\DOCS">
+<p class="nav-h">START HERE</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="index.html">Docs home</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="quickstart.html">Quickstart</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="concepts.html">Concepts</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="hub.html">The hub</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="questions.html">Writing good questions</a></li>
+</ul>
+<p class="nav-h">GUIDES</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="installation.html">Installation</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="cli.html">Command line</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="tuning.html">Adapting to your data</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="serve.html">Serving over HTTP</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="deployment.html">Deploying a fixed need</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="aws-lambda.html">AWS Lambda, step by step</a></li>
+</ul>
+<p class="nav-h">MODELS</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="models.html">Models and readings</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="benchmarks.html">Benchmarks</a></li>
+</ul>
+<p class="nav-h">REFERENCE</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="python-api.html">Python API</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="cli-reference.html" aria-current="page">CLI reference</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="configuration.html">Configuration</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="troubleshooting.html">FAQ and troubleshooting</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="glossary.html">Glossary</a></li>
+</ul>
+<p class="nav-h">PROJECT</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="development.html">Development</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="publishing.html">Publishing</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="changelog.html">Changelog</a></li>
+</ul>
+    </section>
+    <section class="win toc" data-title="ON_PAGE.LST"><ul><li class="l2"><a href="#jul-setup">jul setup</a></li>
+<li class="l2"><a href="#jul-ask">jul ask</a></li>
+<li class="l2"><a href="#jul-run">jul run</a></li>
+<li class="l2"><a href="#jul-context">jul context</a></li>
+<li class="l2"><a href="#jul-autotune">jul autotune</a></li>
+<li class="l2"><a href="#jul-pack">jul pack</a></li>
+<li class="l2"><a href="#jul-synth">jul synth</a></li>
+<li class="l2"><a href="#jul-models">jul models</a></li>
+<li class="l2"><a href="#jul-serve">jul serve</a></li>
+<li class="l2"><a href="#jul-bench">jul bench</a></li>
+<li class="l2"><a href="#jul-lab">jul lab</a></li></ul></section>
+  </aside>
+  <main id="doc">
+    <section class="win doc" data-title="C:\JUL\DOCS\CLIREFER.TXT">
+<article class="prose">
+<h1 id="cli-reference">CLI reference</h1>
+<p>Every command and every flag, generated from the parser <code>jul</code> runs (<code>jul &lt;command&gt; --help</code> prints
+the same). For what the commands are for, with examples and file formats, read
+<a href="cli.html">Command line</a> first.</p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#jul-setup"><code>jul setup</code></a></td>
+<td>install the backend, download the model, check a first answer</td>
+</tr>
+<tr>
+<td><a href="#jul-ask"><code>jul ask</code></a></td>
+<td>one typed question, answered now</td>
+</tr>
+<tr>
+<td><a href="#jul-run"><code>jul run</code></a></td>
+<td>answer a question file over a JSONL input</td>
+</tr>
+<tr>
+<td><a href="#jul-context"><code>jul context</code></a></td>
+<td>create, list, show or delete a saved context</td>
+</tr>
+<tr>
+<td><a href="#jul-autotune"><code>jul autotune</code></a></td>
+<td>train a per-task head from labeled examples</td>
+</tr>
+<tr>
+<td><a href="#jul-pack"><code>jul pack</code></a></td>
+<td>pack questions (and a context's heads) into a bundle to deploy; trains nothing</td>
+</tr>
+<tr>
+<td><a href="#jul-synth"><code>jul synth</code></a></td>
+<td>write a synthetic labeled dataset (for a later autotune)</td>
+</tr>
+<tr>
+<td><a href="#jul-models"><code>jul models</code></a></td>
+<td>list the presets, or fit one for a new model (add)</td>
+</tr>
+<tr>
+<td><a href="#jul-serve"><code>jul serve</code></a></td>
+<td>serve the Jev HTTP protocol (POST /v1/systemone) locally</td>
+</tr>
+<tr>
+<td><a href="#jul-bench"><code>jul bench</code></a></td>
+<td>which model for your questions: accuracy, latency, autotune, on your data</td>
+</tr>
+<tr>
+<td><a href="#jul-lab"><code>jul lab</code></a></td>
+<td>research commands</td>
+</tr>
+</tbody>
+</table>
+<h2 id="jul-setup">jul setup</h2>
+<p>install the backend, download the model, check a first answer.</p>
+<pre><code class="language-text">jul setup [-h] [--model MODEL] [--backend {mlx,torch,onnx,api}] [--no-install] [--no-check]
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--model MODEL</code></td>
+<td></td>
+<td></td>
+<td>preset: wemm-4b-4bit, minicpm5-2b, jul-decision-wemm-4b, jul-decision-minicpm5-2b (aliases: fast, accurate)</td>
+</tr>
+<tr>
+<td><code>--backend BACKEND</code></td>
+<td>mlx, torch, onnx, api</td>
+<td></td>
+<td>default: $JUL_BACKEND, else mlx on Apple Silicon, else torch</td>
+</tr>
+<tr>
+<td><code>--no-install</code></td>
+<td></td>
+<td></td>
+<td>do not pip install a missing backend</td>
+</tr>
+<tr>
+<td><code>--no-check</code></td>
+<td></td>
+<td></td>
+<td>skip the final test decision</td>
+</tr>
+</tbody>
+</table>
+<h2 id="jul-ask">jul ask</h2>
+<p>one typed question, answered now.</p>
+<pre><code class="language-text">jul ask [-h] [-o OPTION] --state STATE [--model MODEL] [--backend {mlx,torch,onnx,api}] [--context CONTEXT] [--method {vector,letters,cross}] {choice,noul,score} instructions
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>kind</code></td>
+<td>choice, noul, score</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>instructions</code></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>-o, --option OPTION</code></td>
+<td></td>
+<td></td>
+<td>choice: key[:description]; noul: true:meaning / false:meaning; score: a level description, lowest first</td>
+</tr>
+<tr>
+<td><code>--state STATE</code></td>
+<td></td>
+<td></td>
+<td>the text to judge (repeatable) <strong>required</strong></td>
+</tr>
+<tr>
+<td><code>--model MODEL</code></td>
+<td></td>
+<td></td>
+<td>preset: wemm-4b-4bit, minicpm5-2b, jul-decision-wemm-4b, jul-decision-minicpm5-2b (aliases: fast, accurate)</td>
+</tr>
+<tr>
+<td><code>--backend BACKEND</code></td>
+<td>mlx, torch, onnx, api</td>
+<td></td>
+<td>default: $JUL_BACKEND, else mlx on Apple Silicon, else torch</td>
+</tr>
+<tr>
+<td><code>--context CONTEXT</code></td>
+<td></td>
+<td></td>
+<td>name of a saved context</td>
+</tr>
+<tr>
+<td><code>--method METHOD</code></td>
+<td>vector, letters, cross</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="jul-run">jul run</h2>
+<p>answer a question file over a JSONL input.</p>
+<pre><code class="language-text">jul run [-h] --input INPUT [--output OUTPUT] [--model MODEL] [--backend {mlx,torch,onnx,api}] [--context CONTEXT] [--method {vector,letters,cross}] questions
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>questions</code></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>--input INPUT</code></td>
+<td></td>
+<td></td>
+<td><strong>required</strong></td>
+</tr>
+<tr>
+<td><code>--output OUTPUT</code></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>--model MODEL</code></td>
+<td></td>
+<td></td>
+<td>preset: wemm-4b-4bit, minicpm5-2b, jul-decision-wemm-4b, jul-decision-minicpm5-2b (aliases: fast, accurate)</td>
+</tr>
+<tr>
+<td><code>--backend BACKEND</code></td>
+<td>mlx, torch, onnx, api</td>
+<td></td>
+<td>default: $JUL_BACKEND, else mlx on Apple Silicon, else torch</td>
+</tr>
+<tr>
+<td><code>--context CONTEXT</code></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>--method METHOD</code></td>
+<td>vector, letters, cross</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="jul-context">jul context</h2>
+<p>create, list, show or delete a saved context.</p>
+<pre><code class="language-text">jul context [-h] [--description DESCRIPTION] [--examples EXAMPLES] [--use-description] [--lazy] [--model MODEL] [--backend {mlx,torch,onnx,api}] {create,list,show,delete} [name]
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>action</code></td>
+<td>create, list, show, delete</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>--description DESCRIPTION</code></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>--examples EXAMPLES</code></td>
+<td></td>
+<td></td>
+<td>.txt (one per line) or .jsonl with a <code>text</code> field</td>
+</tr>
+<tr>
+<td><code>--use-description</code></td>
+<td></td>
+<td></td>
+<td>also put the description in the prompts; measured harmful on average, so it is off unless you ask and measure on your own data</td>
+</tr>
+<tr>
+<td><code>--lazy</code></td>
+<td></td>
+<td></td>
+<td>do not compute the centers now</td>
+</tr>
+<tr>
+<td><code>--model MODEL</code></td>
+<td></td>
+<td></td>
+<td>preset: wemm-4b-4bit, minicpm5-2b, jul-decision-wemm-4b, jul-decision-minicpm5-2b (aliases: fast, accurate)</td>
+</tr>
+<tr>
+<td><code>--backend BACKEND</code></td>
+<td>mlx, torch, onnx, api</td>
+<td></td>
+<td>default: $JUL_BACKEND, else mlx on Apple Silicon, else torch</td>
+</tr>
+</tbody>
+</table>
+<h2 id="jul-autotune">jul autotune</h2>
+<p>train a per-task head from labeled examples.</p>
+<pre><code class="language-text">jul autotune [-h] --questions QUESTIONS --labeled LABELED [--features {vector,lexical,hybrid}] [--model MODEL] [--backend {mlx,torch,onnx,api}] context
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>context</code></td>
+<td></td>
+<td></td>
+<td>name of the context the head is stored in</td>
+</tr>
+<tr>
+<td><code>--questions QUESTIONS</code></td>
+<td></td>
+<td></td>
+<td><strong>required</strong></td>
+</tr>
+<tr>
+<td><code>--labeled LABELED</code></td>
+<td></td>
+<td></td>
+<td>JSONL: {state, answers: {question: answer}} <strong>required</strong></td>
+</tr>
+<tr>
+<td><code>--features FEATURES</code></td>
+<td>vector, lexical, hybrid</td>
+<td>vector</td>
+<td>what the head reads: the model's vectors (default), TF-IDF of the text, or both</td>
+</tr>
+<tr>
+<td><code>--model MODEL</code></td>
+<td></td>
+<td></td>
+<td>preset: wemm-4b-4bit, minicpm5-2b, jul-decision-wemm-4b, jul-decision-minicpm5-2b (aliases: fast, accurate)</td>
+</tr>
+<tr>
+<td><code>--backend BACKEND</code></td>
+<td>mlx, torch, onnx, api</td>
+<td></td>
+<td>default: $JUL_BACKEND, else mlx on Apple Silicon, else torch</td>
+</tr>
+</tbody>
+</table>
+<h2 id="jul-pack">jul pack</h2>
+<p>pack questions (and a context's heads) into a bundle to deploy; trains nothing.</p>
+<pre><code class="language-text">jul pack [-h] --questions QUESTIONS [--context CONTEXT] [--model MODEL] [--backend {mlx,torch,onnx,api}] [--reading {auto,vector}] out
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>out</code></td>
+<td></td>
+<td></td>
+<td>directory to write</td>
+</tr>
+<tr>
+<td><code>--questions QUESTIONS</code></td>
+<td></td>
+<td></td>
+<td><strong>required</strong></td>
+</tr>
+<tr>
+<td><code>--context CONTEXT</code></td>
+<td></td>
+<td></td>
+<td>context whose heads and calibration the bundle carries</td>
+</tr>
+<tr>
+<td><code>--model MODEL</code></td>
+<td></td>
+<td></td>
+<td>preset: wemm-4b-4bit, minicpm5-2b, jul-decision-wemm-4b, jul-decision-minicpm5-2b (aliases: fast, accurate)</td>
+</tr>
+<tr>
+<td><code>--backend BACKEND</code></td>
+<td>mlx, torch, onnx, api</td>
+<td></td>
+<td>default: $JUL_BACKEND, else mlx on Apple Silicon, else torch</td>
+</tr>
+<tr>
+<td><code>--reading READING</code></td>
+<td>auto, vector</td>
+<td>auto</td>
+<td>auto: the preset's cross model answers the types it declares (default); vector: every question as vectors, so the bundle needs the vector model only</td>
+</tr>
+</tbody>
+</table>
+<h2 id="jul-synth">jul synth</h2>
+<p>write a synthetic labeled dataset (for a later autotune).</p>
+<pre><code class="language-text">jul synth [-h] [--seeds SEEDS] --output OUTPUT [--per-option PER_OPTION] --writer WRITER [--batch BATCH] [--temperature TEMPERATURE] [--seed SEED] questions
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>questions</code></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>--seeds SEEDS</code></td>
+<td></td>
+<td></td>
+<td>JSONL of real examples: {state|text, answers?}; answers optional</td>
+</tr>
+<tr>
+<td><code>--output OUTPUT</code></td>
+<td></td>
+<td></td>
+<td>JSONL in the format of autotune --labeled <strong>required</strong></td>
+</tr>
+<tr>
+<td><code>--per-option PER_OPTION</code></td>
+<td></td>
+<td>30</td>
+<td>texts per option (default 30)</td>
+</tr>
+<tr>
+<td><code>--writer WRITER</code></td>
+<td></td>
+<td></td>
+<td>a generative mlx-lm repo, e.g. an instruct model of 7B or more <strong>required</strong></td>
+</tr>
+<tr>
+<td><code>--batch BATCH</code></td>
+<td></td>
+<td>8</td>
+<td>texts asked per call (default 8)</td>
+</tr>
+<tr>
+<td><code>--temperature TEMPERATURE</code></td>
+<td></td>
+<td>0.9</td>
+<td></td>
+</tr>
+<tr>
+<td><code>--seed SEED</code></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="jul-models">jul models</h2>
+<p>list the presets, or fit one for a new model (add).</p>
+<pre><code class="language-text">jul models [-h] [--repo REPO] [--backend {mlx,torch,onnx,api}] [--data DATA] [--n-dev N_DEV] [--n-generic N_GENERIC] [--no-routing] [--route-above ROUTE_ABOVE] [--cross CROSS] [--no-cross] [--train-heads ROWS] [--questions QUESTIONS] [--epochs EPOCHS] [{list,add}] [name]
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>action</code></td>
+<td>list, add</td>
+<td>list</td>
+<td></td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td></td>
+<td></td>
+<td>add: the preset name</td>
+</tr>
+<tr>
+<td><code>--repo REPO</code></td>
+<td></td>
+<td></td>
+<td>add: Hugging Face repo (default: the known repo for this name), or a local directory; one holding a decision.json is added as a decision model</td>
+</tr>
+<tr>
+<td><code>--backend BACKEND</code></td>
+<td>mlx, torch, onnx, api</td>
+<td></td>
+<td>default: $JUL_BACKEND, else mlx on Apple Silicon, else torch</td>
+</tr>
+<tr>
+<td><code>--data DATA</code></td>
+<td></td>
+<td></td>
+<td>add: calibration data dir (default: fetched into ~/.jul/calibration-data)</td>
+</tr>
+<tr>
+<td><code>--n-dev N_DEV</code></td>
+<td></td>
+<td>50</td>
+<td>add: examples per dev set (default 50)</td>
+</tr>
+<tr>
+<td><code>--n-generic N_GENERIC</code></td>
+<td></td>
+<td>200</td>
+<td>add: generic texts (default 200)</td>
+</tr>
+<tr>
+<td><code>--no-routing</code></td>
+<td></td>
+<td></td>
+<td>add, decision model: skip fitting the vector reading long questions fall back to</td>
+</tr>
+<tr>
+<td><code>--route-above ROUTE_ABOVE</code></td>
+<td></td>
+<td></td>
+<td>add, decision model: option count above which it falls back to vectors; 0 disables the routing. Default: measured (or its decision.json, if it says)</td>
+</tr>
+<tr>
+<td><code>--cross CROSS</code></td>
+<td></td>
+<td></td>
+<td>add: a cross model (directory or repo with a cross.json) that answers the question types it declares; without --repo, attached to the fitted preset. A repo carrying one in cross/ gets it without this flag</td>
+</tr>
+<tr>
+<td><code>--no-cross</code></td>
+<td></td>
+<td></td>
+<td>add: ignore the cross model the repo carries</td>
+</tr>
+<tr>
+<td><code>--train-heads ROWS</code></td>
+<td></td>
+<td></td>
+<td>add: train contrastive heads on the --repo backbone (kept frozen) from labeled rows, JSONL {state, type, question, options, answer} or parquet; with --questions, autotune's format {state, answers}. Needs torch for the training</td>
+</tr>
+<tr>
+<td><code>--questions QUESTIONS</code></td>
+<td></td>
+<td></td>
+<td>add --train-heads: the question file the rows answer</td>
+</tr>
+<tr>
+<td><code>--epochs EPOCHS</code></td>
+<td></td>
+<td>40</td>
+<td>add --train-heads: maximum epochs (default 40)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="jul-serve">jul serve</h2>
+<p>serve the Jev HTTP protocol (POST /v1/systemone) locally.</p>
+<pre><code class="language-text">jul serve [-h] [--model MODEL] [--backend {mlx,torch,onnx,api}] [--host HOST] [--port PORT] [--api-key API_KEY] [--no-warmup] [--escalate-to TARGET] [--escalate-model ESCALATE_MODEL] [--escalate-key-env VAR] [--min-confidence MIN_CONFIDENCE]
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--model MODEL</code></td>
+<td></td>
+<td></td>
+<td>preset: wemm-4b-4bit, minicpm5-2b, jul-decision-wemm-4b, jul-decision-minicpm5-2b (aliases: fast, accurate)</td>
+</tr>
+<tr>
+<td><code>--backend BACKEND</code></td>
+<td>mlx, torch, onnx, api</td>
+<td></td>
+<td>default: $JUL_BACKEND, else mlx on Apple Silicon, else torch</td>
+</tr>
+<tr>
+<td><code>--host HOST</code></td>
+<td></td>
+<td>127.0.0.1</td>
+<td>bind address (default 127.0.0.1, local only)</td>
+</tr>
+<tr>
+<td><code>--port PORT</code></td>
+<td></td>
+<td>8577</td>
+<td>port (default 8577)</td>
+</tr>
+<tr>
+<td><code>--api-key API_KEY</code></td>
+<td></td>
+<td></td>
+<td>require this key, as Authorization: Bearer or x-api-key (else $JUL_API_KEY). Recommended when binding beyond 127.0.0.1.</td>
+</tr>
+<tr>
+<td><code>--no-warmup</code></td>
+<td></td>
+<td></td>
+<td>do not load the model before serving</td>
+</tr>
+<tr>
+<td><code>--escalate-to TARGET</code></td>
+<td></td>
+<td></td>
+<td>send answers below --min-confidence elsewhere: typesafe (key in TYPESAFE_API_KEY), ollama[:model], cloudflare[:clef|clef-flash] (CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN), or the URL of any /v1/systemone server. The state leaves the machine</td>
+</tr>
+<tr>
+<td><code>--escalate-model ESCALATE_MODEL</code></td>
+<td></td>
+<td></td>
+<td>model asked there (default: the provider's)</td>
+</tr>
+<tr>
+<td><code>--escalate-key-env VAR</code></td>
+<td></td>
+<td></td>
+<td>the environment variable holding that server's key, for a URL target</td>
+</tr>
+<tr>
+<td><code>--min-confidence MIN_CONFIDENCE</code></td>
+<td></td>
+<td>0.8</td>
+<td>the bar below which an answer escalates (default 0.8; a Noul counts max(p, 1-p))</td>
+</tr>
+</tbody>
+</table>
+<h2 id="jul-bench">jul bench</h2>
+<p>which model for your questions: accuracy, latency, autotune, on your data.</p>
+<pre><code class="language-text">jul bench [-h] [--train TRAIN] [--models MODELS] [--remote-key-env VAR] [--escalate-to TARGET] [--min-confidence MIN_CONFIDENCE] [--backend {mlx,torch,onnx,api}] [--method M[,M]|auto] [--features F[,F]|auto] [--output OUTPUT] [--json] [--near NEAR] [--drop-overlap] [--allow-overlap] [--quiet] test
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>test</code></td>
+<td></td>
+<td></td>
+<td>JSONL or CSV, one row per answer: question, state, options, answer (type optional)</td>
+</tr>
+<tr>
+<td><code>--train TRAIN</code></td>
+<td></td>
+<td></td>
+<td>same format: rows to autotune on; without it, zero-shot only</td>
+</tr>
+<tr>
+<td><code>--models MODELS</code></td>
+<td></td>
+<td></td>
+<td>presets or aliases, comma-separated, each optionally @backend (e.g. jul-decision-e5-small@onnx,minicpm5-2b@torch); default: the default model. Also remote System One servers: typesafe (Jev), ollama[:model], cloudflare:clef|clef-flash, or URL#model (Kev, a hosted Laya...): the test rows are sent there</td>
+</tr>
+<tr>
+<td><code>--remote-key-env VAR</code></td>
+<td></td>
+<td></td>
+<td>the environment variable holding the key of the URL targets in --models (providers use their own: TYPESAFE_API_KEY, CLOUDFLARE_API_TOKEN)</td>
+</tr>
+<tr>
+<td><code>--escalate-to TARGET</code></td>
+<td></td>
+<td></td>
+<td>also measure each local model as a cascade: itself first, then this remote server (same targets as --models) for the answers below --min-confidence; reports the accuracy and the share of rows sent there</td>
+</tr>
+<tr>
+<td><code>--min-confidence MIN_CONFIDENCE</code></td>
+<td></td>
+<td>0.8</td>
+<td>the cascade's bar (default 0.8, as jul serve; a Noul counts max(p, 1-p))</td>
+</tr>
+<tr>
+<td><code>--backend BACKEND</code></td>
+<td>mlx, torch, onnx, api</td>
+<td></td>
+<td>default: $JUL_BACKEND, else mlx on Apple Silicon, else torch</td>
+</tr>
+<tr>
+<td><code>--method M[,M]|auto</code></td>
+<td></td>
+<td></td>
+<td>zero-shot readings to compare: vector, letters, cross, or auto for every one the model takes (default: the model's own reading)</td>
+</tr>
+<tr>
+<td><code>--features F[,F]|auto</code></td>
+<td></td>
+<td></td>
+<td>with --train: what the autotune heads read, vector, lexical, hybrid, or auto (default: vector)</td>
+</tr>
+<tr>
+<td><code>--output, -O OUTPUT</code></td>
+<td></td>
+<td></td>
+<td>also write the full results as JSON to this file</td>
+</tr>
+<tr>
+<td><code>--json</code></td>
+<td></td>
+<td></td>
+<td>print the JSON results instead of the tables</td>
+</tr>
+<tr>
+<td><code>--near NEAR</code></td>
+<td></td>
+<td>0.8</td>
+<td>similarity (character 5-grams) from which a test row counts as a near duplicate of a train row (default 0.8)</td>
+</tr>
+<tr>
+<td><code>--drop-overlap</code></td>
+<td></td>
+<td></td>
+<td>drop test rows found in train (exact or near)</td>
+</tr>
+<tr>
+<td><code>--allow-overlap</code></td>
+<td></td>
+<td></td>
+<td>run even with exact duplicates train/test</td>
+</tr>
+<tr>
+<td><code>--quiet, -q</code></td>
+<td></td>
+<td></td>
+<td>no progress on stderr</td>
+</tr>
+</tbody>
+</table>
+<h2 id="jul-lab">jul lab</h2>
+<p>research commands.</p>
+<pre><code class="language-text">jul lab [-h] ...
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Values</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rest</code></td>
+<td></td>
+<td></td>
+<td>passed through: extract, evaluate, bench, summary, ask, decide</td>
+</tr>
+</tbody>
+</table>
+</article>
+<nav class="pager" aria-label="Pages"><a href="python-api.html" rel="prev">◄ Python API</a><a href="configuration.html" rel="next">Configuration ►</a></nav>
+<p class="foot dim"><a href="https://github.com/usejul/jul/blob/main/cli/jul_cli/main.py">Edit this page</a> · JuL, <i>Just use Less</i> · Apache-2.0 · Not affiliated with TypeSafe AI or Jev.</p>
+    </section>
+  </main>
+</div>
+<script src="assets/docs.js"></script>
+</body>
+</html>

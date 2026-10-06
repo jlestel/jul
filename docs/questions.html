@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Writing good questions · JuL docs</title>
+<meta name="description" content="Writing good questions The model compares your text with what you wrote for each option. It reads descriptions, not your intentions: the same model can go from ">
+<meta name="theme-color" content="#0a0600">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230a0600'/%3E%3Ctext x='2' y='12' font-family='monospace' font-size='11' fill='%23ffb000'%3E%3E_%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/docs.css">
+<script>try{var p=localStorage.getItem("jul-phosphor");if(p)document.documentElement.dataset.phosphor=p}catch(e){}</script>
+</head>
+<body>
+<a class="skip" href="#doc">Skip to the page</a>
+<nav class="menubar" aria-label="Main">
+  <a class="brand" href="../index.html">▓ JuL-DOS 0.5</a>
+  <a href="index.html"><u>D</u>ocs</a>
+  <a href="quickstart.html" class="hide-sm"><u>Q</u>uickstart</a>
+  <a href="python-api.html" class="hide-sm"><u>A</u>PI</a>
+  <a href="cli-reference.html" class="hide-sm">C<u>L</u>I</a>
+  <a href="https://github.com/usejul/jul"><u>G</u>itHub</a>
+  <span class="spacer"></span>
+  <label class="search"><span aria-hidden="true">[/]</span><input id="q" type="search" placeholder="search" autocomplete="off" aria-label="Search the docs"></label>
+  <button id="phosphor" type="button" title="Change phosphor">PHOSPHOR:<span id="ph-name">AMB</span></button>
+</nav>
+<div id="results" class="win results" data-title="SEARCH.EXE" hidden aria-live="polite"></div>
+<div class="layout">
+  <aside class="side">
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="dir">[≡] CONTENTS</button>
+    <section class="win dir" id="dir" data-title="C:\JUL\DOCS">
+<p class="nav-h">START HERE</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="index.html">Docs home</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="quickstart.html">Quickstart</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="concepts.html">Concepts</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="hub.html">The hub</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="questions.html" aria-current="page">Writing good questions</a></li>
+</ul>
+<p class="nav-h">GUIDES</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="installation.html">Installation</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="cli.html">Command line</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="tuning.html">Adapting to your data</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="serve.html">Serving over HTTP</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="deployment.html">Deploying a fixed need</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="aws-lambda.html">AWS Lambda, step by step</a></li>
+</ul>
+<p class="nav-h">MODELS</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="models.html">Models and readings</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="benchmarks.html">Benchmarks</a></li>
+</ul>
+<p class="nav-h">REFERENCE</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="python-api.html">Python API</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="cli-reference.html">CLI reference</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="configuration.html">Configuration</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="troubleshooting.html">FAQ and troubleshooting</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="glossary.html">Glossary</a></li>
+</ul>
+<p class="nav-h">PROJECT</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="development.html">Development</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="publishing.html">Publishing</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="changelog.html">Changelog</a></li>
+</ul>
+    </section>
+    <section class="win toc" data-title="ON_PAGE.LST"><ul><li class="l2"><a href="#describe-every-option">Describe every option</a></li>
+<li class="l2"><a href="#make-options-distinct">Make options distinct</a></li>
+<li class="l2"><a href="#a-catch-all-described">A catch-all, described</a></li>
+<li class="l2"><a href="#pick-the-right-type">Pick the right type</a></li>
+<li class="l2"><a href="#describe-yes-and-no-when-they-are-not-obvious">Describe yes and no when they are not obvious</a></li>
+<li class="l2"><a href="#use-the-probabilities">Use the probabilities</a></li>
+<li class="l2"><a href="#measure-do-not-guess">Measure, do not guess</a></li>
+<li class="l2"><a href="#when-wording-is-not-enough">When wording is not enough</a></li></ul></section>
+  </aside>
+  <main id="doc">
+    <section class="win doc" data-title="C:\JUL\DOCS\QUESTION.TXT">
+<article class="prose">
+<h1 id="writing-good-questions">Writing good questions</h1>
+<p>The model compares your text with what you wrote for each option. It reads <strong>descriptions</strong>, not your
+intentions: the same model can go from wrong to right by rewording an option. This page is the checklist,
+cheapest gain first.</p>
+<h2 id="describe-every-option">Describe every option</h2>
+<p>The key is what you get back; the description is what the model reads. Without a description, the key
+alone is read, and a key like <code>T2</code> or <code>escal</code> means nothing to it.</p>
+<pre><code class="language-python"># weak: the model reads &quot;billing&quot;, &quot;tech&quot;, &quot;other&quot;
+Choice(instructions=&quot;Which team?&quot;, criteria=[&quot;billing&quot;, &quot;tech&quot;, &quot;other&quot;])
+
+# better: it reads what each team actually handles
+Choice(instructions=&quot;Which team should handle this support ticket?&quot;,
+       criteria={&quot;billing&quot;: &quot;payments, invoices, refunds, double charges&quot;,
+                 &quot;tech&quot;: &quot;bugs, errors, crashes, the app not working&quot;,
+                 &quot;other&quot;: &quot;anything else: partnerships, press, job applications&quot;})
+</code></pre>
+<p>Write descriptions as a colleague would need them: a few words or a short sentence, the vocabulary your
+texts actually use ("charged twice", not "duplicate transaction event").</p>
+<h2 id="make-options-distinct">Make options distinct</h2>
+<p>Two options that describe overlapping things split the probability between them and both look unsure. If a
+ticket can be about billing <em>and</em> a bug, either ask two questions (a <code>Choice</code> for the team, a <code>Noul</code> for
+"is it a bug?") or define the boundary in the descriptions ("bugs in the payment page go to billing").</p>
+<h2 id="a-catch-all-described">A catch-all, described</h2>
+<p>A <code>Choice</code> always picks one of your options: it cannot say "none of these". Add an option for the rest and
+describe it, or the closest wrong option wins.</p>
+<h2 id="pick-the-right-type">Pick the right type</h2>
+<table>
+<thead>
+<tr>
+<th>You want</th>
+<th>Use</th>
+<th>Not</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>one label among several</td>
+<td><code>Choice</code></td>
+<td>several <code>Noul</code>s, which do not sum to 1</td>
+</tr>
+<tr>
+<td>a yes/no you will threshold</td>
+<td><code>Noul</code></td>
+<td>a two-option <code>Choice</code> (it works, but <code>Noul</code> is read better by the cross models)</td>
+</tr>
+<tr>
+<td>an intensity, a grade, a priority</td>
+<td><code>Score</code>, levels lowest first</td>
+<td>a <code>Choice</code> (it loses the order)</td>
+</tr>
+<tr>
+<td>several independent facts</td>
+<td>several questions in one call</td>
+<td>one <code>Choice</code> mixing them</td>
+</tr>
+</tbody>
+</table>
+<p>A <code>Score</code> answers the <strong>expected level</strong>: with levels <code>["Calm", "Annoyed", "Very angry"]</code>, <code>1.8</code> means
+"close to Very angry". Read <code>probabilities</code> when you need the distribution, <code>confidence</code> for how peaked it is.</p>
+<h2 id="describe-yes-and-no-when-they-are-not-obvious">Describe yes and no when they are not obvious</h2>
+<pre><code class="language-python">Noul(instructions=&quot;Is the delivery late?&quot;,
+     criteria=NoulCriteria(true=&quot;it arrived after the promised date or has not arrived&quot;,
+                           false=&quot;it arrived on time or early&quot;))
+</code></pre>
+<p>Without criteria, yes and no are read as "Yes." and "No.".</p>
+<h2 id="use-the-probabilities">Use the probabilities</h2>
+<p>Every answer comes with a probability, and the temperature that produces it was fitted so that it means
+what it says: on Jev's benchmark, the default model's answers at 0.9 are right close to 90% of the time
+(expected calibration error 0.084, Jev 0.156). Use it:</p>
+<ul>
+<li><strong>automate above a threshold</strong>, send the rest to a human;</li>
+<li><strong>escalate</strong> the unsure ones to a bigger model (<a href="serve.html#escalation-local-first-a-bigger-decider-when-unsure">Escalation</a>);</li>
+<li><strong>check the threshold on your data</strong>: calibration was measured on other texts than yours. Label 100 to 200
+  of your own and look at what a given bar lets through.</li>
+</ul>
+<h2 id="measure-do-not-guess">Measure, do not guess</h2>
+<p>Wording effects are real but uneven: listing the options in the prompt helped on topics and hurt on
+sentiment; a context description helped one model and hurt another. Keep 100 to 200 labeled texts aside,
+change one thing at a time, and keep what wins on them. <code>jul run</code> plus a few lines of Python is enough:</p>
+<pre><code class="language-python">import json
+gold = {r[&quot;id&quot;]: r[&quot;team&quot;] for r in map(json.loads, open(&quot;gold.jsonl&quot;))}
+pred = {r[&quot;id&quot;]: r[&quot;answers&quot;][&quot;team&quot;][&quot;choice&quot;] for r in map(json.loads, open(&quot;answers.jsonl&quot;))}
+print(sum(pred[i] == gold[i] for i in gold) / len(gold))
+</code></pre>
+<h2 id="when-wording-is-not-enough">When wording is not enough</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Try</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>right on most texts, wrong on a style (short, slangy, in-house jargon)</td>
+<td>a <a href="tuning.html#context--what-the-data-looks-like">Context</a> with ~50 real texts</td>
+</tr>
+<tr>
+<td>systematically off on your labels</td>
+<td><a href="tuning.html#autotune--when-it-is-off-key"><code>autotune</code></a> with a few hundred labeled examples</td>
+</tr>
+<tr>
+<td>yes/no about how two things relate (is it a paraphrase, does it follow, is it on time) near chance</td>
+<td>a preset with a cross model (<a href="models.html#cross-models-reading-the-question-and-the-text-together">Models</a>)</td>
+</tr>
+<tr>
+<td>many options (50+), fine-grained</td>
+<td>a bigger embedding model, then <code>autotune</code></td>
+</tr>
+<tr>
+<td>needs knowledge the text does not contain</td>
+<td>a bigger decider, through <a href="serve.html#escalation-local-first-a-bigger-decider-when-unsure">Escalation</a></td>
+</tr>
+</tbody>
+</table>
+</article>
+<nav class="pager" aria-label="Pages"><a href="hub.html" rel="prev">◄ The hub</a><a href="installation.html" rel="next">Installation ►</a></nav>
+<p class="foot dim"><a href="https://github.com/usejul/jul/edit/main/docs/questions.md">Edit this page</a> · JuL, <i>Just use Less</i> · Apache-2.0 · Not affiliated with TypeSafe AI or Jev.</p>
+    </section>
+  </main>
+</div>
+<script src="assets/docs.js"></script>
+</body>
+</html>

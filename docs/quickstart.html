@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quickstart · JuL docs</title>
+<meta name="description" content="Quickstart Ten minutes, from nothing to a file of texts answered on your machine. You need Python 3.10 or later and about 3 GB of disk for the default model. 1.">
+<meta name="theme-color" content="#0a0600">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230a0600'/%3E%3Ctext x='2' y='12' font-family='monospace' font-size='11' fill='%23ffb000'%3E%3E_%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/docs.css">
+<script>try{var p=localStorage.getItem("jul-phosphor");if(p)document.documentElement.dataset.phosphor=p}catch(e){}</script>
+</head>
+<body>
+<a class="skip" href="#doc">Skip to the page</a>
+<nav class="menubar" aria-label="Main">
+  <a class="brand" href="../index.html">▓ JuL-DOS 0.5</a>
+  <a href="index.html"><u>D</u>ocs</a>
+  <a href="quickstart.html" class="hide-sm"><u>Q</u>uickstart</a>
+  <a href="python-api.html" class="hide-sm"><u>A</u>PI</a>
+  <a href="cli-reference.html" class="hide-sm">C<u>L</u>I</a>
+  <a href="https://github.com/usejul/jul"><u>G</u>itHub</a>
+  <span class="spacer"></span>
+  <label class="search"><span aria-hidden="true">[/]</span><input id="q" type="search" placeholder="search" autocomplete="off" aria-label="Search the docs"></label>
+  <button id="phosphor" type="button" title="Change phosphor">PHOSPHOR:<span id="ph-name">AMB</span></button>
+</nav>
+<div id="results" class="win results" data-title="SEARCH.EXE" hidden aria-live="polite"></div>
+<div class="layout">
+  <aside class="side">
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="dir">[≡] CONTENTS</button>
+    <section class="win dir" id="dir" data-title="C:\JUL\DOCS">
+<p class="nav-h">START HERE</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="index.html">Docs home</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="quickstart.html" aria-current="page">Quickstart</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="concepts.html">Concepts</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="hub.html">The hub</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="questions.html">Writing good questions</a></li>
+</ul>
+<p class="nav-h">GUIDES</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="installation.html">Installation</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="cli.html">Command line</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="tuning.html">Adapting to your data</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="serve.html">Serving over HTTP</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="deployment.html">Deploying a fixed need</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="aws-lambda.html">AWS Lambda, step by step</a></li>
+</ul>
+<p class="nav-h">MODELS</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="models.html">Models and readings</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="benchmarks.html">Benchmarks</a></li>
+</ul>
+<p class="nav-h">REFERENCE</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="python-api.html">Python API</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="cli-reference.html">CLI reference</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="configuration.html">Configuration</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="troubleshooting.html">FAQ and troubleshooting</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="glossary.html">Glossary</a></li>
+</ul>
+<p class="nav-h">PROJECT</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="development.html">Development</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="publishing.html">Publishing</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="changelog.html">Changelog</a></li>
+</ul>
+    </section>
+    <section class="win toc" data-title="ON_PAGE.LST"><ul><li class="l2"><a href="#1-install">1. Install</a></li>
+<li class="l2"><a href="#2-a-first-answer-from-the-shell">2. A first answer, from the shell</a></li>
+<li class="l2"><a href="#3-the-same-in-python">3. The same, in Python</a></li>
+<li class="l2"><a href="#4-a-whole-file">4. A whole file</a></li>
+<li class="l2"><a href="#5-where-to-go-next">5. Where to go next</a></li></ul></section>
+  </aside>
+  <main id="doc">
+    <section class="win doc" data-title="C:\JUL\DOCS\QUICKSTA.TXT">
+<article class="prose">
+<h1 id="quickstart">Quickstart</h1>
+<p>Ten minutes, from nothing to a file of texts answered on your machine. You need Python 3.10 or later and
+about 3 GB of disk for the default model.</p>
+<h2 id="1-install">1. Install</h2>
+<pre><code class="language-bash">python -m venv .venv &amp;&amp; source .venv/bin/activate
+pip install jul
+jul setup
+</code></pre>
+<p><code>jul setup</code> does four things and says which: it picks the backend (MLX on an Apple Silicon Mac, PyTorch
+anywhere else), installs it if missing, downloads the default model once from the Hugging Face Hub, and runs
+one real decision with its latency.</p>
+<pre><code class="language-text">jul setup: jul-decision-wemm-4b on mlx
+  backend  mlx (installed now)
+  preset   jul-decision-wemm-4b (built-in): tau 0.0553, center options
+  weights  usejul/WeMM-Embedding-4B-mlx-4bit -&gt; ~/.cache/huggingface/...
+  check    'I was charged twice' -&gt; billing (0.88), 55 ms per decision (first call 4.1s with the load)
+</code></pre>
+<p>Nothing else leaves your machine after that download: no account, no key, no telemetry.</p>
+<h2 id="2-a-first-answer-from-the-shell">2. A first answer, from the shell</h2>
+<pre><code class="language-bash">jul ask choice &quot;Which team should handle this ticket?&quot; \
+    -o billing:&quot;payments, invoices&quot; -o technical:&quot;bugs, errors&quot; -o sales:&quot;pricing, plans&quot; \
+    --state &quot;I was charged twice&quot;
+</code></pre>
+<pre><code class="language-json">{&quot;request_id&quot;: &quot;…&quot;, &quot;model&quot;: &quot;jul-decision-wemm-4b&quot;,
+ &quot;usage&quot;: {&quot;input_tokens&quot;: 24, &quot;output_tokens&quot;: 0, &quot;total_tokens&quot;: 24},
+ &quot;answers&quot;: {&quot;choice&quot;: {&quot;type&quot;: &quot;choice&quot;, &quot;choice&quot;: &quot;billing&quot;,
+                        &quot;probabilities&quot;: {&quot;billing&quot;: 0.88, &quot;technical&quot;: 0.11, &quot;sales&quot;: 0.01},
+                        &quot;confidence&quot;: 0.88}},
+ &quot;latency_ms&quot;: 55.3}
+</code></pre>
+<p>Read it this way:</p>
+<ul>
+<li><code>choice</code> is the option with the highest probability, <code>confidence</code> is that probability;</li>
+<li><code>probabilities</code> sum to 1 over <strong>your</strong> options: the model can only pick one of them;</li>
+<li><code>output_tokens</code> is always 0: nothing is generated, the answer is read from the model's hidden state
+  (see <a href="concepts.html#reading">Concepts</a>).</li>
+</ul>
+<p>The two other question types:</p>
+<pre><code class="language-bash">jul ask noul &quot;Does the message report a software bug?&quot; --state &quot;The app crashes on export&quot;
+jul ask score &quot;How frustrated is the customer?&quot; -o &quot;Calm&quot; -o &quot;Annoyed&quot; -o &quot;Very angry&quot; \
+    --state &quot;Third time I write. Nobody answers.&quot;
+</code></pre>
+<p>A <code>noul</code> answers the probability of <em>yes</em> (<code>"noul": 0.93</code>). A <code>score</code> answers the expected level from 0 to the
+number of levels minus one (<code>"score": 1.8</code>, close to "Very angry"), with a probability per level.</p>
+<h2 id="3-the-same-in-python">3. The same, in Python</h2>
+<pre><code class="language-python">from jul import TypeSafeClient, Choice, Noul, Score
+
+client = TypeSafeClient()              # the default model; TypeSafeClient(model=&quot;minicpm5-2b&quot;) for another
+
+response = client.system_one(
+    state={&quot;ticket&quot;: &quot;I was charged twice for my subscription this month.&quot;},
+    questions={
+        &quot;team&quot;: Choice(instructions=&quot;Which team should handle this ticket?&quot;,
+                       criteria={&quot;billing&quot;: &quot;payments, invoices, refunds&quot;,
+                                 &quot;technical&quot;: &quot;bugs, errors, crashes&quot;,
+                                 &quot;sales&quot;: &quot;pricing, plans, demos&quot;}),
+        &quot;is_bug&quot;: Noul(instructions=&quot;Does the message report a software bug?&quot;),
+        &quot;frustration&quot;: Score(instructions=&quot;How frustrated is the customer?&quot;,
+                             criteria=[&quot;Calm&quot;, &quot;Frustrated but civil&quot;, &quot;Very angry&quot;]),
+    },
+)
+
+response.choices[&quot;team&quot;].choice           # &quot;billing&quot;
+response.nouls[&quot;is_bug&quot;].noul             # 0.12
+response.scores[&quot;frustration&quot;].score      # 1.15
+response.as_dict()                        # the JSON above
+</code></pre>
+<ul>
+<li><code>state</code> is the text to judge: a string, or any object (a dict is turned into JSON for the model).</li>
+<li><code>questions</code> is a dict: you name each question, and its answer comes back under the same name.</li>
+<li>Every question of a call is about the same state. One call per text.</li>
+<li>The model loads on the first call (a few seconds) and stays in memory; the next calls take tens of
+  milliseconds.</li>
+</ul>
+<h2 id="4-a-whole-file">4. A whole file</h2>
+<p>Put the questions in a file once:</p>
+<pre><code class="language-yaml"># questions.yaml   (pip install &quot;jul[yaml]&quot;, or write the same thing as JSON)
+team:
+  type: choice
+  instructions: Which team should handle this ticket?
+  criteria:
+    billing: payments, invoices, refunds
+    technical: bugs, errors, crashes
+    sales: pricing, plans, demos
+is_bug:
+  type: noul
+  instructions: Does the message report a software bug?
+</code></pre>
+<p>and the texts one per line, as a string or <code>{"state": …, "id": …}</code>:</p>
+<pre><code class="language-json">{&quot;id&quot;: &quot;T-1&quot;, &quot;state&quot;: &quot;I was charged twice&quot;}
+{&quot;id&quot;: &quot;T-2&quot;, &quot;state&quot;: &quot;The export button does nothing&quot;}
+&quot;Do you have a yearly plan?&quot;
+</code></pre>
+<pre><code class="language-bash">jul run questions.yaml --input tickets.jsonl --output answers.jsonl
+</code></pre>
+<p><code>answers.jsonl</code> has one line per text, in the shape above without <code>latency_ms</code>, with the <code>id</code> copied over.</p>
+<h2 id="5-where-to-go-next">5. Where to go next</h2>
+<table>
+<thead>
+<tr>
+<th>You want to…</th>
+<th>Next</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>know why it answered that, and what the knobs are</td>
+<td><a href="concepts.html">Concepts</a></td>
+</tr>
+<tr>
+<td>get better answers without labels</td>
+<td><a href="questions.html">Writing good questions</a>, then a <a href="tuning.html#context--what-the-data-looks-like">Context</a></td>
+</tr>
+<tr>
+<td>get better answers with labels</td>
+<td><a href="tuning.html#autotune--when-it-is-off-key"><code>autotune</code></a></td>
+</tr>
+<tr>
+<td>use a smaller, faster or other model</td>
+<td><a href="hub.html">The hub</a></td>
+</tr>
+<tr>
+<td>call it from JavaScript, Go, a shell script</td>
+<td><a href="serve.html"><code>jul serve</code></a></td>
+</tr>
+<tr>
+<td>ship it to a Lambda</td>
+<td><a href="aws-lambda.html">AWS Lambda</a></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Already on Jev?</strong> Change the import and run your code unchanged:</p>
+<pre><code class="language-python"># from typesafe_sdk import TypeSafeClient, Choice, Noul, Score
+from jul import TypeSafeClient, Choice, Noul, Score
+</code></pre>
+<p>Arguments that only mean something for a remote API (<code>api_key</code>, <code>base_url</code>, <code>timeout</code>, <code>max_retries</code>, …) are
+accepted and ignored.</p>
+</article>
+<nav class="pager" aria-label="Pages"><a href="index.html" rel="prev">◄ Docs home</a><a href="concepts.html" rel="next">Concepts ►</a></nav>
+<p class="foot dim"><a href="https://github.com/usejul/jul/edit/main/docs/quickstart.md">Edit this page</a> · JuL, <i>Just use Less</i> · Apache-2.0 · Not affiliated with TypeSafe AI or Jev.</p>
+    </section>
+  </main>
+</div>
+<script src="assets/docs.js"></script>
+</body>
+</html>

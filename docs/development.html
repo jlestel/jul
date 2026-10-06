@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Development · JuL docs</title>
+<meta name="description" content="Development Layout jul/ lib/jul/ the library — the CLI never imports anything else types.py questions and answers, same fields as the Jev SDK presets.py the pre">
+<meta name="theme-color" content="#0a0600">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230a0600'/%3E%3Ctext x='2' y='12' font-family='monospace' font-size='11' fill='%23ffb000'%3E%3E_%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/docs.css">
+<script>try{var p=localStorage.getItem("jul-phosphor");if(p)document.documentElement.dataset.phosphor=p}catch(e){}</script>
+</head>
+<body>
+<a class="skip" href="#doc">Skip to the page</a>
+<nav class="menubar" aria-label="Main">
+  <a class="brand" href="../index.html">▓ JuL-DOS 0.5</a>
+  <a href="index.html"><u>D</u>ocs</a>
+  <a href="quickstart.html" class="hide-sm"><u>Q</u>uickstart</a>
+  <a href="python-api.html" class="hide-sm"><u>A</u>PI</a>
+  <a href="cli-reference.html" class="hide-sm">C<u>L</u>I</a>
+  <a href="https://github.com/usejul/jul"><u>G</u>itHub</a>
+  <span class="spacer"></span>
+  <label class="search"><span aria-hidden="true">[/]</span><input id="q" type="search" placeholder="search" autocomplete="off" aria-label="Search the docs"></label>
+  <button id="phosphor" type="button" title="Change phosphor">PHOSPHOR:<span id="ph-name">AMB</span></button>
+</nav>
+<div id="results" class="win results" data-title="SEARCH.EXE" hidden aria-live="polite"></div>
+<div class="layout">
+  <aside class="side">
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="dir">[≡] CONTENTS</button>
+    <section class="win dir" id="dir" data-title="C:\JUL\DOCS">
+<p class="nav-h">START HERE</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="index.html">Docs home</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="quickstart.html">Quickstart</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="concepts.html">Concepts</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="hub.html">The hub</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="questions.html">Writing good questions</a></li>
+</ul>
+<p class="nav-h">GUIDES</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="installation.html">Installation</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="cli.html">Command line</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="tuning.html">Adapting to your data</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="serve.html">Serving over HTTP</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="deployment.html">Deploying a fixed need</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="aws-lambda.html">AWS Lambda, step by step</a></li>
+</ul>
+<p class="nav-h">MODELS</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="models.html">Models and readings</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="benchmarks.html">Benchmarks</a></li>
+</ul>
+<p class="nav-h">REFERENCE</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="python-api.html">Python API</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="cli-reference.html">CLI reference</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="configuration.html">Configuration</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="troubleshooting.html">FAQ and troubleshooting</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="glossary.html">Glossary</a></li>
+</ul>
+<p class="nav-h">PROJECT</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="development.html" aria-current="page">Development</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="publishing.html">Publishing</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="changelog.html">Changelog</a></li>
+</ul>
+    </section>
+    <section class="win toc" data-title="ON_PAGE.LST"><ul><li class="l2"><a href="#layout">Layout</a></li>
+<li class="l2"><a href="#tests">Tests</a></li></ul></section>
+  </aside>
+  <main id="doc">
+    <section class="win doc" data-title="C:\JUL\DOCS\DEVELOPM.TXT">
+<article class="prose">
+<h1 id="development">Development</h1>
+<h2 id="layout">Layout</h2>
+<pre><code>jul/
+  lib/jul/          the library — the CLI never imports anything else
+    types.py        questions and answers, same fields as the Jev SDK
+    presets.py      the presets: repos, formulations, layers, tau, centers
+    engine.py       the vector method: formulations, cached prefixes, combination
+    decision.py     the pointer method: a decision model read with its own decision.json
+    client.py       TypeSafeClient / AsyncTypeSafeClient
+    context.py      Context: description, examples, labeled; disk cache
+    synth.py        `jul synth`: synthetic labeled data for autotune
+    tuning.py       `autotune(...)`: per-task head (vector, lexical, hybrid), cross-validated, with a safety net
+    lexical.py      TF-IDF in numpy, for the lexical and hybrid heads
+    bundle.py       `jul pack`: a fixed need packed into a bundle, and Bundle
+    encoder.py      encoders (BERT, XLM-R, e5) as backbones: the micro models
+    home.py         JUL_HOME
+    calibrate.py    `jul models add`: checks, extraction, choice of layers / center / tau
+    backbone.py     the backend interface: tap layers, stop early, cached prefix; picks the backend
+    backends/       mlx.py (mlx-lm), torch.py (transformers), onnx.py (ONNX Runtime) and
+                    onnx_export.py (the export, KV cache, 8-bit weights)
+    calibration.py  temperature and per-option bias
+  cli/jul_cli/      the command line; serve.py is `jul serve`, the Jev HTTP protocol
+  scripts/          data preparation, tuning experiments, the benchmark
+  tests/            fast tests, plus a slow suite that loads the models
+</code></pre>
+<h2 id="tests">Tests</h2>
+<pre><code class="language-bash">pytest tests                       # 126 tests, ~30 seconds, no model and no data
+JUL_SLOW=1 pytest tests            # all 159, downloads and loads the presets
+JUL_SLOW=1 pytest tests -m slow    # only the 33 that need a model
+JUL_SLOW=1 pytest tests -m torch   # MLX against PyTorch on the same weights
+</code></pre>
+<p>The onnx, encoder and bundle tests build tiny random models on the fly (a 4-layer Qwen3 and a
+4-layer XLM-R), export them with JuL and compare onnx with torch on the same weights; only the
+tokenizers are downloaded (<code>JUL_TEST_TOKENIZER</code>, <code>JUL_TEST_ENCODER_TOKENIZER</code>). They need
+<code>jul[onnx-export]</code> and are skipped without it.</p>
+<p><strong><code>JUL_SLOW</code> is a test-only switch</strong>, read by <code>tests/conftest.py</code> and by nothing in the library. The
+33 tests marked <code>@pytest.mark.slow</code> load a real model, so a plain <code>pytest</code> skips them rather than
+pulling over 15 GB of weights on someone who just cloned the repo. They are reported as skipped, with the
+reason, never silently dropped. Set <code>JUL_SLOW=1</code> to run them.</p>
+<p>The slow suite includes a per-preset non-regression check against <code>tests/fixtures/baseline.json</code>,
+which ships with the repo — that one needs the models but no dataset download.</p>
+</article>
+<nav class="pager" aria-label="Pages"><a href="glossary.html" rel="prev">◄ Glossary</a><a href="publishing.html" rel="next">Publishing ►</a></nav>
+<p class="foot dim"><a href="https://github.com/usejul/jul/edit/main/docs/development.md">Edit this page</a> · JuL, <i>Just use Less</i> · Apache-2.0 · Not affiliated with TypeSafe AI or Jev.</p>
+    </section>
+  </main>
+</div>
+<script src="assets/docs.js"></script>
+</body>
+</html>

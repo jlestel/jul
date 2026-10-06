@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Publishing · JuL docs</title>
+<meta name="description" content="Publishing JuL .github/workflows/release.yml builds the package on every push to main and on every v* tag. The version comes from git (setuptools-scm), never fr">
+<meta name="theme-color" content="#0a0600">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230a0600'/%3E%3Ctext x='2' y='12' font-family='monospace' font-size='11' fill='%23ffb000'%3E%3E_%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/docs.css">
+<script>try{var p=localStorage.getItem("jul-phosphor");if(p)document.documentElement.dataset.phosphor=p}catch(e){}</script>
+</head>
+<body>
+<a class="skip" href="#doc">Skip to the page</a>
+<nav class="menubar" aria-label="Main">
+  <a class="brand" href="../index.html">▓ JuL-DOS 0.5</a>
+  <a href="index.html"><u>D</u>ocs</a>
+  <a href="quickstart.html" class="hide-sm"><u>Q</u>uickstart</a>
+  <a href="python-api.html" class="hide-sm"><u>A</u>PI</a>
+  <a href="cli-reference.html" class="hide-sm">C<u>L</u>I</a>
+  <a href="https://github.com/usejul/jul"><u>G</u>itHub</a>
+  <span class="spacer"></span>
+  <label class="search"><span aria-hidden="true">[/]</span><input id="q" type="search" placeholder="search" autocomplete="off" aria-label="Search the docs"></label>
+  <button id="phosphor" type="button" title="Change phosphor">PHOSPHOR:<span id="ph-name">AMB</span></button>
+</nav>
+<div id="results" class="win results" data-title="SEARCH.EXE" hidden aria-live="polite"></div>
+<div class="layout">
+  <aside class="side">
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="dir">[≡] CONTENTS</button>
+    <section class="win dir" id="dir" data-title="C:\JUL\DOCS">
+<p class="nav-h">START HERE</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="index.html">Docs home</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="quickstart.html">Quickstart</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="concepts.html">Concepts</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="hub.html">The hub</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="questions.html">Writing good questions</a></li>
+</ul>
+<p class="nav-h">GUIDES</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="installation.html">Installation</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="cli.html">Command line</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="tuning.html">Adapting to your data</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="serve.html">Serving over HTTP</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="deployment.html">Deploying a fixed need</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="aws-lambda.html">AWS Lambda, step by step</a></li>
+</ul>
+<p class="nav-h">MODELS</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="models.html">Models and readings</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="benchmarks.html">Benchmarks</a></li>
+</ul>
+<p class="nav-h">REFERENCE</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="python-api.html">Python API</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="cli-reference.html">CLI reference</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="configuration.html">Configuration</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="troubleshooting.html">FAQ and troubleshooting</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="glossary.html">Glossary</a></li>
+</ul>
+<p class="nav-h">PROJECT</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="development.html">Development</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="publishing.html" aria-current="page">Publishing</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="changelog.html">Changelog</a></li>
+</ul>
+    </section>
+    <section class="win toc" data-title="ON_PAGE.LST"><ul><li class="l2"><a href="#where-the-version-comes-from">Where the version comes from</a></li>
+<li class="l2"><a href="#one-time-setup-on-the-index-side">One-time setup, on the index side</a></li>
+<li class="l2"><a href="#cutting-a-release">Cutting a release</a></li>
+<li class="l2"><a href="#what-it-does-not-cover">What it does not cover</a></li></ul></section>
+  </aside>
+  <main id="doc">
+    <section class="win doc" data-title="C:\JUL\DOCS\PUBLISHI.TXT">
+<article class="prose">
+<h1 id="publishing-jul">Publishing JuL</h1>
+<p><code>.github/workflows/release.yml</code> builds the package on every push to <code>main</code> and on every <code>v*</code> tag. The
+version comes from git (<a href="https://setuptools-scm.readthedocs.io/">setuptools-scm</a>), never from a file
+edited by hand, and <strong>a release version only comes from a tag</strong>. Git is trunk-based: <code>main</code> moves
+continuously and publishes an unstable build; a tag cuts a release.</p>
+<table>
+<thead>
+<tr>
+<th>Trigger</th>
+<th>Version built</th>
+<th>Index</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>push to <code>main</code></td>
+<td>the next patch as a dev release: <code>0.5.1.dev7</code> = 7 commits after <code>v0.5.0</code></td>
+<td>TestPyPI, when the repo variable <code>PUBLISH_TESTPYPI</code> is <code>true</code> (the unstable channel)</td>
+</tr>
+<tr>
+<td>tag <code>v0.6.0rc1</code> (any pre-release: <code>aN</code>, <code>bN</code>, <code>rcN</code>, <code>.devN</code>)</td>
+<td><code>0.6.0rc1</code></td>
+<td>TestPyPI</td>
+</tr>
+<tr>
+<td>tag <code>v0.6.0</code></td>
+<td><code>0.6.0</code></td>
+<td>PyPI</td>
+</tr>
+<tr>
+<td><code>workflow_dispatch</code></td>
+<td>as for <code>main</code></td>
+<td>nothing, it builds and stops</td>
+</tr>
+</tbody>
+</table>
+<p>Nothing uploads until the build passes <code>twine check --strict</code>, the sdist has rebuilt the wheel on
+its own, and the wheel has installed and imported in a clean environment on Linux 3.10, Linux 3.13
+and macOS 3.13.</p>
+<h2 id="where-the-version-comes-from">Where the version comes from</h2>
+<p><code>pyproject.toml</code> has <code>[tool.setuptools_scm]</code>: the build reads the last <code>v*</code> tag and the commits since.
+On a tagged commit the version is the tag; after it, the next patch with <code>.dev&lt;commits&gt;</code>, which pip
+sorts after the last release and installs only with <code>--pre</code>. The local part (<code>+g&lt;sha&gt;</code>) is dropped:
+the indexes refuse it. The version is written to <code>lib/jul/_version.py</code> at build or install (ignored by
+git) and read by <code>jul.__version__</code>; a checkout used without installing it says <code>0+unknown</code>.</p>
+<p>On a tag the workflow checks that the build is exactly the tag: a tag pushed on another commit than
+the one built, or a dirty tree, would give a <code>.devN</code>, and the build stops before anything is uploaded.</p>
+<p>Pushes to <code>main</code> are debounced: the TestPyPI job first waits <code>TESTPYPI_DEBOUNCE_MINUTES</code> (a repo
+variable, 15 by default), and a new push to <code>main</code> cancels the run still waiting. A burst of pushes
+therefore publishes one dev build, the last one. Tags do not wait and are never cancelled.</p>
+<p>To install the unstable channel:</p>
+<pre><code class="language-bash">pip install --pre -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple jul
+</code></pre>
+<p>(<code>--extra-index-url</code>: JuL's dependencies are not all on TestPyPI.) TestPyPI is not a production
+index and may be wiped: it is for trying things, never for depending on.</p>
+<h2 id="one-time-setup-on-the-index-side">One-time setup, on the index side</h2>
+<p>Both uploads use Trusted Publishing, so there is no API token in this repo and nothing to rotate. It
+has to be declared once per index, by whoever owns the project there.</p>
+<p>PyPI, at https://pypi.org/manage/account/publishing/ (the "pending publisher" form works before the
+project exists, which is the case for the first release):</p>
+<pre><code>PyPI project name:  jul
+Owner:              usejul
+Repository name:    jul
+Workflow name:      release.yml
+Environment name:   pypi
+</code></pre>
+<p>TestPyPI, at https://test.pypi.org/manage/account/publishing/, is the same form with environment
+name <code>testpypi</code>.</p>
+<p>Then, in this repo:</p>
+<ul>
+<li>Settings &gt; Environments: create <code>pypi</code> and <code>testpypi</code>. Worth adding a required reviewer on
+  <code>pypi</code>, since a PyPI version number can never be reused: the only undo for a bad upload is burning
+  the number.</li>
+<li>Settings &gt; Variables: add <code>PUBLISH_TESTPYPI</code> = <code>true</code> for pushes to <code>main</code> to publish the
+  unstable build to TestPyPI. Without it, <code>main</code> still builds and smoke-tests. Leave it unset on a
+  fork. A merge to <code>main</code> never reaches PyPI.</li>
+</ul>
+<h2 id="cutting-a-release">Cutting a release</h2>
+<ol>
+<li><code>main</code> is green (and, if you like, its dev build installs from TestPyPI).</li>
+<li>Optionally a release candidate first: <code>git tag v0.6.0rc1 &amp;&amp; git push origin v0.6.0rc1</code>, then
+   <code>pip install --pre -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple jul==0.6.0rc1</code>.</li>
+<li>Tag the release commit on <code>main</code> and push the tag: <code>git tag v0.6.0 &amp;&amp; git push origin v0.6.0</code>.</li>
+<li>The <code>pypi</code> job uploads. If you put a reviewer on the environment, it waits for you first. Release
+   notes can be written as a GitHub release on the tag afterwards; it triggers nothing.</li>
+</ol>
+<p>No file changes for a release: there is no version to bump.</p>
+<h2 id="what-it-does-not-cover">What it does not cover</h2>
+<p>The smoke test installs the base package: <code>import jul</code>, the assets, the console script. It never
+loads a model, so a backend extra that stops resolving on a new Python would go unnoticed until
+somebody runs <code>pip install jul[torch]</code>. Both backends are exercised by <code>ci.yml</code>, which runs on the
+same commits, on Linux, for torch. MLX has no runner and never will on the free tier.</p>
+</article>
+<nav class="pager" aria-label="Pages"><a href="development.html" rel="prev">◄ Development</a><a href="changelog.html" rel="next">Changelog ►</a></nav>
+<p class="foot dim"><a href="https://github.com/usejul/jul/edit/main/docs/publishing.md">Edit this page</a> · JuL, <i>Just use Less</i> · Apache-2.0 · Not affiliated with TypeSafe AI or Jev.</p>
+    </section>
+  </main>
+</div>
+<script src="assets/docs.js"></script>
+</body>
+</html>

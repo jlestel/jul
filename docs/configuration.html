@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Configuration · JuL docs</title>
+<meta name="description" content="Configuration JuL has no config file. Settings come, from the most specific to the most general, from an argument of the call, a flag of the command, an environ">
+<meta name="theme-color" content="#0a0600">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230a0600'/%3E%3Ctext x='2' y='12' font-family='monospace' font-size='11' fill='%23ffb000'%3E%3E_%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/docs.css">
+<script>try{var p=localStorage.getItem("jul-phosphor");if(p)document.documentElement.dataset.phosphor=p}catch(e){}</script>
+</head>
+<body>
+<a class="skip" href="#doc">Skip to the page</a>
+<nav class="menubar" aria-label="Main">
+  <a class="brand" href="../index.html">▓ JuL-DOS 0.5</a>
+  <a href="index.html"><u>D</u>ocs</a>
+  <a href="quickstart.html" class="hide-sm"><u>Q</u>uickstart</a>
+  <a href="python-api.html" class="hide-sm"><u>A</u>PI</a>
+  <a href="cli-reference.html" class="hide-sm">C<u>L</u>I</a>
+  <a href="https://github.com/usejul/jul"><u>G</u>itHub</a>
+  <span class="spacer"></span>
+  <label class="search"><span aria-hidden="true">[/]</span><input id="q" type="search" placeholder="search" autocomplete="off" aria-label="Search the docs"></label>
+  <button id="phosphor" type="button" title="Change phosphor">PHOSPHOR:<span id="ph-name">AMB</span></button>
+</nav>
+<div id="results" class="win results" data-title="SEARCH.EXE" hidden aria-live="polite"></div>
+<div class="layout">
+  <aside class="side">
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="dir">[≡] CONTENTS</button>
+    <section class="win dir" id="dir" data-title="C:\JUL\DOCS">
+<p class="nav-h">START HERE</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="index.html">Docs home</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="quickstart.html">Quickstart</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="concepts.html">Concepts</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="hub.html">The hub</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="questions.html">Writing good questions</a></li>
+</ul>
+<p class="nav-h">GUIDES</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="installation.html">Installation</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="cli.html">Command line</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="tuning.html">Adapting to your data</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="serve.html">Serving over HTTP</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="deployment.html">Deploying a fixed need</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="aws-lambda.html">AWS Lambda, step by step</a></li>
+</ul>
+<p class="nav-h">MODELS</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="models.html">Models and readings</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="benchmarks.html">Benchmarks</a></li>
+</ul>
+<p class="nav-h">REFERENCE</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="python-api.html">Python API</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="cli-reference.html">CLI reference</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="configuration.html" aria-current="page">Configuration</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="troubleshooting.html">FAQ and troubleshooting</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="glossary.html">Glossary</a></li>
+</ul>
+<p class="nav-h">PROJECT</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="development.html">Development</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="publishing.html">Publishing</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="changelog.html">Changelog</a></li>
+</ul>
+    </section>
+    <section class="win toc" data-title="ON_PAGE.LST"><ul><li class="l2"><a href="#environment-variables">Environment variables</a></li>
+<li class="l3"><a href="#where-and-how-the-model-runs">Where and how the model runs</a></li>
+<li class="l3"><a href="#onnx">ONNX</a></li>
+<li class="l3"><a href="#embeddings-apis---backend-api">Embeddings APIs (--backend api)</a></li>
+<li class="l3"><a href="#serving-and-escalation">Serving and escalation</a></li>
+<li class="l3"><a href="#tests-only">Tests only</a></li>
+<li class="l3"><a href="#from-the-hugging-face-libraries">From the Hugging Face libraries</a></li>
+<li class="l2"><a href="#files-on-disk">Files on disk</a></li>
+<li class="l2"><a href="#precedence">Precedence</a></li></ul></section>
+  </aside>
+  <main id="doc">
+    <section class="win doc" data-title="C:\JUL\DOCS\CONFIGUR.TXT">
+<article class="prose">
+<h1 id="configuration">Configuration</h1>
+<p>JuL has no config file. Settings come, from the most specific to the most general, from an argument of
+the call, a flag of the command, an environment variable, or the preset. This page lists every
+environment variable the code reads and every file it writes.</p>
+<h2 id="environment-variables">Environment variables</h2>
+<h3 id="where-and-how-the-model-runs">Where and how the model runs</h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>JUL_BACKEND</code></td>
+<td><code>mlx</code> on Apple Silicon if installed, else <code>torch</code></td>
+<td>the backend: <code>mlx</code>, <code>torch</code>, <code>onnx</code>, <code>api</code></td>
+</tr>
+<tr>
+<td><code>JUL_DEVICE</code></td>
+<td><code>cuda</code> &gt; <code>mps</code> &gt; <code>cpu</code></td>
+<td>the torch device</td>
+</tr>
+<tr>
+<td><code>JUL_DTYPE</code></td>
+<td><code>bfloat16</code>; <code>float32</code> on CPU; <code>float16</code> on GPUs without bf16 (T4)</td>
+<td>the torch dtype: <code>bfloat16</code>, <code>float16</code>, <code>float32</code></td>
+</tr>
+<tr>
+<td><code>JUL_BATCH_TOKENS</code></td>
+<td><code>16384</code></td>
+<td>most tokens in one batch (rows × longest prompt), mlx and torch</td>
+</tr>
+<tr>
+<td><code>JUL_BATCH_SIZE</code></td>
+<td><code>64</code></td>
+<td>most rows in one batch, mlx and torch</td>
+</tr>
+<tr>
+<td><code>JUL_HOME</code></td>
+<td><code>~/.jul</code></td>
+<td>where presets, contexts, heads and calibration data live (point it at a read-only package in a Lambda)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="onnx">ONNX</h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>JUL_ONNX_MODEL</code></td>
+<td>the export's own graph</td>
+<td>another graph for the vector model: a path or <code>s3://bucket/key</code>, read into memory</td>
+</tr>
+<tr>
+<td><code>JUL_ONNX_CROSS_MODEL</code></td>
+<td>the cross model's own graph</td>
+<td>the same for the cross model</td>
+</tr>
+<tr>
+<td><code>JUL_ONNX_THREADS</code></td>
+<td>ONNX Runtime's</td>
+<td>intra-op threads (in a Lambda: one per whole vCPU)</td>
+</tr>
+<tr>
+<td><code>JUL_ONNX_MAX_TOKENS</code></td>
+<td><code>2048</code></td>
+<td>longest row; the end of the input is cut, the prompt kept</td>
+</tr>
+<tr>
+<td><code>JUL_ONNX_BATCH_TOKENS</code></td>
+<td><code>2048</code></td>
+<td>rows × longest per run</td>
+</tr>
+</tbody>
+</table>
+<h3 id="embeddings-apis---backend-api">Embeddings APIs (<code>--backend api</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>JUL_API_BATCH</code></td>
+<td><code>16</code></td>
+<td>texts per request</td>
+</tr>
+<tr>
+<td><code>JUL_API_MAX_CHARS</code></td>
+<td><code>8000</code></td>
+<td>each text is cut to this many characters, with a warning</td>
+</tr>
+<tr>
+<td><code>JUL_API_TIMEOUT</code></td>
+<td><code>300</code></td>
+<td>seconds per request</td>
+</tr>
+<tr>
+<td><code>OLLAMA_HOST</code></td>
+<td><code>http://localhost:11434</code></td>
+<td>the Ollama server for <code>ollama:</code> repos</td>
+</tr>
+<tr>
+<td><code>OPENAI_API_KEY</code>, <code>MISTRAL_API_KEY</code>, <code>VOYAGE_API_KEY</code></td>
+<td>—</td>
+<td>keys for <code>openai:</code>, <code>mistral:</code>, <code>voyage:</code> repos</td>
+</tr>
+</tbody>
+</table>
+<h3 id="serving-and-escalation">Serving and escalation</h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>JUL_API_KEY</code></td>
+<td>none</td>
+<td>the key <code>jul serve</code> requires (<code>--api-key</code> overrides it); without one, any caller is accepted</td>
+</tr>
+<tr>
+<td><code>TYPESAFE_API_KEY</code></td>
+<td>—</td>
+<td>Jev's key, for <code>--escalate-to typesafe</code> and <code>jul bench --models typesafe</code></td>
+</tr>
+<tr>
+<td><code>CLOUDFLARE_ACCOUNT_ID</code></td>
+<td>—</td>
+<td>32 hex characters, for <code>--escalate-to cloudflare</code> and <code>jul bench --models cloudflare:clef</code></td>
+</tr>
+<tr>
+<td><code>CLOUDFLARE_API_TOKEN</code> (or <code>CLOUDFLARE_AUTH_TOKEN</code>)</td>
+<td>—</td>
+<td>Workers AI token, for the same</td>
+</tr>
+</tbody>
+</table>
+<p>Escalation and bench keys are read from the environment only (<code>--escalate-key-env</code>, or <code>--remote-key-env</code>
+for <code>jul bench</code>, names the variable), and no key is ever logged. The server key can also be given with <code>--api-key</code>, but the environment keeps it out of <code>ps</code>
+and shell history.</p>
+<h3 id="tests-only">Tests only</h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>JUL_SLOW</code></td>
+<td><code>1</code> runs the tests that load a real model (read by <code>tests/conftest.py</code>, never by the library)</td>
+</tr>
+<tr>
+<td><code>JUL_TEST_TOKENIZER</code>, <code>JUL_TEST_ENCODER_TOKENIZER</code></td>
+<td>the tokenizers the tiny test models use</td>
+</tr>
+<tr>
+<td><code>JUL_TEST_MODEL</code></td>
+<td>the model the backend tests load</td>
+</tr>
+</tbody>
+</table>
+<h3 id="from-the-hugging-face-libraries">From the Hugging Face libraries</h3>
+<p>JuL downloads weights with <code>huggingface_hub</code>, so its variables apply: <code>HF_HOME</code> (cache location, default
+<code>~/.cache/huggingface</code>), <code>HF_TOKEN</code> (gated or private repos), <code>HF_HUB_OFFLINE=1</code> (never touch the network
+once the weights are cached).</p>
+<h2 id="files-on-disk">Files on disk</h2>
+<pre><code class="language-text">~/.jul/                              ($JUL_HOME)
+├─ presets/&lt;name&gt;@&lt;backend&gt;.json     written by `jul models add`: layers, tau, center, what was measured
+├─ contexts/&lt;name&gt;/                  a saved Context
+│  ├─ meta.json                      description, calibrations
+│  ├─ examples.txt                   its unlabeled texts
+│  ├─ centers/*.npy                  one center per model, prompt and layer
+│  └─ heads/&lt;digest&gt;.npz + .json     heads trained by `autotune`, one per question
+├─ heads/&lt;name&gt;/                     contrastive heads (`jul models add --train-heads`, CLM)
+├─ calibration-data/                 the development sets `jul models add` downloads once
+└─ text_prefixes.json                optional: input prefixes for encoders, extends the built-in list
+~/.cache/huggingface/                the model weights (HF_HOME)
+</code></pre>
+<p>A head is keyed by the model, the backend, the question's instructions and its options: change any of them
+and the question is answered zero-shot until you run <code>autotune</code> again. Deleting <code>~/.jul</code> loses fitted
+presets, contexts and heads, never the weights.</p>
+<h2 id="precedence">Precedence</h2>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Call argument</th>
+<th>CLI flag</th>
+<th>Environment</th>
+<th>Otherwise</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>model</td>
+<td><code>model=</code></td>
+<td><code>--model</code></td>
+<td>—</td>
+<td><code>jul-decision-wemm-4b</code></td>
+</tr>
+<tr>
+<td>backend</td>
+<td><code>backend=</code></td>
+<td><code>--backend</code></td>
+<td><code>JUL_BACKEND</code></td>
+<td>detected</td>
+</tr>
+<tr>
+<td>reading</td>
+<td><code>method=</code></td>
+<td><code>--method</code></td>
+<td>—</td>
+<td>the preset's, per question type</td>
+</tr>
+<tr>
+<td>context</td>
+<td><code>context=</code></td>
+<td><code>--context</code></td>
+<td>—</td>
+<td>none</td>
+</tr>
+<tr>
+<td>server key</td>
+<td><code>serve(api_key=)</code></td>
+<td><code>--api-key</code></td>
+<td><code>JUL_API_KEY</code></td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+</article>
+<nav class="pager" aria-label="Pages"><a href="cli-reference.html" rel="prev">◄ CLI reference</a><a href="troubleshooting.html" rel="next">FAQ and troubleshooting ►</a></nav>
+<p class="foot dim"><a href="https://github.com/usejul/jul/edit/main/docs/configuration.md">Edit this page</a> · JuL, <i>Just use Less</i> · Apache-2.0 · Not affiliated with TypeSafe AI or Jev.</p>
+    </section>
+  </main>
+</div>
+<script src="assets/docs.js"></script>
+</body>
+</html>

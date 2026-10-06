@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Command line · JuL docs</title>
+<meta name="description" content="Command line jul ask choice &amp;quot;Which team should handle this ticket?&amp;quot; \ -o billing:&amp;quot;payments, invoices&amp;quot; -o technical:&amp;quot;bugs, errors&amp;quot; ">
+<meta name="theme-color" content="#0a0600">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230a0600'/%3E%3Ctext x='2' y='12' font-family='monospace' font-size='11' fill='%23ffb000'%3E%3E_%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/docs.css">
+<script>try{var p=localStorage.getItem("jul-phosphor");if(p)document.documentElement.dataset.phosphor=p}catch(e){}</script>
+</head>
+<body>
+<a class="skip" href="#doc">Skip to the page</a>
+<nav class="menubar" aria-label="Main">
+  <a class="brand" href="../index.html">▓ JuL-DOS 0.5</a>
+  <a href="index.html"><u>D</u>ocs</a>
+  <a href="quickstart.html" class="hide-sm"><u>Q</u>uickstart</a>
+  <a href="python-api.html" class="hide-sm"><u>A</u>PI</a>
+  <a href="cli-reference.html" class="hide-sm">C<u>L</u>I</a>
+  <a href="https://github.com/usejul/jul"><u>G</u>itHub</a>
+  <span class="spacer"></span>
+  <label class="search"><span aria-hidden="true">[/]</span><input id="q" type="search" placeholder="search" autocomplete="off" aria-label="Search the docs"></label>
+  <button id="phosphor" type="button" title="Change phosphor">PHOSPHOR:<span id="ph-name">AMB</span></button>
+</nav>
+<div id="results" class="win results" data-title="SEARCH.EXE" hidden aria-live="polite"></div>
+<div class="layout">
+  <aside class="side">
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="dir">[≡] CONTENTS</button>
+    <section class="win dir" id="dir" data-title="C:\JUL\DOCS">
+<p class="nav-h">START HERE</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="index.html">Docs home</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="quickstart.html">Quickstart</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="concepts.html">Concepts</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="hub.html">The hub</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="questions.html">Writing good questions</a></li>
+</ul>
+<p class="nav-h">GUIDES</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="installation.html">Installation</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="cli.html" aria-current="page">Command line</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="tuning.html">Adapting to your data</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="serve.html">Serving over HTTP</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="deployment.html">Deploying a fixed need</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="aws-lambda.html">AWS Lambda, step by step</a></li>
+</ul>
+<p class="nav-h">MODELS</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="models.html">Models and readings</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="benchmarks.html">Benchmarks</a></li>
+</ul>
+<p class="nav-h">REFERENCE</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="python-api.html">Python API</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="cli-reference.html">CLI reference</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="configuration.html">Configuration</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="troubleshooting.html">FAQ and troubleshooting</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="glossary.html">Glossary</a></li>
+</ul>
+<p class="nav-h">PROJECT</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="development.html">Development</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="publishing.html">Publishing</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="changelog.html">Changelog</a></li>
+</ul>
+    </section>
+    <section class="win toc" data-title="ON_PAGE.LST"><ul><li class="l2"><a href="#bench-on-your-own-data">Bench on your own data</a></li>
+<li class="l2"><a href="#file-formats">File formats</a></li></ul></section>
+  </aside>
+  <main id="doc">
+    <section class="win doc" data-title="C:\JUL\DOCS\CLI.TXT">
+<article class="prose">
+<h1 id="command-line">Command line</h1>
+<pre><code class="language-bash">jul ask choice &quot;Which team should handle this ticket?&quot; \
+    -o billing:&quot;payments, invoices&quot; -o technical:&quot;bugs, errors&quot; \
+    --state &quot;I was charged twice&quot; --model minicpm5-2b
+
+jul run questions.yaml --input tickets.jsonl --output answers.jsonl --context tickets
+jul context create tickets --description &quot;Support tickets of an online bank&quot; --examples sample.txt
+jul context list                  # the saved contexts
+jul context show tickets          # its description, example count, tuned and calibrated questions
+jul context delete tickets
+jul synth questions.yaml --seeds sample.jsonl --per-option 30 --output synth.jsonl
+jul autotune tickets --questions questions.yaml --labeled labeled.jsonl --features hybrid
+jul pack bundle/ --questions questions.yaml --context tickets --backend onnx
+jul models
+jul models add jul-decision-minicpm5-2b --repo usejul/jul-decision-minicpm5-2b-mlx-4bit   # a decision model
+jul models add my-model --repo org/Some-Instruct-3B                                 # fits a preset
+jul setup --model jul-decision-minicpm5-2b    # backend, weights and one timed decision
+jul serve --model minicpm5-2b --port 8577   # the Jev HTTP protocol on 127.0.0.1, see serve.md
+</code></pre>
+<h2 id="bench-on-your-own-data">Bench on your own data</h2>
+<p><code>jul bench</code> answers the question you will ask in production with every model you name, on rows you have
+labeled, and says which one to use. One row per answer, JSONL or CSV, carrying its own question so a file can
+mix several:</p>
+<pre><code class="language-json">{&quot;type&quot;: &quot;choice&quot;, &quot;question&quot;: &quot;Which team should handle this ticket?&quot;,
+ &quot;options&quot;: {&quot;billing&quot;: &quot;payments, invoices&quot;, &quot;technical&quot;: &quot;bugs, errors&quot;},
+ &quot;state&quot;: &quot;I was charged twice&quot;, &quot;answer&quot;: &quot;billing&quot;}
+</code></pre>
+<p>In CSV the options are <code>key:description|key:description</code> (or <code>key|key</code>). <code>type</code> is <code>choice</code> by default; a
+<code>noul</code> answers <code>true</code>/<code>false</code> and needs no options; a <code>score</code> lists its levels lowest first and answers the
+level (its index or its text).</p>
+<pre><code class="language-bash">jul bench test.jsonl --models jul-decision-e5-small@onnx,minicpm5-2b@torch      # zero-shot
+jul bench test.jsonl --train train.jsonl --models fast,accurate -O results.json   # + autotune
+jul bench test.jsonl --train train.jsonl --models minicpm5-2b@torch --method auto --features auto
+jul bench test.csv --json &gt; results.json
+</code></pre>
+<ul>
+<li><strong>Per question</strong>: accuracy, its 95% Wilson interval, p50/p95 latency (and the mean error for a score).</li>
+<li><strong>The pick</strong>: the fastest model whose interval still reaches the best accuracy. When several are within it,
+  the report says they cannot be told apart on that many rows: that is the honest answer below ~50 rows.</li>
+<li><strong>Readings</strong>: by default each model answers the way it does in production. <code>--method vector,letters,cross</code>
+  (or <code>auto</code>) measures each zero-shot reading, <code>--features vector,lexical,hybrid</code> (or <code>auto</code>) each autotune
+  head, the same names as <code>jul ask --method</code> and <code>jul autotune --features</code>. Every reading gets its own row and
+  the pick is chosen among all of them, so the answer is "this model, read this way". A reading a model cannot
+  take (letters on an embeddings API, anything but its pointer head on a decision model, cross without a cross
+  model) is shown <code>n/a</code> with the reason. More readings cost more time, and the best of many on the same rows is
+  slightly optimistic: the report says so.</li>
+<li><strong>Autotune</strong> only with <code>--train</code>, a separate file you labeled: never a split of the test file. Each model is
+  tuned in a throwaway context (nothing saved in <code>~/.jul</code>); a head that does not beat zero-shot on its own
+  folds is shown with <code>*</code> and not counted, and an autotuned row is only picked if it does better on the test
+  rows. Decision models (pointer) are measured zero-shot only.</li>
+<li><strong>Overlap check</strong>, before anything runs: a test text also in train (after folding case, accents,
+  punctuation and turning every number into 0, so <code>van ABC-123 at 11pm</code> matches <code>van abc-987 at 10pm</code>) stops
+  the bench; <code>--drop-overlap</code> removes those rows from test, <code>--allow-overlap</code> runs anyway. Near duplicates
+  (character 5-gram similarity above <code>--near</code>, 0.8 by default) and duplicates inside test are reported. What
+  cannot be checked: a model that saw public data during its pretraining.</li>
+<li><strong>Remote servers</strong>, next to JuL's models: <code>typesafe</code> (Jev, key in <code>TYPESAFE_API_KEY</code>), <code>ollama[:model]</code>
+  (Nimble), <code>cloudflare:clef</code> or <code>cloudflare:clef-flash</code> (<code>CLOUDFLARE_ACCOUNT_ID</code>, <code>CLOUDFLARE_API_TOKEN</code>), or
+  the URL of any <code>/v1/systemone</code> server as <code>URL#model</code> with its key in <code>--remote-key-env VAR</code> (Kev, llama.cpp,
+  a hosted Laya, another <code>jul serve</code>). Each is asked with your own key, zero-shot only, and its latency
+  includes the network. <strong>The test rows are sent to that server.</strong> A target whose key is missing is shown
+  failed, before anything is sent, and the others still run. A URL without <code>--remote-key-env</code> is called with
+  no <code>Authorization</code> header (right for a local <code>jul serve</code> or llama.cpp); <code>--remote-key-env</code> also replaces
+  <code>CLOUDFLARE_API_TOKEN</code> for <code>cloudflare:*</code>, as <code>jul serve --escalate-key-env</code> does. A <code>user:password@</code> in a URL
+  is never written to the report or the logs.</li>
+</ul>
+<p><code>bash
+  jul bench test.jsonl --models accurate,typesafe,cloudflare:clef,https://kev.example#kev-4b \
+    --remote-key-env KEV_API_KEY</code>
+- <strong>Cascade</strong>, <code>--escalate-to TARGET [--min-confidence 0.8]</code>: each local model is also measured the way
+  <code>jul serve --escalate-to</code> answers, itself first and the remote server only for the answers below the bar.
+  Its row (<code>cascade@0.8</code>) gives the accuracy of the pair and the share of rows sent to the server, which is
+  what it costs; when the cascade is the pick, the verdict line repeats that share. Same targets and keys as
+  remote <code>--models</code>; <code>--min-confidence</code> is between 0 and 1. Remote models in <code>--models</code> are not cascaded.
+  The server's failures are never hidden: a row that failed there is counted on the cascade row
+  (<code>2 failed there</code>), a server that failed on every escalated row (a rejected key, say) turns the row into
+  <code>n/a</code> with its error, and so does a local model that cannot read the way asked.</p>
+<p><code>bash
+  jul bench test.jsonl --models accurate,fast --escalate-to typesafe --min-confidence 0.8</code></p>
+<h2 id="file-formats">File formats</h2>
+<p><strong>Questions</strong> (<code>questions.yaml</code>, for <code>run</code>, <code>synth</code>, <code>autotune</code>, <code>pack</code>): YAML or JSON, one entry per
+question, its name as key. <code>criteria</code> is <code>{key: description}</code> for a <code>choice</code>, the ordered levels for a
+<code>score</code>, nothing for a <code>noul</code>.</p>
+<pre><code class="language-yaml">team:
+  type: choice
+  instructions: Which team should handle this ticket?
+  criteria:
+    billing: payments, invoices, refunds
+    technical: bugs, errors, crashes
+is_bug:
+  type: noul
+  instructions: Does the message report a software bug?
+frustration:
+  type: score
+  instructions: How frustrated is the customer?
+  criteria: [Calm, Frustrated but civil, Very angry]
+</code></pre>
+<p><strong>Labeled examples</strong> (<code>labeled.jsonl</code>, for <code>autotune</code>): one JSON object per line, the text in <code>state</code>
+(or <code>text</code>) and one answer per question in <code>answers</code> — the option key for a <code>choice</code>, <code>true</code>/<code>false</code> for
+a <code>noul</code>, the index of the level for a <code>score</code> (0 = the first, lowest level). The answers may also sit at the top level, named after the questions.</p>
+<pre><code class="language-json">{&quot;state&quot;: &quot;I was charged twice for my subscription&quot;, &quot;answers&quot;: {&quot;team&quot;: &quot;billing&quot;, &quot;is_bug&quot;: false, &quot;frustration&quot;: 1}}
+{&quot;state&quot;: &quot;The app crashes every time I export&quot;, &quot;answers&quot;: {&quot;team&quot;: &quot;technical&quot;, &quot;is_bug&quot;: true, &quot;frustration&quot;: 2}}
+{&quot;text&quot;: &quot;Do you have a yearly plan?&quot;, &quot;team&quot;: &quot;billing&quot;, &quot;is_bug&quot;: false, &quot;frustration&quot;: 0}
+</code></pre>
+<p><strong>Seeds</strong> (<code>sample.jsonl</code>, for <code>synth --seeds</code>): the same lines, with <code>answers</code> optional — a seed without
+answers only informs the style of the texts written.</p>
+<pre><code class="language-json">{&quot;state&quot;: &quot;hi, my card got declined at the station again&quot;, &quot;answers&quot;: {&quot;team&quot;: &quot;billing&quot;}}
+{&quot;state&quot;: &quot;ur app logged me out 3 times today&quot;}
+</code></pre>
+<p><strong>Examples of a context</strong> (<code>sample.txt</code>, for <code>context create --examples</code>): one text per line, or a
+<code>.jsonl</code> with a <code>text</code> field per line.</p>
+<pre><code class="language-text">I was charged twice for my subscription
+The app crashes every time I export
+Do you have a yearly plan?
+</code></pre>
+<p><strong>Input of <code>run</code></strong> (<code>tickets.jsonl</code>): one message per line, a string or <code>{"state": ..., "id": ...}</code>; the
+<code>id</code> is copied to the output. <strong>Output</strong> (<code>answers.jsonl</code>): one line per message, the shape of a Jev API
+response:</p>
+<pre><code class="language-json">{&quot;request_id&quot;: &quot;c3b355de-…&quot;, &quot;model&quot;: &quot;e5-small&quot;, &quot;usage&quot;: {&quot;input_tokens&quot;: 9, &quot;output_tokens&quot;: 0, &quot;total_tokens&quot;: 9}, &quot;answers&quot;: {&quot;team&quot;: {&quot;choice&quot;: &quot;billing&quot;, &quot;probabilities&quot;: {&quot;billing&quot;: 0.91, &quot;technical&quot;: 0.06, &quot;sales&quot;: 0.03}, &quot;confidence&quot;: 0.91}}, &quot;id&quot;: &quot;T-1042&quot;}
+</code></pre>
+</article>
+<nav class="pager" aria-label="Pages"><a href="installation.html" rel="prev">◄ Installation</a><a href="tuning.html" rel="next">Adapting to your data ►</a></nav>
+<p class="foot dim"><a href="https://github.com/usejul/jul/edit/main/docs/cli.md">Edit this page</a> · JuL, <i>Just use Less</i> · Apache-2.0 · Not affiliated with TypeSafe AI or Jev.</p>
+    </section>
+  </main>
+</div>
+<script src="assets/docs.js"></script>
+</body>
+</html>

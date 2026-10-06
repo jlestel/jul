@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The hub · JuL docs</title>
+<meta name="description" content="The hub JuL is model-agnostic. Your code asks typed questions through one API; behind it you plug the model, the runtime and the provider that fit your constrai">
+<meta name="theme-color" content="#0a0600">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230a0600'/%3E%3Ctext x='2' y='12' font-family='monospace' font-size='11' fill='%23ffb000'%3E%3E_%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/docs.css">
+<script>try{var p=localStorage.getItem("jul-phosphor");if(p)document.documentElement.dataset.phosphor=p}catch(e){}</script>
+</head>
+<body>
+<a class="skip" href="#doc">Skip to the page</a>
+<nav class="menubar" aria-label="Main">
+  <a class="brand" href="../index.html">▓ JuL-DOS 0.5</a>
+  <a href="index.html"><u>D</u>ocs</a>
+  <a href="quickstart.html" class="hide-sm"><u>Q</u>uickstart</a>
+  <a href="python-api.html" class="hide-sm"><u>A</u>PI</a>
+  <a href="cli-reference.html" class="hide-sm">C<u>L</u>I</a>
+  <a href="https://github.com/usejul/jul"><u>G</u>itHub</a>
+  <span class="spacer"></span>
+  <label class="search"><span aria-hidden="true">[/]</span><input id="q" type="search" placeholder="search" autocomplete="off" aria-label="Search the docs"></label>
+  <button id="phosphor" type="button" title="Change phosphor">PHOSPHOR:<span id="ph-name">AMB</span></button>
+</nav>
+<div id="results" class="win results" data-title="SEARCH.EXE" hidden aria-live="polite"></div>
+<div class="layout">
+  <aside class="side">
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="dir">[≡] CONTENTS</button>
+    <section class="win dir" id="dir" data-title="C:\JUL\DOCS">
+<p class="nav-h">START HERE</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="index.html">Docs home</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="quickstart.html">Quickstart</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="concepts.html">Concepts</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="hub.html" aria-current="page">The hub</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="questions.html">Writing good questions</a></li>
+</ul>
+<p class="nav-h">GUIDES</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="installation.html">Installation</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="cli.html">Command line</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="tuning.html">Adapting to your data</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="serve.html">Serving over HTTP</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="deployment.html">Deploying a fixed need</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="aws-lambda.html">AWS Lambda, step by step</a></li>
+</ul>
+<p class="nav-h">MODELS</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="models.html">Models and readings</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="benchmarks.html">Benchmarks</a></li>
+</ul>
+<p class="nav-h">REFERENCE</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="python-api.html">Python API</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="cli-reference.html">CLI reference</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="configuration.html">Configuration</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="troubleshooting.html">FAQ and troubleshooting</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="glossary.html">Glossary</a></li>
+</ul>
+<p class="nav-h">PROJECT</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="development.html">Development</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="publishing.html">Publishing</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="changelog.html">Changelog</a></li>
+</ul>
+    </section>
+    <section class="win toc" data-title="ON_PAGE.LST"><ul><li class="l2"><a href="#models-you-run">Models you run</a></li>
+<li class="l2"><a href="#backends">Backends</a></li>
+<li class="l2"><a href="#embeddings-apis">Embeddings APIs</a></li>
+<li class="l2"><a href="#system-one-servers">System One servers</a></li>
+<li class="l2"><a href="#choosing">Choosing</a></li></ul></section>
+  </aside>
+  <main id="doc">
+    <section class="win doc" data-title="C:\JUL\DOCS\HUB.TXT">
+<article class="prose">
+<h1 id="the-hub">The hub</h1>
+<p>JuL is model-agnostic. Your code asks typed questions through one API; behind it you plug the model,
+the runtime and the provider that fit your constraints, and change them without touching that code.</p>
+<pre><code class="language-text">                         ┌──────────────────────────────────────────┐
+  Python  ─ TypeSafeClient│                                          │
+  shell   ─ jul ask / run │   one API: Choice · Noul · Score         │
+  any lang ─ jul serve    │   one answer shape: Jev's System One     │
+  Lambda  ─ Bundle        │                                          │
+                         └───────────────────┬──────────────────────┘
+                                             │
+           ┌──────────────┬──────────────────┼──────────────────┬──────────────────┐
+           ▼              ▼                  ▼                  ▼                  ▼
+     embedding LLMs   decision models     encoders         embeddings APIs   System One servers
+     WeMM, F2LLM,     jul-decision-*,     e5, BERT,        Ollama, OpenAI,   Jev, Clef (Cloudflare),
+     Qwen3-Emb,       minicpm5-2b-        XLM-R            Mistral, Voyage,  Nimble (Ollama), Kev,
+     Harrier, any     decision, CLM-8B                     any OpenAI-       another jul serve
+     HF decoder                                            compatible        (escalation tiers)
+           │              │                  │                  │                  │
+           └──────── mlx · torch · onnx ─────┘                api              HTTP
+</code></pre>
+<p>Five families, four backends, one call. The rest of this page says what each brings and how to pick.</p>
+<h2 id="models-you-run">Models you run</h2>
+<p>Anything on the Hugging Face Hub, or in a local directory, that JuL can load on one of its backends.
+<code>jul models add</code> fits it once on the development sets (layer, center, temperature) and from then on
+<code>--model &lt;name&gt;</code> uses it everywhere: Python, CLI, server, bundles.</p>
+<table>
+<thead>
+<tr>
+<th>Family</th>
+<th>What it is</th>
+<th>Examples</th>
+<th>Best for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Embedding LLMs</strong></td>
+<td>decoders fine-tuned for embeddings, read at a middle layer</td>
+<td><code>wemm-4b-4bit</code> (built in), <code>wemm-9b</code>, <code>f2llm-1.7b</code>, <code>qwen3-embedding-0.6b</code>, <code>harrier-0.6b</code></td>
+<td>sorting one text into options, zero-shot</td>
+</tr>
+<tr>
+<td><strong>Any decoder</strong></td>
+<td>a general LLM read the same way</td>
+<td><code>minicpm5-2b</code> (built in), <code>bitnet-2b</code>, any instruct model</td>
+<td>trying a model you already use</td>
+</tr>
+<tr>
+<td><strong>Decision models</strong></td>
+<td>trained to answer typed questions, bring their own format in a <code>decision.json</code></td>
+<td><code>jul-decision-minicpm5-2b</code></td>
+<td>questions that read two things together</td>
+</tr>
+<tr>
+<td><strong>Cross models (adapters)</strong></td>
+<td>LoRA adapters that read the question and the text together, on the same weights</td>
+<td><code>jul-decision-wemm-4b</code> (the default), <code>jul-decision-wemm-4b-4bit</code></td>
+<td>yes/no and choices (the default), scores (<code>-4bit</code>), one model in memory</td>
+</tr>
+<tr>
+<td><strong>Encoders</strong></td>
+<td>small bidirectional models, read as their sentence embedding</td>
+<td><code>e5-small</code>, <code>jul-decision-e5-small</code></td>
+<td>milliseconds, CPU only, Lambda</td>
+</tr>
+<tr>
+<td><strong>Contrastive heads</strong></td>
+<td>projection heads on a frozen backbone</td>
+<td><code>clm-8b</code> (CLM's heads on Qwen3-8B), your own with <code>--train-heads</code></td>
+<td>reusing heads trained elsewhere</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="language-bash">jul models add harrier-0.6b --repo majentik/harrier-oss-v1-0.6b-MLX-4bit     # an embedding LLM
+jul models add my-model --repo org/Some-Instruct-3B                          # any decoder
+jul models add jul-decision-minicpm5-2b --repo usejul/jul-decision-minicpm5-2b-mlx-4bit   # a decision model
+jul models add clm-8b --repo Contrastive-LM/CLM-v0.1-8B                       # contrastive heads
+jul models                                                                   # what you have
+</code></pre>
+<p>What <code>jul models add</code> recognizes by itself: a repo with a <code>decision.json</code> is a decision model, one with a
+CLM <code>config.json</code> or a <code>contrastive.json</code> gets contrastive heads, one carrying a <code>cross/</code> folder gets its
+cross model attached. Everything else is fitted as a vector preset. The 18 models we measured, with their
+scores: <a href="models.html#every-model-measured">Models</a>.</p>
+<h2 id="backends">Backends</h2>
+<p>The same preset name can be fitted on several backends; the backend decides where it runs.</p>
+<table>
+<thead>
+<tr>
+<th>Backend</th>
+<th>Install</th>
+<th>Runs on</th>
+<th>Reads</th>
+<th>Use it for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mlx</code></td>
+<td><code>pip install "jul[mlx]"</code></td>
+<td>Apple Silicon</td>
+<td>every reading</td>
+<td>a Mac, the default there</td>
+</tr>
+<tr>
+<td><code>torch</code></td>
+<td><code>pip install "jul[torch]"</code></td>
+<td>CUDA, CPU, MPS</td>
+<td>every reading</td>
+<td>Linux, Windows, GPUs, the default elsewhere</td>
+</tr>
+<tr>
+<td><code>onnx</code></td>
+<td><code>pip install "jul[onnx]"</code></td>
+<td>CPU, no torch</td>
+<td>vector, cross (encoders)</td>
+<td>deploying: Lambda, containers, 225 MB packages</td>
+</tr>
+<tr>
+<td><code>api</code></td>
+<td>nothing extra</td>
+<td>wherever the API is</td>
+<td>vector only</td>
+<td>no weights at all, a model you already serve</td>
+</tr>
+</tbody>
+</table>
+<p>Pick one with <code>backend=</code> in Python, <code>--backend</code> on the CLI, or <code>JUL_BACKEND</code> for everything. Never picked by
+default: <code>onnx</code> (it reads a model exported for it) and <code>api</code> (it calls a server). Details:
+<a href="installation.html#backend-device-and-batching">Installation</a>.</p>
+<p><strong>Vectors are tied to their weights.</strong> MLX presets are 4-bit, PyTorch loads bf16: the same model reads
+slightly different vectors on each (cosine ~0.95). Contexts, heads and bundles are therefore keyed per
+backend: a head trained on MLX is never applied to PyTorch vectors. Tune and pack on the backend you deploy on.</p>
+<h2 id="embeddings-apis">Embeddings APIs</h2>
+<p>When the model already runs somewhere (an Ollama on the box, a hosted provider), JuL reads its embeddings
+over HTTP instead of loading weights. <code>jul models add</code> fits the center and temperature as for a local
+model.</p>
+<table>
+<thead>
+<tr>
+<th><code>--repo</code></th>
+<th>Endpoint</th>
+<th>Key</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ollama:MODEL</code></td>
+<td><code>$OLLAMA_HOST</code> or <code>http://localhost:11434</code></td>
+<td>none</td>
+</tr>
+<tr>
+<td><code>openai:MODEL</code></td>
+<td><code>https://api.openai.com/v1</code></td>
+<td><code>OPENAI_API_KEY</code></td>
+</tr>
+<tr>
+<td><code>mistral:MODEL</code></td>
+<td><code>https://api.mistral.ai/v1</code></td>
+<td><code>MISTRAL_API_KEY</code></td>
+</tr>
+<tr>
+<td><code>voyage:MODEL</code></td>
+<td><code>https://api.voyageai.com/v1</code></td>
+<td><code>VOYAGE_API_KEY</code></td>
+</tr>
+<tr>
+<td><code>http(s)://host/v1#MODEL</code></td>
+<td>any OpenAI-compatible <code>/embeddings</code></td>
+<td>none</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="language-bash">jul models add qwen3-emb --repo ollama:qwen3-embedding:0.6b --backend api
+jul ask choice &quot;Which team?&quot; -o billing -o technical --state &quot;I was charged twice&quot; --model qwen3-emb --backend api
+</code></pre>
+<p>Trade-offs: one layer (the API's output), no prefix cache, no logits, and with a hosted provider the state
+leaves the machine. See <a href="models.html#embeddings-apis---backend-api">Models › Embeddings APIs</a>.</p>
+<h2 id="system-one-servers">System One servers</h2>
+<p>JuL speaks Jev's HTTP protocol both ways.</p>
+<p><strong>As a server</strong>, <code>jul serve</code> exposes any of the models above at <code>POST /v1/systemone</code>: any Jev client, SDK or
+<code>curl</code>, talks to it by changing its base URL. See <a href="serve.html">Serving over HTTP</a>.</p>
+<p><strong>As a client</strong>, <code>SystemOneHTTP</code> calls any server that speaks it, and <code>Escalation</code> chains them: answer
+locally, and send only the questions answered below a confidence bar to the next tier.</p>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th><code>--escalate-to</code></th>
+<th>Key</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Jev (TypeSafe)</td>
+<td><code>typesafe</code></td>
+<td><code>TYPESAFE_API_KEY</code></td>
+</tr>
+<tr>
+<td>Nimble on Ollama</td>
+<td><code>ollama</code>, <code>ollama:MODEL</code></td>
+<td>none</td>
+</tr>
+<tr>
+<td>Clef on Cloudflare Workers AI</td>
+<td><code>cloudflare</code>, <code>cloudflare:clef</code></td>
+<td><code>CLOUDFLARE_API_TOKEN</code> + <code>CLOUDFLARE_ACCOUNT_ID</code></td>
+</tr>
+<tr>
+<td>Kev, another <code>jul serve</code>, any server</td>
+<td>its URL</td>
+<td><code>--escalate-key-env VAR</code></td>
+</tr>
+</tbody>
+</table>
+<p>The same targets go in <code>jul bench --models</code> (a URL as <code>URL#model</code>, its key in <code>--remote-key-env</code>), to measure
+them against JuL's models on your own rows before choosing: see <a href="cli.html#bench-on-your-own-data">Bench on your own data</a>.</p>
+<pre><code class="language-python">from jul import TypeSafeClient, Escalation, SystemOneHTTP
+
+client = Escalation(tiers=[(&quot;local&quot;, TypeSafeClient()),
+                           (&quot;ollama&quot;, SystemOneHTTP(&quot;http://localhost:11434&quot;, model=&quot;nimble&quot;))],
+                    min_confidence=0.8)
+r = client.system_one(state=&quot;…&quot;, questions={…})
+r.escalation[&quot;team&quot;]     # {&quot;tried&quot;: [&quot;local&quot;], &quot;tier&quot;: &quot;local&quot;, &quot;confidence&quot;: 0.93, &quot;met_bar&quot;: True}
+</code></pre>
+<p>See <a href="serve.html#escalation-local-first-a-bigger-decider-when-unsure">Serving › Escalation</a> and
+<a href="python-api.html#escalation">Python API › Escalation</a>.</p>
+<h2 id="choosing">Choosing</h2>
+<p>Start from your constraint, not from the model.</p>
+<table>
+<thead>
+<tr>
+<th>Your constraint</th>
+<th>Start with</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>best accuracy on a laptop, no labels</td>
+<td>the default, <code>jul-decision-wemm-4b</code></td>
+<td>0.857 zero-shot on Jev's benchmark (Jev 0.753), 55 ms, 2.6 GB on MLX</td>
+</tr>
+<tr>
+<td>speed, many options, batch jobs</td>
+<td><code>f2llm-1.7b</code> or <code>harrier-0.6b</code></td>
+<td>24 ms / 1 GB, 13 ms / 0.31 GB; tune them with labels</td>
+</tr>
+<tr>
+<td>CPU only, serverless</td>
+<td><code>jul-decision-e5-small</code> on onnx + <code>autotune</code></td>
+<td>4 ms per text, 90 MB, $0.59 per million in Lambda</td>
+</tr>
+<tr>
+<td>yes/no about how two things relate</td>
+<td>a preset with a cross model (the default on PyTorch)</td>
+<td>the vectors alone answer those near chance</td>
+</tr>
+<tr>
+<td>no GPU, no weights, a model already served</td>
+<td>an embeddings API</td>
+<td>nothing to download</td>
+</tr>
+<tr>
+<td>local first, but some questions are hard</td>
+<td><code>Escalation</code> to Jev, Clef or Nimble</td>
+<td>only the unsure ones leave</td>
+</tr>
+<tr>
+<td>a model you already trust</td>
+<td><code>jul models add</code></td>
+<td>one command, measured on dev sets</td>
+</tr>
+</tbody>
+</table>
+<p>Then measure on a few hundred of your own texts: the benchmark tells you where to start, your data tells
+you where to stop. <a href="benchmarks.html">Benchmarks</a> has every number and how it was measured.</p>
+</article>
+<nav class="pager" aria-label="Pages"><a href="concepts.html" rel="prev">◄ Concepts</a><a href="questions.html" rel="next">Writing good questions ►</a></nav>
+<p class="foot dim"><a href="https://github.com/usejul/jul/edit/main/docs/hub.md">Edit this page</a> · JuL, <i>Just use Less</i> · Apache-2.0 · Not affiliated with TypeSafe AI or Jev.</p>
+    </section>
+  </main>
+</div>
+<script src="assets/docs.js"></script>
+</body>
+</html>

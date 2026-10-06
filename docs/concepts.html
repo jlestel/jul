@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Concepts · JuL docs</title>
+<meta name="description" content="Concepts Six words explain JuL: state, question, option, reading, context, head. This page gives each one in a paragraph, then how they fit together. The rest o">
+<meta name="theme-color" content="#0a0600">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230a0600'/%3E%3Ctext x='2' y='12' font-family='monospace' font-size='11' fill='%23ffb000'%3E%3E_%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/docs.css">
+<script>try{var p=localStorage.getItem("jul-phosphor");if(p)document.documentElement.dataset.phosphor=p}catch(e){}</script>
+</head>
+<body>
+<a class="skip" href="#doc">Skip to the page</a>
+<nav class="menubar" aria-label="Main">
+  <a class="brand" href="../index.html">▓ JuL-DOS 0.5</a>
+  <a href="index.html"><u>D</u>ocs</a>
+  <a href="quickstart.html" class="hide-sm"><u>Q</u>uickstart</a>
+  <a href="python-api.html" class="hide-sm"><u>A</u>PI</a>
+  <a href="cli-reference.html" class="hide-sm">C<u>L</u>I</a>
+  <a href="https://github.com/usejul/jul"><u>G</u>itHub</a>
+  <span class="spacer"></span>
+  <label class="search"><span aria-hidden="true">[/]</span><input id="q" type="search" placeholder="search" autocomplete="off" aria-label="Search the docs"></label>
+  <button id="phosphor" type="button" title="Change phosphor">PHOSPHOR:<span id="ph-name">AMB</span></button>
+</nav>
+<div id="results" class="win results" data-title="SEARCH.EXE" hidden aria-live="polite"></div>
+<div class="layout">
+  <aside class="side">
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="dir">[≡] CONTENTS</button>
+    <section class="win dir" id="dir" data-title="C:\JUL\DOCS">
+<p class="nav-h">START HERE</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="index.html">Docs home</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="quickstart.html">Quickstart</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="concepts.html" aria-current="page">Concepts</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="hub.html">The hub</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="questions.html">Writing good questions</a></li>
+</ul>
+<p class="nav-h">GUIDES</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="installation.html">Installation</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="cli.html">Command line</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="tuning.html">Adapting to your data</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="serve.html">Serving over HTTP</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="deployment.html">Deploying a fixed need</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="aws-lambda.html">AWS Lambda, step by step</a></li>
+</ul>
+<p class="nav-h">MODELS</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="models.html">Models and readings</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="benchmarks.html">Benchmarks</a></li>
+</ul>
+<p class="nav-h">REFERENCE</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="python-api.html">Python API</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="cli-reference.html">CLI reference</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="configuration.html">Configuration</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="troubleshooting.html">FAQ and troubleshooting</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="glossary.html">Glossary</a></li>
+</ul>
+<p class="nav-h">PROJECT</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="development.html">Development</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="publishing.html">Publishing</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="changelog.html">Changelog</a></li>
+</ul>
+    </section>
+    <section class="win toc" data-title="ON_PAGE.LST"><ul><li class="l2"><a href="#state">State</a></li>
+<li class="l2"><a href="#question">Question</a></li>
+<li class="l2"><a href="#option">Option</a></li>
+<li class="l2"><a href="#reading">Reading</a></li>
+<li class="l2"><a href="#preset">Preset</a></li>
+<li class="l2"><a href="#backend">Backend</a></li>
+<li class="l2"><a href="#context">Context</a></li>
+<li class="l2"><a href="#head">Head</a></li>
+<li class="l2"><a href="#how-they-fit">How they fit</a></li>
+<li class="l2"><a href="#what-jul-is-not">What JuL is not</a></li></ul></section>
+  </aside>
+  <main id="doc">
+    <section class="win doc" data-title="C:\JUL\DOCS\CONCEPTS.TXT">
+<article class="prose">
+<h1 id="concepts">Concepts</h1>
+<p>Six words explain JuL: <strong>state</strong>, <strong>question</strong>, <strong>option</strong>, <strong>reading</strong>, <strong>context</strong>, <strong>head</strong>. This page
+gives each one in a paragraph, then how they fit together. The rest of the docs assumes them.</p>
+<h2 id="state">State</h2>
+<p>The text you want a decision about: a support ticket, an email, a log line, a product review. One call,
+one state. It can be a string, or any object: a dict is turned into JSON before the model reads it, so
+<code>{"subject": …, "body": …}</code> works as is.</p>
+<h2 id="question">Question</h2>
+<p>What you want to know about the state. Three types, the same as Jev's:</p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Asks</th>
+<th>Answers</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Choice</code></td>
+<td>which one of these options?</td>
+<td><code>choice</code> (a key), <code>probabilities</code> per option, <code>confidence</code></td>
+<td>which team handles this ticket?</td>
+</tr>
+<tr>
+<td><code>Noul</code></td>
+<td>yes or no?</td>
+<td><code>noul</code>, the probability of yes, from 0 to 1</td>
+<td>does it report a bug?</td>
+</tr>
+<tr>
+<td><code>Score</code></td>
+<td>how much, on this scale?</td>
+<td><code>score</code>, the expected level from 0 to n−1, <code>probabilities</code> per level, <code>confidence</code></td>
+<td>how angry is the customer?</td>
+</tr>
+</tbody>
+</table>
+<p>A call can ask many questions about the same state at once; each comes back under the name you gave it.</p>
+<h2 id="option">Option</h2>
+<p>A question's possible answers. A <code>Choice</code> has a <strong>key</strong> (what you get back, <code>"billing"</code>) and a
+<strong>description</strong> (what the model reads, <code>"payments, invoices, refunds"</code>). The model never sees your keys if
+you give descriptions, so write descriptions a colleague would understand: see
+<a href="questions.html">Writing good questions</a>. A <code>Score</code>'s options are its levels, lowest first. A <code>Noul</code>'s options
+are yes and no, which you may describe (<code>NoulCriteria(true=…, false=…)</code>).</p>
+<h2 id="reading">Reading</h2>
+<p>How a model is turned into an answer. JuL never lets the model write: it runs the model over the text,
+stops it <strong>one step before its first word</strong>, and reads the answer out of the hidden state, the vector the
+model built to understand the text.</p>
+<pre><code class="language-text">STATE &quot;I was charged twice&quot;
+               │
+┌──────────────┴──────────────┐
+│ the model (your machine)    │
+│ layers 1 → 31, then stop.   │
+└──────────────┬──────────────┘
+               │ hidden state
+               ▼
+      cosine(state, option) ◄── options
+               │         (encoded once,
+               ▼              cached)
+       softmax(cos / τ)
+               │
+               ▼
+billing    ████████████████  0.88
+technical  ██                0.11
+sales      ▏                 0.01
+</code></pre>
+<p>That default is the <strong>vector</strong> reading: the state and each option go through the same prompt, and the
+answer is the option whose vector is closest. Everything that does not depend on the state (the prompt
+prefix, the option vectors) is computed once and cached, so a call only pays for its own tokens. A
+temperature <code>τ</code>, fitted per model, turns the similarities into probabilities that mean what they say.</p>
+<p>Other readings exist for other kinds of models and questions: a <strong>cross</strong> reading that reads the question
+and the text together (better for yes/no about how two things relate), a <strong>pointer</strong> reading for models
+trained to decide, a <strong>contrastive</strong> one for projection heads. You rarely choose: the model's preset does.
+The full list is in <a href="models.html#every-reading-and-every-setting">Models › Every reading</a>.</p>
+<h2 id="preset">Preset</h2>
+<p>A model plus the settings that make it read well: which layer to read, which prompts, which temperature,
+which center. The built-in presets were fitted on development data that the benchmarks never use.
+<code>jul models add</code> fits one for any other model with the same protocol, so <strong>adding a model is adding a
+preset, not code</strong>. See <a href="hub.html">The hub</a>.</p>
+<h2 id="backend">Backend</h2>
+<p>What runs the model: <strong>mlx</strong> (Apple Silicon), <strong>torch</strong> (PyTorch, on CUDA, CPU or MPS), <strong>onnx</strong> (ONNX
+Runtime on CPU, for deployment), or <strong>api</strong> (an embeddings API: Ollama, OpenAI, Mistral, Voyage, any
+OpenAI-compatible server). Same code, same answers' shape, whichever runs.</p>
+<h2 id="context">Context</h2>
+<p>What your data looks like, given once and reused: a description, and a few dozen <strong>unlabeled</strong> texts of
+your task. Their mean vector becomes the "center" the model compares against, which helps on texts with a
+style of their own. A context is saved under a name (<code>~/.jul/contexts/&lt;name&gt;/</code>) and is also where tuned
+heads live. Jev has no equivalent. See <a href="tuning.html#context--what-the-data-looks-like">Adapting to your data</a>.</p>
+<h2 id="head">Head</h2>
+<p>A small classifier trained in seconds on <strong>labeled</strong> examples, on top of the vectors the model already
+computes (<code>autotune</code>). The model is not changed and inference is as fast. JuL keeps a head only if it
+beats zero-shot on examples it did not train on, so tuning cannot make things worse by surprise. See
+<a href="tuning.html#autotune--when-it-is-off-key"><code>autotune</code></a>.</p>
+<h2 id="how-they-fit">How they fit</h2>
+<pre><code class="language-text">                questions (Choice / Noul / Score, their options)
+                                  │
+state ──► preset (model + reading + settings) on a backend ──► answers + probabilities
+                                  ▲
+                    context (unlabeled texts, tuned heads)
+</code></pre>
+<p>From the cheapest to the most effective way to get better answers:</p>
+<ol>
+<li><strong>Better descriptions</strong> of the options: free, often the biggest gain (<a href="questions.html">Writing good questions</a>).</li>
+<li><strong>Another model</strong>: bigger, or trained for decisions (<a href="hub.html">The hub</a>).</li>
+<li><strong>A context</strong> with ~50 unlabeled texts: helps on texts with their own style.</li>
+<li><strong><code>autotune</code></strong> with a few hundred labeled examples per question: the largest gain when you have labels.</li>
+<li><strong>Escalation</strong>: answer locally, and send only the unsure questions to a bigger decider
+   (<a href="serve.html#escalation-local-first-a-bigger-decider-when-unsure">Serving › Escalation</a>).</li>
+</ol>
+<h2 id="what-jul-is-not">What JuL is not</h2>
+<ul>
+<li><strong>Not a chatbot.</strong> It does not write text, explain itself or extract fields. It picks among options you
+  give, or puts a number on a yes/no or a scale.</li>
+<li><strong>Not a knowledge base.</strong> A question that needs facts the text does not contain ("is this company listed
+  in Paris?") is out of reach of a small model reading one text.</li>
+<li><strong>Not magic on arithmetic.</strong> Comparing two dates works; computing a gap (an age, a warranty in months)
+  stays near chance. See <a href="models.html#a-cross-model-on-the-presets-own-weights-lora">Models › LoRA cross model</a>.</li>
+<li><strong>Fitted on English.</strong> It answers French and other languages, measured lower: test on your data.</li>
+</ul>
+</article>
+<nav class="pager" aria-label="Pages"><a href="quickstart.html" rel="prev">◄ Quickstart</a><a href="hub.html" rel="next">The hub ►</a></nav>
+<p class="foot dim"><a href="https://github.com/usejul/jul/edit/main/docs/concepts.md">Edit this page</a> · JuL, <i>Just use Less</i> · Apache-2.0 · Not affiliated with TypeSafe AI or Jev.</p>
+    </section>
+  </main>
+</div>
+<script src="assets/docs.js"></script>
+</body>
+</html>

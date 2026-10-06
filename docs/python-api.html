@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Python API · JuL docs</title>
+<meta name="description" content="Python API Everything from jul import … exposes, with every argument. The names, fields and shapes of the first two sections are Jev&#x27;s SDK&#x27;s: code written for t">
+<meta name="theme-color" content="#0a0600">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230a0600'/%3E%3Ctext x='2' y='12' font-family='monospace' font-size='11' fill='%23ffb000'%3E%3E_%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/docs.css">
+<script>try{var p=localStorage.getItem("jul-phosphor");if(p)document.documentElement.dataset.phosphor=p}catch(e){}</script>
+</head>
+<body>
+<a class="skip" href="#doc">Skip to the page</a>
+<nav class="menubar" aria-label="Main">
+  <a class="brand" href="../index.html">▓ JuL-DOS 0.5</a>
+  <a href="index.html"><u>D</u>ocs</a>
+  <a href="quickstart.html" class="hide-sm"><u>Q</u>uickstart</a>
+  <a href="python-api.html" class="hide-sm"><u>A</u>PI</a>
+  <a href="cli-reference.html" class="hide-sm">C<u>L</u>I</a>
+  <a href="https://github.com/usejul/jul"><u>G</u>itHub</a>
+  <span class="spacer"></span>
+  <label class="search"><span aria-hidden="true">[/]</span><input id="q" type="search" placeholder="search" autocomplete="off" aria-label="Search the docs"></label>
+  <button id="phosphor" type="button" title="Change phosphor">PHOSPHOR:<span id="ph-name">AMB</span></button>
+</nav>
+<div id="results" class="win results" data-title="SEARCH.EXE" hidden aria-live="polite"></div>
+<div class="layout">
+  <aside class="side">
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="dir">[≡] CONTENTS</button>
+    <section class="win dir" id="dir" data-title="C:\JUL\DOCS">
+<p class="nav-h">START HERE</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="index.html">Docs home</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="quickstart.html">Quickstart</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="concepts.html">Concepts</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="hub.html">The hub</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="questions.html">Writing good questions</a></li>
+</ul>
+<p class="nav-h">GUIDES</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="installation.html">Installation</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="cli.html">Command line</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="tuning.html">Adapting to your data</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="serve.html">Serving over HTTP</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="deployment.html">Deploying a fixed need</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="aws-lambda.html">AWS Lambda, step by step</a></li>
+</ul>
+<p class="nav-h">MODELS</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="models.html">Models and readings</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="benchmarks.html">Benchmarks</a></li>
+</ul>
+<p class="nav-h">REFERENCE</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="python-api.html" aria-current="page">Python API</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="cli-reference.html">CLI reference</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="configuration.html">Configuration</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="troubleshooting.html">FAQ and troubleshooting</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="glossary.html">Glossary</a></li>
+</ul>
+<p class="nav-h">PROJECT</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="development.html">Development</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="publishing.html">Publishing</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="changelog.html">Changelog</a></li>
+</ul>
+    </section>
+    <section class="win toc" data-title="ON_PAGE.LST"><ul><li class="l2"><a href="#typesafeclient">TypeSafeClient</a></li>
+<li class="l3"><a href="#system_one">system_one</a></li>
+<li class="l2"><a href="#asynctypesafeclient">AsyncTypeSafeClient</a></li>
+<li class="l2"><a href="#questions">Questions</a></li>
+<li class="l3"><a href="#choice">Choice</a></li>
+<li class="l3"><a href="#noul">Noul</a></li>
+<li class="l3"><a href="#score">Score</a></li>
+<li class="l2"><a href="#answers">Answers</a></li>
+<li class="l3"><a href="#systemoneresponse">SystemOneResponse</a></li>
+<li class="l3"><a href="#choiceanswer-noulanswer-scoreanswer">ChoiceAnswer, NoulAnswer, ScoreAnswer</a></li>
+<li class="l3"><a href="#usage">Usage</a></li>
+<li class="l2"><a href="#context">Context</a></li>
+<li class="l2"><a href="#autotune">autotune</a></li>
+<li class="l3"><a href="#tuningreport">TuningReport</a></li>
+<li class="l2"><a href="#escalation">Escalation</a></li>
+<li class="l3"><a href="#systemonehttp">SystemOneHTTP</a></li>
+<li class="l2"><a href="#bundle-and-pack">Bundle and pack</a></li>
+<li class="l2"><a href="#presets">Presets</a></li>
+<li class="l2"><a href="#errors-you-may-catch">Errors you may catch</a></li></ul></section>
+  </aside>
+  <main id="doc">
+    <section class="win doc" data-title="C:\JUL\DOCS\PYTHONAP.TXT">
+<article class="prose">
+<h1 id="python-api">Python API</h1>
+<p>Everything <code>from jul import …</code> exposes, with every argument. The names, fields and shapes of the first
+two sections are Jev's SDK's: code written for <code>typesafe_sdk</code> runs unchanged. The others are what JuL adds.</p>
+<pre><code class="language-python">from jul import (TypeSafeClient, AsyncTypeSafeClient,            # the client
+                 Choice, Noul, NoulCriteria, Score,              # questions
+                 SystemOneResponse, ChoiceAnswer, NoulAnswer, ScoreAnswer, Usage,   # answers
+                 Context, TuningReport,                          # adapting to your data
+                 Escalation, EscalatedResponse, SystemOneHTTP,   # the hub: other deciders
+                 Bundle, pack,                                   # deploying a fixed need
+                 Preset, PRESETS, __version__)
+</code></pre>
+<h2 id="typesafeclient">TypeSafeClient</h2>
+<pre><code class="language-python">TypeSafeClient(model=None, context=None, method=None, one_word_only=False, backend=None,
+               context_home=None, api_key=None, base_url=None, timeout=None, max_retries=None, **ignored)
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Default</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>model</code></td>
+<td><code>"jul-decision-wemm-4b"</code></td>
+<td>a preset name, an alias (<code>accurate</code>, <code>fast</code>), a model added with <code>jul models add</code>, or <code>"laya"</code> / <code>"laya:&lt;checkpoint&gt;"</code> (<a href="models.html#laya">Laya</a>)</td>
+</tr>
+<tr>
+<td><code>context</code></td>
+<td><code>None</code></td>
+<td>a <code>Context</code>, or the name of a saved one, used by every call</td>
+</tr>
+<tr>
+<td><code>method</code></td>
+<td>per question type</td>
+<td>force a reading for every call: <code>"vector"</code>, <code>"cross"</code>, <code>"letters"</code></td>
+</tr>
+<tr>
+<td><code>one_word_only</code></td>
+<td><code>False</code></td>
+<td>one prompt instead of two: faster, a little less accurate</td>
+</tr>
+<tr>
+<td><code>backend</code></td>
+<td><code>$JUL_BACKEND</code>, else <code>mlx</code> on Apple Silicon, else <code>torch</code></td>
+<td><code>"mlx"</code>, <code>"torch"</code>, <code>"onnx"</code>, <code>"api"</code></td>
+</tr>
+<tr>
+<td><code>context_home</code></td>
+<td><code>$JUL_HOME/contexts</code></td>
+<td>where named contexts are read and saved</td>
+</tr>
+<tr>
+<td><code>api_key</code>, <code>base_url</code>, <code>timeout</code>, <code>max_retries</code>, …</td>
+<td>—</td>
+<td>Jev's remote arguments: accepted and ignored</td>
+</tr>
+</tbody>
+</table>
+<p>Constructing a client loads nothing and needs no backend installed. The model loads on the first call and
+stays in memory; only one model is held at a time (asking another one drops the first).</p>
+<table>
+<thead>
+<tr>
+<th>Member</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>system_one(state, questions, context=None, model=None, method=None, route_above=None, **ignored)</code></td>
+<td>answers every question about one state, returns a <code>SystemOneResponse</code></td>
+</tr>
+<tr>
+<td><code>autotune(context, questions, labeled, model=None, save=True, features="vector", formulations=None)</code></td>
+<td>trains a head per question, returns <code>{name: TuningReport}</code>; see <a href="#autotune">below</a></td>
+</tr>
+<tr>
+<td><code>model</code></td>
+<td>the preset name in use</td>
+</tr>
+<tr>
+<td><code>backend</code></td>
+<td>the backend, resolved on first access</td>
+</tr>
+<tr>
+<td><code>context</code></td>
+<td>the client's default context</td>
+</tr>
+<tr>
+<td><code>close()</code></td>
+<td>releases the model; also <code>with TypeSafeClient() as client:</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="system_one">system_one</h3>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>state</code></td>
+<td>the text: a <code>str</code> as is, anything else serialized as JSON (a dict, a list, a dataclass…)</td>
+</tr>
+<tr>
+<td><code>questions</code></td>
+<td><code>{name: Choice | Noul | Score}</code>, at least one</td>
+</tr>
+<tr>
+<td><code>context</code></td>
+<td>overrides the client's context for this call</td>
+</tr>
+<tr>
+<td><code>model</code></td>
+<td>another preset for this call (loads it, drops the previous one)</td>
+</tr>
+<tr>
+<td><code>method</code></td>
+<td>overrides the reading for this call</td>
+</tr>
+<tr>
+<td><code>route_above</code></td>
+<td>decision models only: above this many options, read as vectors; <code>0</code> disables it</td>
+</tr>
+<tr>
+<td><code>response_model</code>, <code>retry</code>, <code>extra_body</code>, …</td>
+<td>Jev's arguments: accepted and ignored</td>
+</tr>
+</tbody>
+</table>
+<p>Raises <code>ValueError</code> for an empty <code>questions</code>, an unknown <code>model=</code> passed to the call (the constructor raises
+it for its own) or a <code>Score</code> with fewer than two levels,
+<code>TypeError</code> for a question that is not one of the three types.</p>
+<h2 id="asynctypesafeclient">AsyncTypeSafeClient</h2>
+<p>The same constructor and members, awaitable: <code>await client.system_one(...)</code>, <code>await client.autotune(...)</code>,
+<code>await client.close()</code>, <code>async with AsyncTypeSafeClient() as client:</code>. The work runs in a worker thread, so
+the event loop keeps turning.</p>
+<h2 id="questions">Questions</h2>
+<h3 id="choice">Choice</h3>
+<pre><code class="language-python">Choice(instructions=&quot;&quot;, criteria={})
+</code></pre>
+<p>Pick one option. <code>criteria</code> is <code>{key: description}</code>, or a plain list of keys (then the key is also what the
+model reads). At least one option. See <a href="questions.html">Writing good questions</a>.</p>
+<h3 id="noul">Noul</h3>
+<pre><code class="language-python">Noul(instructions=&quot;&quot;, criteria=None)
+</code></pre>
+<p>Yes or no. <code>criteria</code> is optional: <code>NoulCriteria(true=…, false=…)</code>, or a dict with <code>true</code>/<code>false</code> (or
+<code>yes</code>/<code>no</code>) keys. Without it, yes and no read as <code>"Yes."</code> and <code>"No."</code>.</p>
+<h3 id="score">Score</h3>
+<pre><code class="language-python">Score(instructions=&quot;&quot;, criteria=[])
+</code></pre>
+<p>A level on a scale. <code>criteria</code> lists the level descriptions, <strong>lowest first</strong>, at least two.</p>
+<h2 id="answers">Answers</h2>
+<h3 id="systemoneresponse">SystemOneResponse</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>answers</code></td>
+<td><code>dict[str, ChoiceAnswer | NoulAnswer | ScoreAnswer]</code></td>
+<td>every answer, by question name, in the order asked</td>
+</tr>
+<tr>
+<td><code>choices</code></td>
+<td><code>dict[str, ChoiceAnswer]</code></td>
+<td>the <code>Choice</code> answers only</td>
+</tr>
+<tr>
+<td><code>nouls</code></td>
+<td><code>dict[str, NoulAnswer]</code></td>
+<td>the <code>Noul</code> answers only</td>
+</tr>
+<tr>
+<td><code>scores</code></td>
+<td><code>dict[str, ScoreAnswer]</code></td>
+<td>the <code>Score</code> answers only</td>
+</tr>
+<tr>
+<td><code>model</code></td>
+<td><code>str</code></td>
+<td>the preset that answered</td>
+</tr>
+<tr>
+<td><code>usage</code></td>
+<td><code>Usage</code></td>
+<td>tokens read</td>
+</tr>
+<tr>
+<td><code>request_id</code></td>
+<td><code>str</code></td>
+<td>a UUID per call</td>
+</tr>
+<tr>
+<td><code>as_dict()</code></td>
+<td><code>dict</code></td>
+<td>the Jev HTTP response shape, ready for <code>json.dumps</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="choiceanswer-noulanswer-scoreanswer">ChoiceAnswer, NoulAnswer, ScoreAnswer</h3>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Fields</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ChoiceAnswer</code></td>
+<td><code>choice</code> (the key with the highest probability), <code>probabilities</code> (<code>{key: p}</code>, summing to 1), <code>confidence</code> (the chosen key's probability)</td>
+</tr>
+<tr>
+<td><code>NoulAnswer</code></td>
+<td><code>noul</code>: the probability of yes, in [0, 1]</td>
+</tr>
+<tr>
+<td><code>ScoreAnswer</code></td>
+<td><code>score</code> (the expected level, from 0 to n−1), <code>probabilities</code> (<code>{"0": p, "1": p, …}</code>), <code>legend</code> (<code>{"0": "Calm", …}</code>), <code>confidence</code> (1 − the spread of the distribution, scaled to [0, 1]: 1 when one level takes everything)</td>
+</tr>
+</tbody>
+</table>
+<p>Probabilities are rounded to 4 decimals. Each answer has <code>as_dict()</code>, which adds <code>"type"</code>.</p>
+<h3 id="usage">Usage</h3>
+<p><code>input_tokens</code> (tokens fed to the model for this call), <code>output_tokens</code> (always 0: nothing is generated),
+<code>total_tokens</code>. With <code>--backend api</code>, the counts are characters.</p>
+<h2 id="context">Context</h2>
+<pre><code class="language-python">Context(description=&quot;&quot;, examples=[], labeled=[], name=None, use_description=False)
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>description</code></td>
+<td>one sentence about the data; reaches the prompts only with <code>use_description=True</code> (measured harmful on average)</td>
+</tr>
+<tr>
+<td><code>examples</code></td>
+<td>unlabeled texts of the task: their mean vector becomes the center. Warns under 10; ~50 is the sweet spot</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td>needed to save it and to reuse it by name</td>
+</tr>
+<tr>
+<td><code>use_description</code></td>
+<td>put <code>description</code> in the prompts</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Member</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>save(name=None, home=None)</code></td>
+<td>writes <code>~/.jul/contexts/&lt;name&gt;/</code>: centers, heads, calibrations, examples</td>
+</tr>
+<tr>
+<td><code>Context.load(name, home=None)</code></td>
+<td>reads it back (<code>FileNotFoundError</code> if absent)</td>
+</tr>
+<tr>
+<td><code>Context.list_saved(home=None)</code></td>
+<td>the saved names</td>
+</tr>
+<tr>
+<td><code>Context.delete(name, home=None)</code></td>
+<td>removes it, returns whether it existed</td>
+</tr>
+</tbody>
+</table>
+<p>Anywhere a context is expected, its saved name works too: <code>client.system_one(state, q, context="tickets")</code>.
+See <a href="tuning.html#context--what-the-data-looks-like">Adapting to your data</a>.</p>
+<h2 id="autotune">autotune</h2>
+<pre><code class="language-python">reports = client.autotune(context, questions, labeled, model=None, save=True,
+                          features=&quot;vector&quot;, formulations=None)
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>context</code></td>
+<td>a <code>Context</code> or a name: where the heads are stored (created if new)</td>
+</tr>
+<tr>
+<td><code>questions</code></td>
+<td>the same <code>{name: question}</code> you will ask</td>
+</tr>
+<tr>
+<td><code>labeled</code></td>
+<td><code>[(state, {question_name: answer}), …]</code>: the option key for a <code>Choice</code>, <code>True</code>/<code>False</code> for a <code>Noul</code>, the level index for a <code>Score</code></td>
+</tr>
+<tr>
+<td><code>features</code></td>
+<td>what the head reads: <code>"vector"</code>, <code>"lexical"</code> (TF-IDF, needs <code>jul[tune]</code>), <code>"hybrid"</code> (both)</td>
+</tr>
+<tr>
+<td><code>formulations</code></td>
+<td>the prompts read, by name (<code>"one_word"</code>, <code>"question_options"</code>, <code>"question"</code>), a list for all questions or a dict per question</td>
+</tr>
+<tr>
+<td><code>save</code></td>
+<td>save the context when it has a name</td>
+</tr>
+</tbody>
+</table>
+<p>Returns <code>{name: TuningReport}</code>. A head is <strong>activated only if it beats zero-shot</strong> in cross-validation;
+otherwise only a calibration is kept. Then <code>client.system_one(..., context=...)</code> uses it with no other
+change. Not available on decision models (pointer reading). See <a href="tuning.html#autotune--when-it-is-off-key"><code>autotune</code></a>.</p>
+<h3 id="tuningreport">TuningReport</h3>
+<p><code>question</code>, <code>n_examples</code>, <code>n_evaluated</code>, <code>n_options</code>, <code>zero_shot_accuracy</code>, <code>head_accuracy</code> (<code>None</code> if no
+head was trained), <code>activated</code>, <code>reason</code>, <code>temperature</code>, <code>features</code>. <code>print(report)</code> gives the summary,
+<code>as_dict()</code> the fields.</p>
+<h2 id="escalation">Escalation</h2>
+<pre><code class="language-python">Escalation(tiers, min_confidence=0.8, default=0.8)
+</code></pre>
+<p>Several deciders in order. The first answers every question; a question answered below the bar goes to the
+next tier, with the other unsure ones only, and so on.</p>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tiers</code></td>
+<td><code>[(name, decider), …]</code>, names unique. A decider is anything with <code>system_one(state, questions)</code>: a <code>TypeSafeClient</code>, a <code>SystemOneHTTP</code>, another <code>Escalation</code></td>
+</tr>
+<tr>
+<td><code>min_confidence</code></td>
+<td>one bar for every question, or <code>{question_name: bar}</code></td>
+</tr>
+<tr>
+<td><code>default</code></td>
+<td>the bar of a question missing from that dict</td>
+</tr>
+</tbody>
+</table>
+<p>How sure an answer is: <code>confidence</code> for a <code>Choice</code> or a <code>Score</code>, <code>max(noul, 1 − noul)</code> for a <code>Noul</code>. The
+answer kept is the last tier's that answered, even if less sure (two models' confidences do not compare).
+A tier that fails (network, HTTP error) is skipped and its error recorded; a malformed request
+(<code>ValueError</code>, <code>TypeError</code>) is raised, never sent on. <code>system_one</code> returns an <code>EscalatedResponse</code>: a
+<code>SystemOneResponse</code> plus <code>escalation</code>, per question:</p>
+<pre><code class="language-python">{&quot;tried&quot;: [&quot;local&quot;, &quot;jev&quot;], &quot;tier&quot;: &quot;jev&quot;, &quot;confidence&quot;: 0.91, &quot;met_bar&quot;: True}
+</code></pre>
+<h3 id="systemonehttp">SystemOneHTTP</h3>
+<pre><code class="language-python">SystemOneHTTP(base_url, model=&quot;jev-latest&quot;, api_key=None, timeout=30.0, exact_url=False)
+</code></pre>
+<p>A decider over HTTP: any server speaking <code>POST /v1/systemone</code> (Jev at <code>https://api.typesafe.ai</code>, Ollama's
+Nimble at <code>http://localhost:11434</code>, Kev, another <code>jul serve</code>). <code>base_url</code> is the server root, with or without
+<code>/v1</code>. Redirects are never followed, so a key never reaches another host. Raises <code>jul.escalate.RemoteError</code>
+on any failure. <code>jul.escalate.remote_tier("typesafe" | "ollama:nimble" | "cloudflare:clef-flash" | URL)</code> and
+<code>jul.escalate.cloudflare_tier()</code> build one with the provider's usual key variable.</p>
+<h2 id="bundle-and-pack">Bundle and pack</h2>
+<pre><code class="language-python">pack(client, questions, out, context=None, model=None, reading=&quot;auto&quot;) -&gt; Path
+Bundle.load(path, backend=None, model=None, cross_model=None) -&gt; Bundle
+</code></pre>
+<p><code>pack</code> computes everything that does not depend on the state (prompts, option vectors, centers, heads)
+into a directory. <code>Bundle</code> answers with the state as its only input:</p>
+<table>
+<thead>
+<tr>
+<th>Member</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>bundle.system_one(state)</code></td>
+<td>a <code>SystemOneResponse</code>, as the client would answer</td>
+</tr>
+<tr>
+<td><code>bundle.system_one_batch(states)</code></td>
+<td>the same for many states, read in batches</td>
+</tr>
+<tr>
+<td><code>bundle.question_names</code></td>
+<td>the packed questions</td>
+</tr>
+<tr>
+<td><code>bundle.models</code></td>
+<td>the models it needs: <code>["vector"]</code>, <code>["cross"]</code> or both</td>
+</tr>
+</tbody>
+</table>
+<p><code>reading="vector"</code> packs every question on the vectors (one model to ship). <code>Bundle.load(model=...)</code> points
+to the weights if they moved. Vector presets only. See <a href="deployment.html">Deploying a fixed need</a>.</p>
+<h2 id="presets">Presets</h2>
+<p><code>PRESETS</code> is the dict of built-in presets (<code>jul-decision-wemm-4b</code>, <code>wemm-4b-4bit</code>, <code>minicpm5-2b</code>), each a
+<code>Preset</code> with its <code>name</code>, <code>repos</code> per backend, <code>formulations</code>, <code>tau</code>, <code>center</code>, <code>latency_ms</code>, <code>quality</code>.
+Presets you add live in <code>~/.jul/presets/&lt;name&gt;@&lt;backend&gt;.json</code>; <code>jul models</code> lists them all.
+<code>jul.presets.resolve(name, backend)</code> returns the one a client would use.</p>
+<h2 id="errors-you-may-catch">Errors you may catch</h2>
+<table>
+<thead>
+<tr>
+<th>Exception</th>
+<th>When</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ValueError</code></td>
+<td>unknown model or backend, empty questions, a <code>Score</code> with one level, a model not fitted for this backend</td>
+</tr>
+<tr>
+<td><code>TypeError</code></td>
+<td>a question that is not <code>Choice</code>, <code>Noul</code> or <code>Score</code>, a context of the wrong type</td>
+</tr>
+<tr>
+<td><code>ImportError</code></td>
+<td>no backend installed (<code>pip install "jul[mlx]"</code> or <code>"jul[torch]"</code>)</td>
+</tr>
+<tr>
+<td><code>FileNotFoundError</code></td>
+<td>a context name that was never saved</td>
+</tr>
+<tr>
+<td><code>jul.escalate.RemoteError</code></td>
+<td>a remote tier failed (only raised by <code>SystemOneHTTP</code> used alone)</td>
+</tr>
+<tr>
+<td><code>jul.backends.api.EmbeddingsError</code></td>
+<td>an embeddings API failed or refused</td>
+</tr>
+</tbody>
+</table>
+</article>
+<nav class="pager" aria-label="Pages"><a href="benchmarks.html" rel="prev">◄ Benchmarks</a><a href="cli-reference.html" rel="next">CLI reference ►</a></nav>
+<p class="foot dim"><a href="https://github.com/usejul/jul/edit/main/docs/python-api.md">Edit this page</a> · JuL, <i>Just use Less</i> · Apache-2.0 · Not affiliated with TypeSafe AI or Jev.</p>
+    </section>
+  </main>
+</div>
+<script src="assets/docs.js"></script>
+</body>
+</html>

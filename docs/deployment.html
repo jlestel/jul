@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deploying a fixed need · JuL docs</title>
+<meta name="description" content="Deployment: jul pack and the onnx backend When the questions are known in advance, everything that does not depend on the message can be computed once: the prom">
+<meta name="theme-color" content="#0a0600">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230a0600'/%3E%3Ctext x='2' y='12' font-family='monospace' font-size='11' fill='%23ffb000'%3E%3E_%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/docs.css">
+<script>try{var p=localStorage.getItem("jul-phosphor");if(p)document.documentElement.dataset.phosphor=p}catch(e){}</script>
+</head>
+<body>
+<a class="skip" href="#doc">Skip to the page</a>
+<nav class="menubar" aria-label="Main">
+  <a class="brand" href="../index.html">▓ JuL-DOS 0.5</a>
+  <a href="index.html"><u>D</u>ocs</a>
+  <a href="quickstart.html" class="hide-sm"><u>Q</u>uickstart</a>
+  <a href="python-api.html" class="hide-sm"><u>A</u>PI</a>
+  <a href="cli-reference.html" class="hide-sm">C<u>L</u>I</a>
+  <a href="https://github.com/usejul/jul"><u>G</u>itHub</a>
+  <span class="spacer"></span>
+  <label class="search"><span aria-hidden="true">[/]</span><input id="q" type="search" placeholder="search" autocomplete="off" aria-label="Search the docs"></label>
+  <button id="phosphor" type="button" title="Change phosphor">PHOSPHOR:<span id="ph-name">AMB</span></button>
+</nav>
+<div id="results" class="win results" data-title="SEARCH.EXE" hidden aria-live="polite"></div>
+<div class="layout">
+  <aside class="side">
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="dir">[≡] CONTENTS</button>
+    <section class="win dir" id="dir" data-title="C:\JUL\DOCS">
+<p class="nav-h">START HERE</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="index.html">Docs home</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="quickstart.html">Quickstart</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="concepts.html">Concepts</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="hub.html">The hub</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="questions.html">Writing good questions</a></li>
+</ul>
+<p class="nav-h">GUIDES</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="installation.html">Installation</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="cli.html">Command line</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="tuning.html">Adapting to your data</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="serve.html">Serving over HTTP</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="deployment.html" aria-current="page">Deploying a fixed need</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="aws-lambda.html">AWS Lambda, step by step</a></li>
+</ul>
+<p class="nav-h">MODELS</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="models.html">Models and readings</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="benchmarks.html">Benchmarks</a></li>
+</ul>
+<p class="nav-h">REFERENCE</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="python-api.html">Python API</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="cli-reference.html">CLI reference</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="configuration.html">Configuration</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="troubleshooting.html">FAQ and troubleshooting</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="glossary.html">Glossary</a></li>
+</ul>
+<p class="nav-h">PROJECT</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="development.html">Development</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="publishing.html">Publishing</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="changelog.html">Changelog</a></li>
+</ul>
+    </section>
+    
+  </aside>
+  <main id="doc">
+    <section class="win doc" data-title="C:\JUL\DOCS\DEPLOYME.TXT">
+<article class="prose">
+<h1 id="deployment-jul-pack-and-the-onnx-backend">Deployment: <code>jul pack</code> and the onnx backend</h1>
+<p>When the questions are known in advance, everything that does not depend on the message can be computed
+once: the prompts, their prefix caches, the option vectors, the centers, the heads and calibrations of a
+context. <code>jul pack</code> packs all of it into a directory, a bundle; <code>Bundle</code> answers with the message as its
+only input, in the format of <code>system_one</code>.</p>
+<p>Packing trains nothing and changes no model: a bundle holds no weights, it names the model it was
+packed on and is loaded on that model, wherever it runs.</p>
+<pre><code class="language-bash">jul pack bundle/ --questions questions.yaml --context tickets --model e5-small --backend onnx
+</code></pre>
+<pre><code class="language-python">from jul import Bundle, pack
+pack(client, questions, &quot;bundle/&quot;, context=&quot;tickets&quot;)   # the same, from Python
+bundle = Bundle.load(&quot;bundle/&quot;)
+bundle.system_one(&quot;I was charged twice&quot;).answers[&quot;team&quot;].choice
+bundle.system_one_batch(messages)          # every prompt read over all messages in batches
+</code></pre>
+<p>A prompt shared by several questions (<code>one_word</code>) is read once per message. Packing is not tied to a
+backend — a bundle names the backend its vectors came from, and the code is the same on all three
+(tested on torch and onnx) — but the vectors are: pack on the backend you deploy on (loading on
+another one warns).</p>
+<p><strong>The onnx backend</strong> runs a model exported by JuL on ONNX Runtime, without torch or transformers (the
+tokenizer is read with <code>tokenizers</code> alone). With e5-small in 8 bits, the whole Lambda package, model
+included, is 225 MB.</p>
+<pre><code class="language-bash">pip install &quot;jul[onnx-export]&quot;
+python -m jul.backends.onnx_export intfloat/multilingual-e5-small models/e5-small-onnx
+python -m jul.backends.onnx_export models/e5-small-onnx models/e5-small-onnx-w8 --int8
+jul models add e5-small --repo models/e5-small-onnx-w8 --backend onnx
+jul autotune tickets --questions questions.yaml --labeled labeled.jsonl --features hybrid \
+    --model e5-small --backend onnx
+jul pack bundle/ --questions questions.yaml --context tickets --model e5-small --backend onnx
+</code></pre>
+<ul>
+<li>The graph returns the raw hidden states of the upper half of the layers (<code>--layers</code> narrows it), and
+  for a decoder takes and returns a <strong>KV cache</strong>: each prompt prefix runs once, a message pays for its
+  own tokens only (266 → 134 ms per message on Harrier 0.6B, same vectors).</li>
+<li><code>--int8</code>: 8-bit weights (MatMulNBits, blocks of 32, int8 compute), within a cosine of 0.9995 of
+  float32 on an M4 and on AWS Graviton alike. Dynamic int8 quantization was tried first and returned
+  wrong vectors on Graviton2 (cosine ~0.85). An encoder's embedding table is also quantized, at 4 bits
+  (e5-small: 470 → 86 MB).</li>
+<li>The exported attention is not memory-efficient: rows are capped at <code>JUL_ONNX_MAX_TOKENS</code> (the end of
+  the input is cut, the prompt kept) and batches at <code>JUL_ONNX_BATCH_TOKENS</code>. Without those caps, one
+  17k-token text asked for ~20 GB.</li>
+<li>No logits and no final norm: the letters reading and decision models need mlx or torch.</li>
+<li><code>JUL_ONNX_MODEL=s3://bucket/key</code> reads the graph from S3 into memory, for a graph too big for a
+  package (Harrier 0.6B in 8 bits: 1.1 GB).</li>
+</ul>
+<p>Measured on AWS Lambda arm64, eu-west-1 prices, two questions per message (intent among 72, emotion
+among 6), by the jul-lambda showcase (CDK, not published yet):</p>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Reading (formulations)</th>
+<th>Head (features)</th>
+<th>Passes</th>
+<th>Accuracy (emotion / intent)</th>
+<th>Lambda</th>
+<th>Per message</th>
+<th>Per million</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>multilingual-e5-small</strong></td>
+<td>direct: <code>one_word</code> for both</td>
+<td>hybrid</td>
+<td>1</td>
+<td>0.787 / 0.890</td>
+<td>1,769 MB</td>
+<td><strong>17 ms</strong></td>
+<td><strong>$0.59</strong></td>
+</tr>
+<tr>
+<td>Harrier 0.6B, 8-bit</td>
+<td>direct: <code>one_word</code> for both</td>
+<td>hybrid</td>
+<td>1</td>
+<td>0.791 / 0.890</td>
+<td>4 GB</td>
+<td>164 ms</td>
+<td>$8.95</td>
+</tr>
+<tr>
+<td>Harrier 0.6B, 8-bit</td>
+<td>mixed: emotion <code>question_options</code>, intent <code>question</code></td>
+<td>hybrid</td>
+<td>2</td>
+<td>0.883 / 0.910</td>
+<td>4 GB, batch 32</td>
+<td>—</td>
+<td>$13.76</td>
+</tr>
+</tbody>
+</table>
+<p>The reading is which prompts a message is read with (<code>formulations=</code>); the head is what the tuned head
+reads (<code>features=</code>). All three bundles use hybrid heads.</p>
+<p>Step by step, from the questions to a deployed function (AWS CLI or CDK): <a href="aws-lambda.html">AWS Lambda</a>.</p>
+<p>e5-small is the one to deploy: same accuracy as Harrier read the same way, ten times faster, fifteen times
+cheaper, a 2.4 s cold start with the model in the package. Harrier's extra passes (<code>mixed</code>) buy emotion
+points at 23 times the price.</p>
+</article>
+<nav class="pager" aria-label="Pages"><a href="serve.html" rel="prev">◄ Serving over HTTP</a><a href="aws-lambda.html" rel="next">AWS Lambda, step by step ►</a></nav>
+<p class="foot dim"><a href="https://github.com/usejul/jul/edit/main/docs/deployment.md">Edit this page</a> · JuL, <i>Just use Less</i> · Apache-2.0 · Not affiliated with TypeSafe AI or Jev.</p>
+    </section>
+  </main>
+</div>
+<script src="assets/docs.js"></script>
+</body>
+</html>

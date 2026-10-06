@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Benchmarks · JuL docs</title>
+<meta name="description" content="Benchmarks Jev&#x27;s published benchmark, 300 examples, every row read through this library (scripts/bench_jul.py). Only the zero-shot table compares to Jev: the se">
+<meta name="theme-color" content="#0a0600">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230a0600'/%3E%3Ctext x='2' y='12' font-family='monospace' font-size='11' fill='%23ffb000'%3E%3E_%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/docs.css">
+<script>try{var p=localStorage.getItem("jul-phosphor");if(p)document.documentElement.dataset.phosphor=p}catch(e){}</script>
+</head>
+<body>
+<a class="skip" href="#doc">Skip to the page</a>
+<nav class="menubar" aria-label="Main">
+  <a class="brand" href="../index.html">▓ JuL-DOS 0.5</a>
+  <a href="index.html"><u>D</u>ocs</a>
+  <a href="quickstart.html" class="hide-sm"><u>Q</u>uickstart</a>
+  <a href="python-api.html" class="hide-sm"><u>A</u>PI</a>
+  <a href="cli-reference.html" class="hide-sm">C<u>L</u>I</a>
+  <a href="https://github.com/usejul/jul"><u>G</u>itHub</a>
+  <span class="spacer"></span>
+  <label class="search"><span aria-hidden="true">[/]</span><input id="q" type="search" placeholder="search" autocomplete="off" aria-label="Search the docs"></label>
+  <button id="phosphor" type="button" title="Change phosphor">PHOSPHOR:<span id="ph-name">AMB</span></button>
+</nav>
+<div id="results" class="win results" data-title="SEARCH.EXE" hidden aria-live="polite"></div>
+<div class="layout">
+  <aside class="side">
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="dir">[≡] CONTENTS</button>
+    <section class="win dir" id="dir" data-title="C:\JUL\DOCS">
+<p class="nav-h">START HERE</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="index.html">Docs home</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="quickstart.html">Quickstart</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="concepts.html">Concepts</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="hub.html">The hub</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="questions.html">Writing good questions</a></li>
+</ul>
+<p class="nav-h">GUIDES</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="installation.html">Installation</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="cli.html">Command line</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="tuning.html">Adapting to your data</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="serve.html">Serving over HTTP</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="deployment.html">Deploying a fixed need</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="aws-lambda.html">AWS Lambda, step by step</a></li>
+</ul>
+<p class="nav-h">MODELS</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="models.html">Models and readings</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="benchmarks.html" aria-current="page">Benchmarks</a></li>
+</ul>
+<p class="nav-h">REFERENCE</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="python-api.html">Python API</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="cli-reference.html">CLI reference</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="configuration.html">Configuration</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="troubleshooting.html">FAQ and troubleshooting</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="glossary.html">Glossary</a></li>
+</ul>
+<p class="nav-h">PROJECT</p><ul class="tree">
+<li><span class="br" aria-hidden="true">├─</span><a href="development.html">Development</a></li>
+<li><span class="br" aria-hidden="true">├─</span><a href="publishing.html">Publishing</a></li>
+<li><span class="br" aria-hidden="true">└─</span><a href="changelog.html">Changelog</a></li>
+</ul>
+    </section>
+    <section class="win toc" data-title="ON_PAGE.LST"><ul><li class="l2"><a href="#the-baseline-worth-remembering">The baseline worth remembering</a></li>
+<li class="l2"><a href="#the-decision-model-on-the-development-sets">The decision model, on the development sets</a></li>
+<li class="l2"><a href="#the-decision-model-on-the-jev-benchmark">The decision model, on the Jev benchmark</a></li>
+<li class="l2"><a href="#embedding-models">Embedding models</a></li>
+<li class="l2"><a href="#what-is-measured-and-what-is-not">What is measured, and what is not</a></li>
+<li class="l2"><a href="#next-steps">Next steps</a></li>
+<li class="l3"><a href="#routing-by-question-type">Routing by question type</a></li>
+<li class="l3"><a href="#smaller-leads-already-measured">Smaller leads, already measured</a></li>
+<li class="l2"><a href="#reproducing-the-measurements">Reproducing the measurements</a></li></ul></section>
+  </aside>
+  <main id="doc">
+    <section class="win doc" data-title="C:\JUL\DOCS\BENCHMAR.TXT">
+<article class="prose">
+<h1 id="benchmarks">Benchmarks</h1>
+<p>Jev's published benchmark, 300 examples, every row read through this library
+(<code>scripts/bench_jul.py</code>). <strong>Only the zero-shot table compares to Jev</strong>: the second one receives task
+data at call time, and Jev receives none.</p>
+<table>
+<thead>
+<tr>
+<th>Zero-shot</th>
+<th style="text-align: right;">AG News</th>
+<th style="text-align: right;">Banking77</th>
+<th style="text-align: right;">Emotion</th>
+<th style="text-align: right;">Mean</th>
+<th style="text-align: right;">ECE ↓</th>
+<th style="text-align: right;">p50</th>
+<th style="text-align: right;">Memory</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>JuL <code>wemm-4b</code></td>
+<td style="text-align: right;">0.95</td>
+<td style="text-align: right;"><strong>0.88</strong></td>
+<td style="text-align: right;">0.80</td>
+<td style="text-align: right;"><strong>0.877</strong></td>
+<td style="text-align: right;">0.112</td>
+<td style="text-align: right;">78 ms</td>
+<td style="text-align: right;">4.5 GB</td>
+</tr>
+<tr>
+<td>JuL <code>wemm-9b</code></td>
+<td style="text-align: right;"><strong>0.97</strong></td>
+<td style="text-align: right;">0.84</td>
+<td style="text-align: right;">0.78</td>
+<td style="text-align: right;">0.863</td>
+<td style="text-align: right;">0.114</td>
+<td style="text-align: right;">138 ms</td>
+<td style="text-align: right;">9.0 GB</td>
+</tr>
+<tr>
+<td>JuL <code>wemm-4b-4bit</code></td>
+<td style="text-align: right;">0.90</td>
+<td style="text-align: right;">0.87</td>
+<td style="text-align: right;">0.80</td>
+<td style="text-align: right;">0.857</td>
+<td style="text-align: right;">0.084</td>
+<td style="text-align: right;">55 ms</td>
+<td style="text-align: right;">2.6 GB</td>
+</tr>
+<tr>
+<td>JuL <code>f2llm-4b</code></td>
+<td style="text-align: right;">0.89</td>
+<td style="text-align: right;">0.82</td>
+<td style="text-align: right;">0.81</td>
+<td style="text-align: right;">0.840</td>
+<td style="text-align: right;">0.090</td>
+<td style="text-align: right;">46 ms</td>
+<td style="text-align: right;">3.0 GB</td>
+</tr>
+<tr>
+<td>JuL <code>f2llm-1.7b</code></td>
+<td style="text-align: right;">0.91</td>
+<td style="text-align: right;">0.67</td>
+<td style="text-align: right;"><strong>0.87</strong></td>
+<td style="text-align: right;">0.817</td>
+<td style="text-align: right;"><strong>0.082</strong></td>
+<td style="text-align: right;"><strong>24 ms</strong></td>
+<td style="text-align: right;">1.0 GB</td>
+</tr>
+<tr>
+<td>JuL <code>jul-decision-minicpm5-2b</code> v1.0 ¹</td>
+<td style="text-align: right;">0.91</td>
+<td style="text-align: right;">0.79</td>
+<td style="text-align: right;">0.69</td>
+<td style="text-align: right;">0.796</td>
+<td style="text-align: right;">0.133</td>
+<td style="text-align: right;">217 ms</td>
+<td style="text-align: right;"></td>
+</tr>
+<tr>
+<td><strong>Jev (published)</strong></td>
+<td style="text-align: right;">0.91</td>
+<td style="text-align: right;">0.87</td>
+<td style="text-align: right;">0.48</td>
+<td style="text-align: right;">0.753</td>
+<td style="text-align: right;">0.156</td>
+<td style="text-align: right;">246 ms</td>
+<td style="text-align: right;">hosted</td>
+</tr>
+<tr>
+<td>JuL <code>minicpm5-2b</code></td>
+<td style="text-align: right;">0.80</td>
+<td style="text-align: right;">0.59</td>
+<td style="text-align: right;">0.46</td>
+<td style="text-align: right;">0.617</td>
+<td style="text-align: right;">0.113</td>
+<td style="text-align: right;">64 ms</td>
+<td style="text-align: right;">2.7 GB</td>
+</tr>
+<tr>
+<td>JuL <code>jul-decision-e5-small</code> ²</td>
+<td style="text-align: right;">0.72</td>
+<td style="text-align: right;">0.59</td>
+<td style="text-align: right;">0.36</td>
+<td style="text-align: right;">0.557</td>
+<td style="text-align: right;">0.140</td>
+<td style="text-align: right;"><strong>4 ms</strong></td>
+<td style="text-align: right;">0.09 GB</td>
+</tr>
+<tr>
+<td>GLiNER2.5 (published)</td>
+<td style="text-align: right;">0.70</td>
+<td style="text-align: right;">0.61</td>
+<td style="text-align: right;">0.44</td>
+<td style="text-align: right;">0.583</td>
+<td style="text-align: right;">0.101</td>
+<td style="text-align: right;">128 ms</td>
+<td style="text-align: right;"></td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Nine <code>jul</code> models beat Jev zero-shot, the best by 12.4 points</strong> (<code>wemm-4b</code>, 0.877 against
+  0.753). <code>wemm-4b-4bit</code> is still 10 points ahead in 2.6 GB at 55 ms, and <code>f2llm-1.7b</code> 6 points ahead
+  in 1 GB at 24 ms, ten times faster than Jev.</li>
+<li><strong>Better calibrated too</strong>: the five leaders sit between 0.082 and 0.114 of ECE, Jev at 0.156.</li>
+<li><strong>AG News is the clean comparison.</strong> Banking77 and Emotion are in MTEB, which embedding models train
+  on, so <code>wemm-*</code> and <code>f2llm-*</code> have probably seen them. AG News is not, and there <code>wemm-9b</code> scores
+  0.97 against Jev's 0.91.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>With task data (not comparable to Jev)</th>
+<th style="text-align: right;">AG News</th>
+<th style="text-align: right;">Banking77</th>
+<th style="text-align: right;">Emotion</th>
+<th style="text-align: right;">Mean</th>
+<th style="text-align: right;">ECE ↓</th>
+<th style="text-align: right;">p50</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>wemm-4b-4bit</code> + autotune (1000 labeled)</td>
+<td style="text-align: right;">0.94</td>
+<td style="text-align: right;"><strong>0.94</strong></td>
+<td style="text-align: right;">0.81</td>
+<td style="text-align: right;"><strong>0.897</strong></td>
+<td style="text-align: right;"><strong>0.067</strong></td>
+<td style="text-align: right;">59 ms</td>
+</tr>
+<tr>
+<td><code>f2llm-1.7b</code> + autotune (1000 labeled)</td>
+<td style="text-align: right;">0.89</td>
+<td style="text-align: right;">0.72</td>
+<td style="text-align: right;"><strong>0.89</strong></td>
+<td style="text-align: right;">0.833</td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;">24 ms</td>
+</tr>
+<tr>
+<td><code>harrier-0.6b</code> + autotune (1000 labeled)</td>
+<td style="text-align: right;">0.91</td>
+<td style="text-align: right;">0.71</td>
+<td style="text-align: right;">0.83</td>
+<td style="text-align: right;">0.814</td>
+<td style="text-align: right;"></td>
+<td style="text-align: right;"><strong>13 ms</strong></td>
+</tr>
+<tr>
+<td><code>minicpm5-2b</code> + autotune (1000 labeled)</td>
+<td style="text-align: right;">0.92</td>
+<td style="text-align: right;">0.76</td>
+<td style="text-align: right;">0.59</td>
+<td style="text-align: right;">0.757</td>
+<td style="text-align: right;">0.102</td>
+<td style="text-align: right;">38 ms</td>
+</tr>
+<tr>
+<td><code>minicpm5-2b</code> + context (50 unlabeled)</td>
+<td style="text-align: right;">0.84</td>
+<td style="text-align: right;">0.62</td>
+<td style="text-align: right;">0.47</td>
+<td style="text-align: right;">0.643</td>
+<td style="text-align: right;">0.140</td>
+<td style="text-align: right;">44 ms</td>
+</tr>
+<tr>
+<td><code>jul-decision-e5-small</code> + autotune, hybrid ²</td>
+<td style="text-align: right;">0.92</td>
+<td style="text-align: right;">0.88</td>
+<td style="text-align: right;">0.54</td>
+<td style="text-align: right;">0.780</td>
+<td style="text-align: right;">0.088</td>
+<td style="text-align: right;"><strong>4 ms</strong></td>
+</tr>
+</tbody>
+</table>
+<p>With a thousand labels, <code>wemm-4b-4bit</code> reaches <strong>0.897</strong> and 0.94 on Banking77, and <code>harrier-0.6b</code>
+passes Jev in 0.31 GB at 13 ms.</p>
+<p>¹ Trained on these three tasks' training splits (the benchmark rows come from the test splits); Jev's
+training data is not published. On six sources neither ever trained on, Jev leads, 0.857 against
+0.721: see <a href="#the-decision-model-on-the-development-sets">the development sets</a>. Measured on v1.0.</p>
+<p>² ONNX 8-bit, one-word reading (one pass per text), M4 Pro. Every question here is a Choice, read by its
+vectors; its cross model reads Noul and Score and does not play on this benchmark. On Kev's typed
+decisions (<code>transfer-v9</code> development split, clean questions, never trained on) the cross model takes
+yes/no from 0.579 to <strong>0.726</strong> and scores from 0.275 to 0.500 (all: 0.460 to 0.524; Jev 0.854). See
+<a href="models.html#cross-models-reading-the-question-and-the-text-together">cross models</a>.</p>
+<p>On anything that reads two things together (a paraphrase, a policy against a case), an embedding
+model falls behind the decision model: see <a href="#embedding-models">Embedding models</a>.</p>
+<p>Eighteen models were read on these same 300 rows; this table keeps the leaders and the presets. 100 rows per dataset means ±5 points per cell and ±3 on the mean. Every layer
+and temperature was fitted on development sets the benchmark never uses. Latencies are p50: <code>wemm-*</code>, <code>f2llm-*</code> and the tuned rows on an M5 Max, <code>minicpm5-2b</code>
+and the decision model on an M4 Pro, where <code>wemm-4b-4bit</code> takes 146 ms. Jev's includes
+the network.</p>
+<h2 id="the-baseline-worth-remembering">The baseline worth remembering</h2>
+<p>A TF-IDF + linear SVM, no LLM, scores 0.690 at 0.17 ms per prediction: see
+<a href="https://github.com/usejul/jul#the-baseline-worth-remembering">the baseline worth remembering</a> in the README, whose
+accuracies CI re-measures on every PR.</p>
+<h2 id="the-decision-model-on-the-development-sets">The decision model, on the development sets</h2>
+<p>Here are the four development sets
+(BTZSC, 200 examples each), both models read through this library (<code>scripts/dev_decision_jul.py</code> in the
+research repo), on an M4 Pro (24 GB) on mains power:</p>
+<p>Cells are accuracy / ECE (lower is better) / p50 latency.</p>
+<table>
+<thead>
+<tr>
+<th>Development set</th>
+<th style="text-align: right;"><code>minicpm5-2b</code> (vectors)</th>
+<th style="text-align: right;"><code>jul-decision-minicpm5-2b</code> v1</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FinancialPhraseBank</td>
+<td style="text-align: right;">0.705 / 0.129 / 105 ms</td>
+<td style="text-align: right;"><strong>0.740</strong> / 0.188 / <strong>64 ms</strong></td>
+</tr>
+<tr>
+<td>Yahoo Topics</td>
+<td style="text-align: right;">0.450 / <strong>0.045</strong> / 203 ms</td>
+<td style="text-align: right;"><strong>0.565</strong> / 0.087 / 136 ms</td>
+</tr>
+<tr>
+<td>Empathetic</td>
+<td style="text-align: right;">0.345 / 0.147 / 208 ms</td>
+<td style="text-align: right;"><strong>0.460</strong> / 0.214 / 234 ms</td>
+</tr>
+<tr>
+<td>Massive (59 options)</td>
+<td style="text-align: right;">0.670 / 0.114 / <strong>63 ms</strong></td>
+<td style="text-align: right;"><strong>0.715</strong> / <strong>0.069</strong> / 596 ms</td>
+</tr>
+<tr>
+<td><strong>Mean</strong></td>
+<td style="text-align: right;">0.542 / 0.109</td>
+<td style="text-align: right;"><strong>0.620</strong> / 0.140</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>+8 points on the mean</strong>, and it wins on all four sets.</li>
+<li><strong>Latency depends on the options.</strong> The vector method encodes them once and caches them; the decision
+  model re-reads all of them on every request. Three short options: 64 ms against 105. Fifty-nine long
+  ones: 596 ms against 63. Above a measured threshold <code>jul</code> routes a question to the vector reading
+  instead; <code>jul models add</code> finds that threshold and says what it costs.</li>
+<li><strong>Calibration is no longer where it loses.</strong> v1.1 ships a temperature of 1.289 fitted on one epoch's
+  weights, and mean ECE is 0.140 against the vector method's 0.109 — Massive, the bad one at 0.241 in
+  v1.0, is now the good one at 0.069. Quantizing to 4 bits still moves probabilities by up to 0.23,
+  enough to flip a borderline decision, so fit a <code>Context</code> calibration on your own data if you need the
+  probabilities themselves and not only the answer.</li>
+<li><strong>It reads French.</strong> On MASSIVE's parallel French and English splits, 0.710 against 0.815 — v1.0 scored
+  0.485 in French, below <code>jul</code>'s untrained vector method. That reversal is what v1.1 was trained for.</li>
+<li>On sources it was never trained on (<code>transfer-v4</code>) it scores 0.739, against 0.652 for Kev-0.8B and
+  0.797 for Kev-4B; Jev 0.857.</li>
+</ul>
+<h2 id="the-decision-model-on-the-jev-benchmark">The decision model, on the Jev benchmark</h2>
+<p>Its row sits in the table above, measured on the same 300 rows with the same metrics
+(<code>scripts/bench_jul_decision.py</code> in the research repo). Read honestly:</p>
+<ul>
+<li><strong>Emotion is where it wins</strong> (0.69 against 0.48), and Emotion is one of the tasks it trained on.</li>
+<li><strong>Banking77 stays 8 points behind Jev (0.79 against 0.87) although it trained on that one too.</strong>
+  Seventy-two fine-grained intents remain the hard part — the vector method scores 0.59 there.</li>
+<li>AG News is a tie, calibration is better than Jev's (0.133 against 0.156) and latency comparable.</li>
+<li><strong>AG News 111 ms, Emotion 111 ms, Banking77 431 ms</strong> — the 217 ms above is their mean. <code>minicpm5-2b</code>
+  answers all three in 64 ms, and the reason is structural: the vector method encodes each option once
+  and caches it, so a call only pays for its own text, and it stops the forward at layer 39/40. The
+  decision model re-reads the instructions and the whole option list on every call, and runs all 42
+  layers, since it reads the last one. Cost therefore scales with the options: four labels cost 111 ms,
+  seventy-two cost 431 ms. Caching them would need the format to put the options before the text, which
+  means retraining.</li>
+</ul>
+<h2 id="embedding-models">Embedding models</h2>
+<p>WeMM-Embedding (Tencent), F2LLM-v2 (CodeFuse-AI), Qwen3-Embedding (Alibaba) and Harrier-OSS
+(Microsoft) are ordinary decoder-only LLMs, fine-tuned by contrastive learning to put texts with the
+same meaning close together. <code>jul</code> reads them like any other model, with no code of its own, and
+<code>wemm-4b-4bit</code> is the default preset. For the others,
+<code>jul models add</code> finds their layers, center and tau on the dev sets. They are the top of the table
+above.</p>
+<pre><code class="language-bash">jul models add wemm-4b      --repo tencent/WeMM-Embedding-4B               # 4.5 GB, the zero-shot best
+jul models add f2llm-4b     --repo fcmeyer/F2LLM-v2-4B-mlx-6bit            # 3.0 GB, 46 ms
+jul models add harrier-0.6b --repo majentik/harrier-oss-v1-0.6b-MLX-4bit   # 0.31 GB, 13 ms
+</code></pre>
+<p>The measurements below come from an earlier run of WeMM-Embedding-4B as a plain embedding (pooled at
+its <code>&lt;embedding&gt;</code> token, by its own script), on the development sets and on Kev's decision questions.</p>
+<p><strong>Who it is for: anyone sorting one text into labels described in words, with no labeled data.</strong>
+Ticket routing, topics, intents, sentiment, emotions. On the development sets it beats everything
+else here, the trained decision model included, and French costs it nothing:</p>
+<table>
+<thead>
+<tr>
+<th>Development set (label sentences)</th>
+<th style="text-align: right;"><code>minicpm5-2b</code> (vectors)</th>
+<th style="text-align: right;"><code>jul-decision-minicpm5-2b</code> v1</th>
+<th style="text-align: right;">WeMM-Embedding-4B</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FinancialPhraseBank</td>
+<td style="text-align: right;">0.705</td>
+<td style="text-align: right;">0.740</td>
+<td style="text-align: right;"><strong>0.800</strong></td>
+</tr>
+<tr>
+<td>Yahoo Topics</td>
+<td style="text-align: right;">0.450</td>
+<td style="text-align: right;">0.565</td>
+<td style="text-align: right;"><strong>0.655</strong></td>
+</tr>
+<tr>
+<td>Empathetic</td>
+<td style="text-align: right;">0.345</td>
+<td style="text-align: right;">0.460</td>
+<td style="text-align: right;"><strong>0.510</strong></td>
+</tr>
+<tr>
+<td>Massive (59 options)</td>
+<td style="text-align: right;">0.670</td>
+<td style="text-align: right;">0.715</td>
+<td style="text-align: right;"><strong>0.780</strong></td>
+</tr>
+<tr>
+<td><strong>Mean</strong> (ECE)</td>
+<td style="text-align: right;">0.542 (0.109)</td>
+<td style="text-align: right;">0.620 (0.140)</td>
+<td style="text-align: right;"><strong>0.686</strong> (0.099)</td>
+</tr>
+<tr>
+<td>MASSIVE English / French, option names</td>
+<td style="text-align: right;">0.640 / 0.535</td>
+<td style="text-align: right;"><strong>0.815 / 0.710</strong> ³</td>
+<td style="text-align: right;">0.595 / 0.590</td>
+</tr>
+</tbody>
+</table>
+<p>³ Trained on MASSIVE, English and French.</p>
+<p><strong>What it is not for: any question that needs the text and something else read together.</strong> Is this
+sentence a paraphrase of that one, does this case satisfy the policy, is the report late. An embedding
+never sees the option while it reads the text, so it cannot compare them. On Kev's <code>transfer-v4</code>
+(656 decision questions from sources never trained on) it scores <strong>0.643 against 0.739</strong> for
+<code>jul-decision-minicpm5-2b</code> v1, and falls <em>below the majority class</em> on paraphrase (0.45), two of three policy
+compositions and deadlines. Use the decision model for those.</p>
+<p>One temperature, 0.0219 fitted on the development sets, calibrates it across tasks (fitted on three
+sets, scored on the fourth, it stays within 0.021–0.023). Latency follows the text length, not the
+option count: options are embedded once, so 52 ms for a short utterance, about 240 ms for a paragraph.</p>
+<h2 id="what-is-measured-and-what-is-not">What is measured, and what is not</h2>
+<p>Measured:</p>
+<ul>
+<li>Both presets' layer and temperature, on dev datasets only.</li>
+<li>Vectors beating letters for <code>Noul</code> and <code>Score</code>, on data disjoint from the benchmark.</li>
+<li>Which center to subtract, per model (both ship a generic one for <code>one word</code>).</li>
+<li>That the context <code>description</code> hurts on average, and how many <code>examples</code> a task center needs.</li>
+<li><code>Choice</code> by vectors, on the full Jev benchmark.</li>
+<li>The effect of <code>examples</code> as a task center.</li>
+<li>A per-task head, on both presets and three datasets, with the example-count curve.</li>
+</ul>
+<p>Not yet measured — do not rely on these without checking:</p>
+<ul>
+<li><strong><code>Noul</code> and <code>Score</code> thresholds</strong>: vectors are now the default for all three types, measured on 480
+  class-balanced yes/no examples (accuracy 0.771 vs 0.692 for letters, AUC 0.938 vs 0.904, ECE 0.148
+  vs 0.238) and on the 9-case ordinal set (7/9 vs 6/9). But <strong>both readings still have a threshold
+  bias</strong> — they rank well (AUC 0.87–0.99) and decide badly. Fix it with <code>client.autotune(...)</code> on a
+  few dozen labeled examples. <code>method="letters"</code> keeps the old reading.</li>
+<li><strong>Centering</strong>: measured. Not centering costs 4.5–8.5 points, so always centre.
+  Which centre matters less, and differently per model: on MiniCPM the generic centre gains 4 points
+  over the option mean. <strong>The best centre is the task's own</strong>, i.e.
+  <code>Context(examples=…)</code>, for both models — 200 examples per strategy though, so ±3.5 points.</li>
+<li>Everything was tuned in English.</li>
+</ul>
+<h2 id="next-steps">Next steps</h2>
+<h3 id="routing-by-question-type">Routing by question type</h3>
+<p>Embedding models lead on sorting one text into labels; the decision model leads on questions that read
+two things together. The natural shape is to route by question type: a <code>Choice</code> over a single text to
+<code>wemm-4b-4bit</code>, the rest to <code>jul-decision-minicpm5-2b</code> v1. <code>Noul</code> and <code>Score</code> still have to be measured on the
+embedding models — only <code>Choice</code> is so far.</p>
+<h3 id="smaller-leads-already-measured">Smaller leads, already measured</h3>
+<ul>
+<li><strong>A generic center for the <code>question + options</code> formulation.</strong> Worth about 2.5 points on MiniCPM
+  (0.560 against 0.535), but it depends on the question, so it costs 195 extra passes every time a
+  new question appears. Left off: a <code>Context</code> with fifty examples is cheaper and scores better.</li>
+<li><strong>Banking77 on MiniCPM.</strong> Read zero-shot, <code>minicpm5-2b</code> stays at 0.59 against Jev's 0.87 on 72
+  fine-grained intents. <code>wemm-4b</code> closes it (0.88), and <code>autotune(...)</code> closes most of it.</li>
+<li><strong>One batch instead of two passes.</strong> The two formulations run one after the other. Batching them
+  should cut latency without touching a single accuracy figure.</li>
+<li><strong>English only.</strong> Every layer, temperature and center here was fitted on English text.</li>
+</ul>
+<h2 id="reproducing-the-measurements">Reproducing the measurements</h2>
+<p>The benchmark rows, the baseline and the dev-set experiments come from <code>scripts/</code>. The decision-model
+figures (<code>dev_decision_jul.py</code>, <code>bench_jul_decision.py</code>) come from the research repo and the AWS Lambda
+figures from jul-lambda; neither is published here. None of the data is committed; these
+steps fetch it. Durations are given per command where measured.</p>
+<pre><code class="language-bash">pip install -e &quot;.[repro]&quot;
+git clone https://github.com/AbdelStark/jev-benchmarks external/jev-benchmarks
+pip install -e &quot;external/jev-benchmarks[data]&quot;
+</code></pre>
+<p>Then build the datasets. They all come from <a href="https://huggingface.co/datasets/btzsc/btzsc"><code>btzsc/btzsc</code></a>
+on the Hub, split by the benchmark's own config so that tuning data and benchmark rows never overlap:</p>
+<pre><code class="language-bash">python scripts/prepare_dev.py        # 4 tuning datasets, never used by the benchmark
+python scripts/prepare_btzsc.py      # 1000 train / 200 val / 100 test per benchmark dataset
+python scripts/prepare_generic.py    # varied texts, for the generic centers
+</code></pre>
+<p>Then the experiments, in order. Each writes to <code>runs/</code> and prints its table:</p>
+<pre><code class="language-bash">python scripts/dev_fit_tau.py minicpm5-2b 39 40 50     # temperatures          (~4 min)
+python scripts/dev_generic_center.py minicpm5-2b       # centering             (~4 min)
+python scripts/dev_context_effect.py minicpm5-2b 100   # does a Context help?  (~7 min)
+python scripts/dev_tuning_curve.py minicpm5-2b         # how many labels?      (~5 min)
+</code></pre>
+<p><code>dev_generic_center.py</code> rewrites the shipped centers in <code>lib/jul/assets/</code>, and <code>dev_tuning_curve.py</code>
+caches encoded vectors in <code>features/</code> so it can be re-run for free.</p>
+<p>Finally the benchmark itself. It checks the published manifest's SHA-256 and verifies that no
+training row appears in it, then runs the three variants <strong>through the public API</strong>:</p>
+<pre><code class="language-bash">python scripts/bench_jul.py minicpm5-2b                # (~7 min)
+python scripts/bench_jul.py wemm-4b-4bit
+python scripts/bench_tfidf.py                          # the no-LLM baseline (~5 s)
+</code></pre>
+<p>Reports land in <code>runs/jev-bench-jul/</code>. Tune on the dev datasets, and run the benchmark once, at the
+end — that is the whole point of keeping the two apart.</p>
+</article>
+<nav class="pager" aria-label="Pages"><a href="models.html" rel="prev">◄ Models and readings</a><a href="python-api.html" rel="next">Python API ►</a></nav>
+<p class="foot dim"><a href="https://github.com/usejul/jul/edit/main/docs/benchmarks.md">Edit this page</a> · JuL, <i>Just use Less</i> · Apache-2.0 · Not affiliated with TypeSafe AI or Jev.</p>
+    </section>
+  </main>
+</div>
+<script src="assets/docs.js"></script>
+</body>
+</html>
