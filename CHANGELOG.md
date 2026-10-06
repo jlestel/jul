@@ -3,6 +3,17 @@
 Versions come from git tags (see [publishing](docs/publishing.md)): a `v*` tag releases to PyPI, every push to
 `main` publishes a dev build to TestPyPI.
 
+## Unreleased
+
+### Fixed
+
+- **MLX with mlx-lm 0.32**: a batch read over a cached prefix (a routed Score on `fast`, any batched vector
+  pass) failed with `too many values to unpack`, mlx-lm 0.32 having made `KVCache.state`
+  `(keys, values, offset)`. The prefix is now copied from the cache's keys and values up to its offset.
+- **MLX with mlx-lm 0.32, hybrid models** (WeMM / Qwen3.5): the state snapshot kept after a cached prefix was
+  shared with the queries restored from it, so a query could start from the previous query's recurrent state.
+  Each query now restores a copy.
+
 ## 0.5.0 — 2026-10-06
 
 ### Added
