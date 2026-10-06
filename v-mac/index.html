@@ -176,9 +176,9 @@ main > * { min-width: 0; }
 .flow .fl-lbl10 { font: 700 10px/1 var(--mono); }
 .flow .fl-sub { font: 400 10px/1 var(--mono); }
 .flow .fl-s11 { font: italic 400 11px/1 var(--mono); }
-.flow .fl-q { font: italic 400 12px/1 var(--mono); }
+.flow .fl-q { font: italic 400 11px/1 var(--mono); }
 .flow .fl-eye { font: 400 10px/1 var(--silk); letter-spacing: .06em; }
-.flow .fl-name { font: 400 30px/1 var(--pix); }
+.flow .fl-name { font: 400 24px/1 var(--pix); }
 .flow .fl-t15 { font: 400 15px/1 var(--pix); }
 .flow .fl-bd { font: 400 30px/1 var(--pix); fill: #fff; }
 .flow .track { stroke: #000; stroke-width: 1; fill: none; }
@@ -842,7 +842,7 @@ latency per decision, and the answer to the ticket.</pre>
     const DEFS = `<defs><pattern id="fl-dither" width="2" height="2" patternUnits="userSpaceOnUse"><rect width="1" height="1"/><rect x="1" y="1" width="1" height="1"/></pattern><pattern id="fl-stripes" width="2" height="2" patternUnits="userSpaceOnUse"><rect width="2" height="1"/></pattern></defs>`;
     const token = route => reduced ? "" : `<rect x="-4" y="-4" width="8" height="8" fill="#fff" stroke="#000"><animateMotion dur="9s" repeatCount="indefinite" path="${route}"/></rect>`;
     const finish = (W, H, route, g, top, cls) =>
-      `<svg class="${cls}" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">${DEFS}<path class="route" d="${route}"/>${g}${top}${token(route)}</svg>`;
+      `<svg class="${cls}" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">${DEFS}<path class="route" d="${route}"/>${g}${token(route)}${top}</svg>`;
 
     const horizontal = W => {
       const stateW = 60, cardW = 100, seg = 50, colW = Math.floor((W - stateW - cardW - seg) / 5), BW = 124, Y0 = 128;
@@ -855,8 +855,8 @@ latency per decision, and the answer to the ticket.</pre>
       S.forEach((st, i) => {
         const cx = stateW + colW * i + (colW >> 1), bx = cx - (BW >> 1), rows = BMP[st.icon];
         g += pix(rows, cx - rows[0].length, 36 - rows.length * 2, 2);
-        g += txt(cx, 64, `${i + 1} · ${st.name}`, "fl-name", 'text-anchor="middle"');
-        g += txt(cx, 80, st.q, "fl-q", 'text-anchor="middle"');
+        g += txt(cx, 64, st.name, "fl-name", 'text-anchor="middle"');
+        g += txt(cx, 80, `${i + 1} · ${st.q}`, "fl-q", 'text-anchor="middle"');
         top += optBox(`${i}-d`, st.def, bx, Y0 - 27, BW, true, 54).svg;
         g += txt(bx, Y0 + 46, st.or || "or:", "fl-s11");
         const tx = bx - 10; let y = Y0 + 56, branches = "", lastMy = Y0 + 10;
