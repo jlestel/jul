@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import math
 import uuid
-from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -163,14 +162,12 @@ class TypeSafeClient:
                 for (name, question), (kind, _, options), z in zip(direct.items(), items, logits):
                     answers[name] = _format(kind, question, options,
                                             self._calibrated(ctx, kind, question, options, z))
-            if routed:
-                with _reading(engine, fallback):
-                    for name, question in routed.items():
-                        kind, options = _kind_of(question), options_of(question)
-                        probabilities, spent = self._answer_probabilities(engine, kind, "vector", question,
-                                                                         options, text, ctx, shared)
-                        tokens += spent
-                        answers[name] = _format(kind, question, options, probabilities)
+            for name, question in routed.items():
+                kind, options = _kind_of(question), options_of(question)
+                probabilities, spent = self._answer_probabilities(engine, kind, "vector", question, options,
+                                                                 text, ctx, shared, preset=fallback)
+                tokens += spent
+                answers[name] = _format(kind, question, options, probabilities)
             return SystemOneResponse(answers={n: answers[n] for n in questions}, model=self._preset.name,
                                      usage=Usage(input_tokens=tokens), request_id=str(uuid.uuid4()))
 
@@ -243,7 +240,9 @@ class TypeSafeClient:
 
     def _answer_probabilities(self, engine: Engine, kind: str, how: str, question: Question,
                               options: list[Option], text: str, ctx: Context | None,
-                              shared: dict) -> tuple[np.ndarray, int]:
+                              shared: dict, preset: Preset | None = None) -> tuple[np.ndarray, int]:
+        """`preset` is the vector reading to use (default: the engine's): a decision model passes its fallback."""
+        preset = preset or engine.preset
         # A tuned head is trained on vector features, so it pins the reading to vectors whatever
         # `method` says; otherwise a head trained by `autotune` would be silently ignored.
         head = self._head(ctx, kind, question, options)
@@ -253,13 +252,13 @@ class TypeSafeClient:
             return self._calibrated(ctx, kind, question, options, logits), tokens
 
         compiled = engine.compile(kind, question.instructions, options, ctx,
-                                  self._head_formulations(head, engine.preset))
+                                  self._head_formulations(head, preset), preset)
         scores, features, tokens = engine.read(compiled, text, shared)
         if head is not None:
             return tuning.apply(head, features, text), tokens
-        # engine.preset, not self._preset: a decision model routes questions to its vector fallback by swapping
-        # engine.preset, and its own preset's tau (1.0) would flatten every routed answer to near uniform.
-        return self._calibrated(ctx, kind, question, options, scores / engine.preset.tau), tokens
+        # The preset read, not self._preset: a decision model routes questions to its vector fallback, and its
+        # own preset's tau (1.0) would flatten every routed answer to near uniform.
+        return self._calibrated(ctx, kind, question, options, scores / preset.tau), tokens
 
     def _digest(self, kind: str, question: Question, options: list[Option]) -> str:
         return question_digest(model_key(self._preset.name, self.backend), kind, question.instructions, options)
@@ -340,11 +339,11 @@ class TypeSafeClient:
                 raise ValueError(f"question {name!r} has fewer than 2 labeled examples")
 
             names = formulations.get(name) if isinstance(formulations, Mapping) else formulations
-            with _reading(engine, fallback):
-                chosen = formulations_for(engine.preset, names) if names else None
-                compiled = engine.compile(kind, question.instructions, options, ctx, chosen)
-                scores, features = engine.read_many(compiled, [states[i] for i, _ in rows])
-                vector_logits = scores / engine.preset.tau
+            reading = fallback or engine.preset
+            chosen = formulations_for(reading, names) if names else None
+            compiled = engine.compile(kind, question.instructions, options, ctx, chosen, reading)
+            scores, features = engine.read_many(compiled, [states[i] for i, _ in rows])
+            vector_logits = scores / reading.tau
             y = np.array([label for _, label in rows])
 
             digest = self._digest(kind, question, options)
@@ -443,20 +442,6 @@ class AsyncTypeSafeClient(TypeSafeClient):
 
 
 # --- helpers ---------------------------------------------------------------------------------
-
-@contextmanager
-def _reading(engine: Engine, preset: Preset | None):
-    """Reads with `preset` on the loaded weights for the duration (a decision model's vector fallback);
-    None leaves the engine as it is."""
-    if preset is None:
-        yield
-        return
-    previous, engine.preset = engine.preset, preset
-    try:
-        yield
-    finally:
-        engine.preset = previous
-
 
 def _logsumexp(z: np.ndarray) -> float:
     m = float(np.max(z))

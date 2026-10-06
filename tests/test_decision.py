@@ -161,17 +161,19 @@ def test_routing_by_count_and_by_type_are_independent():
 
 
 def test_a_routed_question_is_read_at_the_fallback_tau():
-    """The fallback swaps engine.preset; reading it at the pointer preset's tau (1.0) made every answer uniform."""
+    """Reading the fallback at the pointer preset's tau (1.0) made every routed answer near uniform."""
     from types import SimpleNamespace
 
     from jul.client import TypeSafeClient
     client = TypeSafeClient.__new__(TypeSafeClient)
     client._preset = SimpleNamespace(tau=1.0)                       # the pointer preset
     cos = np.array([0.30, 0.20, 0.10])
-    engine = SimpleNamespace(preset=SimpleNamespace(tau=0.05),       # the vector fallback swapped in
+    engine = SimpleNamespace(preset=SimpleNamespace(tau=1.0),        # the engine keeps the pointer preset
                              compile=lambda *a: None, read=lambda compiled, text, shared: (cos, None, 7))
+    fallback = SimpleNamespace(tau=0.05)                              # the vector fallback, passed along
     client._head = lambda *a: None
     client._head_formulations = lambda head, preset=None: None
     q = Score(instructions="How bad?", criteria=["low", "medium", "high"])
-    p, tokens = client._answer_probabilities(engine, "score", "vector", q, options_of(q), "text", None, {})
+    p, tokens = client._answer_probabilities(engine, "score", "vector", q, options_of(q), "text", None, {},
+                                             preset=fallback)
     assert tokens == 7 and p[0] > 0.85                               # softmax(cos / 0.05), not softmax(cos / 1.0)
