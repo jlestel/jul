@@ -25,10 +25,11 @@ in 4 ms against 55 ms per value on one CPU thread (jul-lambda, 2026-09-25).
 from __future__ import annotations
 
 import json
-import warnings
 from pathlib import Path
 
 import numpy as np
+
+from . import truncation
 
 #: Hugging Face `model_type`s read as encoders.
 MODEL_TYPES = {"bert", "xlm-roberta", "roberta", "distilbert", "camembert", "deberta-v2", "electra",
@@ -128,7 +129,8 @@ def features(hidden: dict[int, np.ndarray], mask: np.ndarray, pools: list[tuple[
     return out
 
 
-def fit(prefix: list[int], query: list[int], pool, limit: int) -> tuple[list[int], tuple[int, int]]:
+def fit(prefix: list[int], query: list[int], pool, limit: int,
+        reading: str = "encoder") -> tuple[list[int], tuple[int, int]]:
     """prefix + query cut to `limit` tokens, and the pool in the result's positions. The end of the
     input is cut first (the suffix is kept); if the prompt alone is still too long (a question listing
     many options), the end of the prefix is cut too."""
@@ -140,6 +142,5 @@ def fit(prefix: list[int], query: list[int], pool, limit: int) -> tuple[list[int
         end -= cut
         cut_prefix = max(0, over - cut)
         prefix = prefix[: len(prefix) - cut_prefix]
-        warnings.warn(f"a prompt of {limit + over} tokens is over the encoder's {limit}: its input is cut by "
-                      f"{cut} tokens" + (f", its prefix by {cut_prefix}" if cut_prefix else ""), stacklevel=4)
+        truncation.record(reading, limit, cut + cut_prefix)
     return prefix + query, (len(prefix) + start, len(prefix) + end)

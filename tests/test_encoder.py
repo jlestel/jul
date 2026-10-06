@@ -72,16 +72,19 @@ def test_an_encoder_passes_the_calibration_checks(encoders):
         assert check(bb, bb.n_layers - 1) == []
 
 
-def test_a_long_input_is_cut_to_the_positions_and_keeps_its_suffix(encoders):
+def test_a_long_input_is_cut_to_the_positions_and_keeps_its_suffix(encoders, caplog):
     _, onnx_bb = encoders
     template = PromptTemplate(onnx_bb, "query: ", " thanks")
-    with pytest.warns(UserWarning, match="is cut by"):
+    with caplog.at_level("WARNING", logger="jul.truncation"):
         row, _ = template.run("word " * 200, layers=[3])
     assert np.isfinite(row[3]).all()
+    assert "input cut" in caplog.text and "tokens past it were dropped" in caplog.text
+    caplog.clear()
     long_prefix = PromptTemplate(onnx_bb, "query: " + "option, " * 100, " thanks")
-    with pytest.warns(UserWarning, match="its prefix by"):
+    with caplog.at_level("WARNING", logger="jul.truncation"):
         row, _ = long_prefix.run("my card was stolen", layers=[3])
     assert np.isfinite(row[3]).all()
+    assert "input cut" in caplog.text
 
 
 def test_the_question_template_of_an_encoder_drops_its_options():

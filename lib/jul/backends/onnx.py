@@ -41,7 +41,6 @@ import atexit
 import gc
 import json
 import os
-import warnings
 import weakref
 from dataclasses import dataclass
 from pathlib import Path
@@ -50,7 +49,7 @@ import numpy as np
 import onnxruntime as ort
 import tokenizers
 
-from .. import encoder
+from .. import encoder, truncation
 from ..backbone import Backbone
 
 META = "jul_onnx.json"
@@ -191,8 +190,7 @@ class ONNXBackbone(Backbone):
             over = len(p) + len(q) - limit
             if over > 0:
                 cut = min(over, end - start - 1)   # the input keeps at least one token
-                warnings.warn(f"onnx backend: a prompt of {len(p) + len(q)} tokens is over "
-                              f"JUL_ONNX_MAX_TOKENS={limit}: its input is cut by {cut} tokens", stacklevel=3)
+                truncation.record(f"{self.name} (onnx, JUL_ONNX_MAX_TOKENS)", limit, cut)
                 q = q[: end - cut] + q[end:]
                 end -= cut
             seqs.append(q if cache is not None else p + q)
@@ -228,7 +226,7 @@ class ONNXBackbone(Backbone):
         if not layers:
             return [{} for _ in queries]
         limit = min(self.max_tokens, int(os.environ.get("JUL_ONNX_MAX_TOKENS") or MAX_TOKENS))
-        fitted = [encoder.fit(list(prefix.tokens) if prefix else [], list(q), p, limit)
+        fitted = [encoder.fit(list(prefix.tokens) if prefix else [], list(q), p, limit, f"{self.name} (onnx)")
                   for q, p in zip(queries, pools or [None] * len(queries))]
         budget = int(os.environ.get("JUL_ONNX_BATCH_TOKENS") or BATCH_TOKENS)
         out, group = [], []

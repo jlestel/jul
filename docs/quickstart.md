@@ -35,7 +35,7 @@ jul ask choice "Which team should handle this ticket?" \
 
 ```json
 {"request_id": "…", "model": "jul-decision-wemm-4b",
- "usage": {"input_tokens": 24, "output_tokens": 0, "total_tokens": 24},
+ "usage": {"input_tokens": 24, "output_tokens": 0, "total_tokens": 24, "truncated_tokens": 0},
  "answers": {"choice": {"type": "choice", "choice": "billing",
                         "probabilities": {"billing": 0.88, "technical": 0.11, "sales": 0.01},
                         "confidence": 0.88}},

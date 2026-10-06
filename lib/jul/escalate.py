@@ -96,7 +96,7 @@ class Escalation:
         answers: dict[str, Any] = {}
         trace: dict[str, dict] = {n: {"tried": []} for n in questions}
         raw: dict[str, float] = {}
-        tokens = 0
+        tokens = truncated = 0
         errors: list[str] = []
         last = len(self.tiers) - 1
 
@@ -118,6 +118,7 @@ class Escalation:
                     trace[name].setdefault("errors", []).append(f"{tier}: {type(e).__name__}")
                 continue
             tokens += response.usage.input_tokens
+            truncated = max(truncated, response.usage.truncated_tokens)
             still: dict[str, Question] = {}
             for name, question in pending.items():
                 trace[name]["tried"].append(tier)
@@ -141,7 +142,7 @@ class Escalation:
         for name in questions:
             trace[name]["met_bar"] = raw[name] >= self.bar(name)
         return EscalatedResponse(answers={n: answers[n] for n in questions}, model=self.model,
-                                 usage=Usage(input_tokens=tokens), request_id=str(uuid.uuid4()),
+                                 usage=Usage(input_tokens=tokens, truncated_tokens=truncated), request_id=str(uuid.uuid4()),
                                  escalation=trace)
 
 
@@ -314,5 +315,6 @@ class SystemOneHTTP:
             answers[name] = answer
         usage = data.get("usage") or {}
         return SystemOneResponse(answers=answers, model=str(data.get("model") or self.model),
-                                 usage=Usage(input_tokens=int(usage.get("input_tokens") or 0)),
+                                 usage=Usage(input_tokens=int(usage.get("input_tokens") or 0),
+                                             truncated_tokens=int(usage.get("truncated_tokens") or 0)),
                                  request_id=str(data.get("request_id") or uuid.uuid4()))

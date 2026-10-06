@@ -70,7 +70,7 @@ def test_response_serializes_like_the_jev_api():
                                  model="m", usage=Usage(input_tokens=7), request_id="abc")
     payload = json.loads(json.dumps(response.as_dict()))
     assert payload["request_id"] == "abc" and payload["model"] == "m"
-    assert payload["usage"] == {"input_tokens": 7, "output_tokens": 0, "total_tokens": 7}
+    assert payload["usage"] == {"input_tokens": 7, "output_tokens": 0, "total_tokens": 7, "truncated_tokens": 0}
     assert payload["answers"]["team"]["choice"] == "billing"
 
 
