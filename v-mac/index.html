@@ -258,6 +258,22 @@ ul.mac li::before { content: ""; position: absolute; left: 0; top: .55em; width:
 @media (max-width: 460px) { .modal .about { grid-template-columns: 1fr; } }
 
 @media (prefers-reduced-motion: reduce) { .blink { animation: none; } .bar i { transition: none; } }
+
+/* ── compatibility table ── */
+.compat-wrap { margin-top: 2em; overflow-x: auto; }
+.compat { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 13px; }
+.compat caption { text-align: left; font: 400 30px/1.1 var(--pix); margin-bottom: .3em; }
+.compat th, .compat td { border: 1px solid #000; padding: .45em .7em; text-align: center; vertical-align: middle; }
+.compat thead th { background: #000; color: #fff; font: 400 18px/1.1 var(--pix); }
+.compat thead th small { display: block; font: 400 10px/1.3 var(--mono); }
+.compat tbody th { text-align: left; font-weight: 700; }
+.compat tbody th small { display: block; font-weight: 400; font-size: .85em; }
+.compat td.y::before { content: "■"; }
+.compat td.n { color: #000; }
+.compat td.n::before { content: "—"; }
+.compat td.p::before { content: "□"; }
+.compat td.q::before { content: "?"; }
+.compat-note { margin-top: .8em; font-size: 12px; }
 </style>
 </head>
 <body>
@@ -367,6 +383,23 @@ model="fast"       <span class="dim"># half the size</span></pre>
       <h2 class="h">Your model, your hardware, your way out.</h2>
       <div class="flow" id="flow" aria-label="The flow: a text enters on the left, goes through five steps, each with a default and alternatives, and comes out as a decision"></div>
       <p class="fl-info" id="flow-info" aria-live="polite"></p>
+      <div class="compat-wrap" id="compat">
+      <table class="compat">
+        <caption>Runs on what?</caption>
+        <thead><tr><th>Model family<small>examples</small></th><th>MLX<small>Apple Silicon</small></th><th>PyTorch<small>NVIDIA GPU · CPU</small></th><th>ONNX<small>CPU · Lambda</small></th><th>API<small>no weights</small></th><th>autotune</th><th>jul pack</th></tr></thead>
+        <tbody>
+          <tr><th>Built-in<small>accurate, fast</small></th><td class="y"></td><td class="y"></td><td class="n"></td><td class="n"></td><td class="y"></td><td class="p"></td></tr>
+          <tr><th>Embedding LLMs<small>WeMM, F2LLM, Qwen3-Embedding, Harrier</small></th><td class="y"></td><td class="y"></td><td class="p"></td><td class="n"></td><td class="y"></td><td class="y"></td></tr>
+          <tr><th>Any decoder<small>MiniCPM, any instruct model</small></th><td class="y"></td><td class="y"></td><td class="p"></td><td class="n"></td><td class="y"></td><td class="y"></td></tr>
+          <tr><th>Encoders<small>e5, BERT, XLM-R, jul-decision-e5-small</small></th><td class="n"></td><td class="y"></td><td class="y"></td><td class="n"></td><td class="y"></td><td class="y"></td></tr>
+          <tr><th>Decision models<small>Kev format, jul-decision-minicpm5-2b</small></th><td class="y"></td><td class="y"></td><td class="n"></td><td class="n"></td><td class="y"></td><td class="n"></td></tr>
+          <tr><th>Contrastive heads<small>CLM-8B</small></th><td class="y"></td><td class="y"></td><td class="y"></td><td class="n"></td><td class="y"></td><td class="n"></td></tr>
+          <tr><th>Embeddings APIs<small>Ollama, OpenAI, Mistral, Voyage</small></th><td class="n"></td><td class="n"></td><td class="n"></td><td class="y"></td><td class="q"></td><td class="q"></td></tr>
+          <tr><th>Laya<small>its own runtime</small></th><td class="n"></td><td class="y"></td><td class="n"></td><td class="n"></td><td class="n"></td><td class="n"></td></tr>
+        </tbody>
+      </table>
+      <p class="compat-note">■ yes · □ partly (built-in: accurate packs, fast does not; ONNX: decoders the exporter supports) · ? not measured yet · — no. ONNX runs a model exported by <code>jul.backends.onnx_export</code>.</p>
+      </div>
       <p class="pipe-legend"><span class="k">highlighted</span> = what you get without choosing anything.
         <a href="../docs/hub.html">Every model, backend and provider →</a></p>
     </div>
@@ -781,10 +814,9 @@ latency per decision, and the answer to the ticket.</pre>
         def: ["accurate", "the default model", "accurate — the default model, jul-decision-wemm-4b. What reads your text when you choose nothing."],
         alts: [
           ["fast", "half the size", "fast — half the size of the default: jul-decision-minicpm5-2b."],
-          ["any Hugging Face model", "jul models add", "any Hugging Face model — added with jul models add."],
-          ["a small encoder", "e5, BERT, XLM-R", "a small encoder — e5, BERT or XLM-R."],
-          ["an embeddings API", "Ollama · OpenAI · Mistral · Voyage", "an embeddings API — Ollama, OpenAI, Mistral or Voyage."],
-          ["Laya", "its own runtime", "Laya — runs in its own runtime."]] },
+          ["any Hugging Face model", "LLM, embedding model, encoder, decision model", "any Hugging Face model — an LLM, an embedding model, a small encoder (e5, BERT, XLM-R) or a decision model: jul models add fits it once. See the table below."],
+          ["an embeddings API", "no weights here: Ollama · OpenAI · Mistral · Voyage", "an embeddings API — the model runs elsewhere, JuL reads its embeddings over HTTP (--backend api)."],
+          ["Laya", "its own runtime: no autotune, no pack", "Laya — a decision model with its own runtime: JuL hands it the questions; autotune and jul pack do not apply."]] },
       { name: "Hardware", q: "Where it runs", icon: "chip",
         def: ["auto", "MLX on a Mac, PyTorch elsewhere", "auto — MLX on a Mac, PyTorch elsewhere. Torch device order: cuda > mps > cpu."],
         alts: [
