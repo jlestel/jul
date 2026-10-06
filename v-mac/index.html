@@ -276,7 +276,7 @@ ul.mac li::before { content: ""; position: absolute; left: 0; top: .55em; width:
 .compat-note { margin-top: .8em; font-size: 12px; }
 
 /* ── one accent color on 1-bit ── */
-:root { --acc: #C2410C; }
+:root { --acc: #FFB000; }
 .menubar .apple { display: flex; align-items: stretch; }
 .menubar .apple button { height: 100%; }
 .menubar .apple b { font-weight: 400; color: var(--acc); }
@@ -296,6 +296,16 @@ ul.mac li::before { content: ""; position: absolute; left: 0; top: .55em; width:
 .menubar { height: 26px !important; font-size: 20px !important; padding: 0 8px !important; }
 .menubar a, .menubar button { padding: 0 9px !important; }
 @media (max-width: 560px) { .menubar { font-size: 18px !important; } .menubar a, .menubar button { padding: 0 6px !important; } }
+
+/* amber is light: dark ink on it, and amber as fill rather than as text on white */
+.hero .tag b, .pillar .num, .pipe-legend .k { color: #000 !important; }
+.flow .fl-opt.def text { fill: #000; }
+.flow .fl-opt.def .box { stroke: #000; }
+.menubar .apple b { color: #000; background: var(--acc); padding: 0 6px; }
+.kpi .big { color: #000 !important; }
+.kpi .bar i { border-right: 1px solid #000; }
+.compat td.y::before { color: #000; text-shadow: none; }
+.compat td.y { background: var(--acc); }
 </style>
 </head>
 <body>
@@ -422,7 +432,7 @@ model="fast"       <span class="dim"># half the size</span></pre>
       </table>
       <p class="compat-note">■ yes · □ partly (built-in: accurate packs, fast does not; ONNX: decoders the exporter supports) · ? not measured yet · — no. ONNX runs a model exported by <code>jul.backends.onnx_export</code>.</p>
       </div>
-      <p class="pipe-legend"><span class="k">orange</span> = what you get without choosing anything.
+      <p class="pipe-legend"><span class="k">amber</span> = what you get without choosing anything.
         <a href="../docs/hub.html">Every model, backend and provider →</a></p>
     </div>
   </section>
@@ -866,7 +876,7 @@ latency per decision, and the answer to the ticket.</pre>
           ["any System One server", "a Kev server, another jul serve", "any System One server — a Kev server, another jul serve."]] },
     ];
     const PROBS = [["billing", .88], ["technical", .11], ["sales", .01]];
-    const DEFAULT_INFO = "Point at a box: what it is, in one line. Click to pin it. Orange boxes are the defaults.";
+    const DEFAULT_INFO = "Point at a box: what it is, in one line. Click to pin it. Amber boxes are the defaults.";
     const EXPL = {};
     const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
     const wrap = (s, n) => { const out = []; let line = ""; for (const w of s.split(" ")) { if (line && (line + " " + w).length > n) { out.push(line); line = w; } else line = line ? line + " " + w : w; } if (line) out.push(line); return out; };
