@@ -11,8 +11,15 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230055AA'/%3E%3Crect x='2' y='2' width='12' height='12' fill='%23fff'/%3E%3Crect x='5' y='2' width='6' height='5' fill='%230055AA'/%3E%3Crect x='4' y='9' width='8' height='4' fill='%23FF8800'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&family=Pixelify+Sans:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&family=Jersey+15&family=VT323&display=swap" rel="stylesheet">
 <style>
+/* Topaz, the Workbench 1.3 system font (8x16), served from jsDelivr; VT323 if it does not come */
+@font-face {
+  font-family: "Topaz";
+  src: url("https://cdn.jsdelivr.net/gh/rewtnull/amigafonts@master/ttf/Topaz_a1200_v1.0.ttf") format("truetype");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
 /* ── Workbench 1.3: four colours, one blue screen ───────────────────── */
 :root {
   --blue: #0055AA;
@@ -20,8 +27,8 @@
   --black: #000000;
   --orange: #FF8800;
   --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
-  --pix: "Pixelify Sans", var(--mono);
-  --topaz: "VT323", var(--mono);   /* digits stay unambiguous here */
+  --pix: "Jersey 15", "VT323", var(--mono);          /* headlines: a legible pixel face, 5 ≠ S */
+  --topaz: "Topaz", "VT323", var(--mono);            /* labels, shell, gadgets */
   --fs: 15px;
 }
 * { box-sizing: border-box; }
@@ -45,6 +52,8 @@ code { font: inherit; font-weight: 700; }
 .win:not(.blue) code { color: var(--blue); }
 .blink { animation: blink 1s steps(1) infinite; }
 @keyframes blink { 50% { opacity: 0; } }
+/* pixel faces must never be faux-bolded or they blur */
+h1, h2.h, .w-title, .btn, .screenbar a, .disk span { font-weight: 400; }
 
 /* ── screen title bar ──────────────────────────────────────────────── */
 .screenbar {
@@ -53,18 +62,18 @@ code { font: inherit; font-weight: 700; }
   min-height: 2.2em; padding: 0 .4em 0 .9em;
   background: var(--white); color: var(--blue);
   border-bottom: 2px solid var(--black);
-  font-family: var(--pix); font-size: 1.15rem; line-height: 1.3;
+  font-family: var(--pix); font-size: 1.3rem; line-height: 1.3;
 }
-.screenbar .brand { font-family: var(--topaz); font-size: 1.55rem; line-height: 1; margin-right: .9em; white-space: nowrap; padding: .25em 0; }
+.screenbar .brand { font-family: var(--topaz); font-size: 1rem; line-height: 1; margin-right: .9em; white-space: nowrap; padding: .45em 0; }
 .screenbar a { color: var(--blue); text-decoration: none; padding: .25em .55em; }
 .screenbar a:hover, .screenbar a:focus-visible { background: var(--blue); color: var(--white); }
 .screenbar .spacer { flex: 1; }
-.screenbar .mem { font-family: var(--topaz); font-size: 1.45rem; white-space: nowrap; padding-right: .6em; }
+.screenbar .mem { font-family: var(--topaz); font-size: 1rem; white-space: nowrap; padding-right: .6em; }
 .screenbar .sgad { display: inline-flex; border-left: 2px solid var(--blue); align-self: stretch; align-items: center; padding-left: .5em; gap: 4px; }
 .screenbar .sgad svg { width: 26px; height: 18px; display: block; }
 @media (max-width: 560px) {
-  .screenbar { font-size: 1.05rem; padding-left: .6em; }
-  .screenbar .brand { margin-right: .4em; }
+  .screenbar { font-size: 1.15rem; padding-left: .6em; }
+  .screenbar .brand { margin-right: .4em; font-size: .9rem; }
   .screenbar .mem, .screenbar .sgad { display: none; }
 }
 
@@ -95,9 +104,9 @@ main > * { min-width: 0; }
   background: var(--blue); color: var(--white);
   border-bottom: 2px solid var(--white);
   min-height: 32px; user-select: none;
-  font-family: var(--topaz); font-size: 1.45rem;
+  font-family: var(--pix); font-size: 1.45rem;
 }
-.w-title { flex: 1; min-width: 0; padding: .2em .7em 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; display: flex; align-items: center; }
+.w-title { flex: 1; min-width: 0; padding: .1em .7em 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; display: flex; align-items: center; }
 .gad { display: flex; align-items: center; justify-content: center; width: 36px; background: var(--blue); border-right: 2px solid var(--white); }
 .gad.depth { border-right: 0; border-left: 2px solid var(--white); }
 .gad svg { width: 22px; height: 16px; display: block; }
@@ -112,9 +121,9 @@ main > * { min-width: 0; }
 @media (max-width: 560px) { .w-body { padding: 1.6em 1.2em 1.8em; } }
 
 /* ── type ──────────────────────────────────────────────────────────── */
-.eyebrow { font-family: var(--topaz); font-size: 1.35rem; line-height: 1.2; letter-spacing: .02em; text-transform: uppercase; color: var(--orange); }
+.eyebrow { font-family: var(--topaz); font-size: 1rem; line-height: 1.3; letter-spacing: 0; text-transform: uppercase; color: var(--orange); }
 .win:not(.blue) .eyebrow { color: var(--blue); }
-h2.h { font-family: var(--pix); font-weight: 700; font-size: 2.1rem; line-height: 1.05; margin: .15em 0 .6em; }
+h2.h { font-family: var(--pix); font-size: 2.6rem; line-height: 1; margin: .1em 0 .55em; letter-spacing: .01em; }
 p + p, p + pre, pre + p, p + .code, .code + p { margin-top: 1em; }
 .lead { max-width: 60ch; }
 .note { max-width: 70ch; }
@@ -129,63 +138,107 @@ p + p, p + pre, pre + p, p + .code, .code + p { margin-top: 1em; }
 .code code { color: inherit; }
 
 /* ── hero ──────────────────────────────────────────────────────────── */
-.hero { display: grid; grid-template-columns: auto 1fr; gap: 1.5em 3.5em; align-items: center; padding: .5em 0; }
-.disk { display: flex; flex-direction: column; align-items: center; gap: .5em; width: 130px; color: var(--white); font-family: var(--pix); font-size: 1.15rem; }
+.hero {
+  display: grid; grid-template-columns: auto 1fr auto; grid-template-areas: "disk text ball";
+  gap: 1.5em 3.5em; align-items: center; padding: .5em 0;
+}
+.hero .disk { grid-area: disk; } .hero .htext { grid-area: text; } .hero .boing { grid-area: ball; }
+.disk { display: flex; flex-direction: column; align-items: center; gap: .5em; width: 130px; color: var(--white); font-family: var(--pix); font-size: 1.5rem; }
 .disk svg { width: 100px; height: 100px; display: block; }
 .disk:hover .face, .disk:focus-visible .face { fill: var(--orange); }
 .disk:focus-visible { outline: 2px dotted var(--white); outline-offset: 6px; }
-.hero h1 { font-family: var(--pix); font-weight: 700; font-size: clamp(2.6rem, 6vw, 4.6rem); line-height: .98; }
-.hero .tag { margin-top: .9em; max-width: 58ch; font-size: 1.12em; line-height: 1.65; }
+.hero h1 {
+  font-family: var(--pix); font-size: clamp(3.4rem, 7.6vw, 6rem); line-height: .92; letter-spacing: .01em;
+  text-shadow: 4px 4px 0 var(--black);
+}
+.hero h1 em { font-style: normal; color: var(--orange); }
+.hero .tag { margin-top: 1em; max-width: 58ch; font-size: 1.12em; line-height: 1.65; }
 .hero .tag b { font-weight: 400; background: var(--orange); color: var(--black); padding: 0 .35ch; }
 .cta { display: flex; gap: 1em; flex-wrap: wrap; margin-top: 1.6em; }
 .btn {
-  display: inline-block; font-family: var(--pix); font-size: 1.2rem; line-height: 1.3;
-  padding: .35em 1.2em; border: 2px solid var(--black); background: var(--white); color: var(--black);
+  display: inline-block; font-family: var(--pix); font-size: 1.5rem; line-height: 1.2;
+  padding: .3em 1.2em .2em; border: 2px solid var(--black); background: var(--white); color: var(--black);
   text-decoration: none; box-shadow: 3px 3px 0 var(--black);
 }
 .btn.primary { background: var(--orange); }
 .btn:hover, .btn:focus-visible { background: var(--black); color: var(--white); box-shadow: none; transform: translate(3px, 3px); outline: none; }
-@media (max-width: 760px) { .hero { grid-template-columns: 1fr; } }
+/* the boing ball, 4 colours, bouncing on the screen */
+.boing { width: 150px; height: 190px; display: block; }
+.boing .ballg { animation: bounce 1.3s cubic-bezier(.3,0,.7,1) infinite alternate; }
+.boing .spin { transform-box: fill-box; transform-origin: center; animation: spin 1.6s linear infinite; }
+.boing .shade { transform-box: fill-box; transform-origin: center; animation: shade 1.3s cubic-bezier(.3,0,.7,1) infinite alternate; }
+@keyframes bounce { from { transform: translateY(0); } to { transform: translateY(74px); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes shade { from { transform: scale(.55); opacity: .5; } to { transform: scale(1); opacity: 1; } }
+@media (max-width: 760px) {
+  .hero { grid-template-columns: auto 1fr; grid-template-areas: "disk ball" "text text"; }
+  .boing { width: 110px; height: 140px; justify-self: end; }
+  @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(54px); } }
+}
 
 /* ── three ideas, straight on the screen ───────────────────────────── */
 .pillars { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3em; }
-.pillar .num { font-family: var(--topaz); font-size: 4.6rem; line-height: .8; color: var(--orange); }
-.pillar h2.h { font-size: 1.8rem; margin-top: .25em; }
+.pillar .num { font-family: var(--pix); font-size: 5.2rem; line-height: .8; color: var(--orange); text-shadow: 3px 3px 0 var(--black); }
+.pillar h2.h { font-size: 2.2rem; margin-top: .25em; }
 .pillar .code { margin-top: 1.3em; }
 @media (max-width: 1020px) { .pillars { grid-template-columns: 1fr; gap: 3em; } }
 .chips { display: flex; flex-wrap: wrap; gap: .6em .7em; margin-top: 1.2em; }
 .chips span { border: 1px solid var(--white); padding: .05em .7ch; white-space: nowrap; }
 
-/* ── pipeline ──────────────────────────────────────────────────────── */
-.pipe { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); column-gap: 2.4em; margin-top: 1.8em; }
-.stage { position: relative; min-width: 0; }
-.stage:not(:last-child)::after {
-  content: ""; position: absolute; right: -1.85em; top: 7.2em;
-  border: 8px solid transparent; border-left: 12px solid var(--blue); border-right: 0;
+/* ── the flow: one text in, one decision out ───────────────────────── */
+.flowwin .w-body { padding: 1.8em 1.6em 2em; }
+.flowwin .intro { padding: 0 .6em; }
+.flow { display: block; width: 100%; height: auto; margin-top: 1.4em; overflow: visible; }
+.flow text { font-family: var(--mono); fill: var(--white); font-size: 13px; text-rendering: geometricPrecision; pointer-events: none; }
+.flow .lbl { font-weight: 700; font-size: 13px; }
+.flow .sm { font-size: 10.5px; }
+.flow .cap { font-family: var(--topaz); font-size: 14px; fill: var(--orange); }
+.flow .hd { font-family: var(--pix); font-size: 19px; }
+.flow .k { fill: var(--black); }
+.flow .kb { fill: var(--blue); }
+.flow rect, .flow line, .flow path, .flow polygon { shape-rendering: crispEdges; }
+.flow .round, .flow .round * { shape-rendering: geometricPrecision; }
+.flow .br { fill: none; stroke: var(--white); stroke-width: 2; }
+.flow .br.hot { stroke: var(--orange); stroke-width: 4; }
+.flow .main { fill: none; stroke: var(--white); stroke-width: 3; }
+.flow .ret { fill: none; stroke: var(--white); stroke-width: 2; stroke-dasharray: 4 4; }
+.flow .alt { cursor: pointer; }
+.flow .alt .bx { fill: var(--blue); stroke: var(--white); stroke-width: 2; }
+.flow .alt:hover .bx, .flow .alt.pick .bx, .flow .alt:focus-visible .bx { fill: var(--orange); stroke: var(--black); }
+.flow .alt:hover text, .flow .alt.pick text, .flow .alt:focus-visible text { fill: var(--black); }
+.flow .alt:focus { outline: none; }
+.flow .node { cursor: pointer; }
+.flow .node .bx { fill: var(--orange); stroke: var(--black); stroke-width: 2; }
+.flow .node text { fill: var(--black); }
+.flow .node:hover .bx, .flow .node:focus-visible .bx, .flow .node.pick .bx { fill: var(--white); }
+.flow .node:focus { outline: none; }
+.flow .sh { fill: var(--black); }
+.flow .card { fill: var(--white); stroke: var(--black); stroke-width: 2; }
+.flow .ball { pointer-events: none; }
+.req {
+  margin: 1.4em .6em 0; display: grid; grid-template-columns: 1fr auto; gap: .6em 1.2em; align-items: center;
+  background: var(--white); color: var(--black); border: 2px solid var(--black); outline: 2px solid var(--white); outline-offset: 2px;
+  padding: .75em 1.1em; min-height: 4.3em;
 }
-.stage .eyebrow { margin-bottom: .1em; }
-.stage h3 { font-family: var(--pix); font-weight: 700; font-size: 1.3rem; line-height: 1.1; margin: .1em 0 .8em; min-height: 2.2em; }
-.stage ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .5em; }
-.stage li { border: 1px solid var(--blue); padding: .35em .8em; line-height: 1.4; }
-.stage li.def { background: var(--orange); border: 2px solid var(--black); font-weight: 700; min-height: 4.6em; box-shadow: 3px 3px 0 var(--black); }
-.stage li small { display: block; font-size: .85em; font-weight: 400; color: var(--blue); }
-.stage li.def small { color: var(--black); }
-.pipe-legend { margin-top: 1.8em; }
-.pipe-legend .k { background: var(--orange); padding: 0 .6ch; font-weight: 700; border: 1px solid var(--black); }
-@media (max-width: 1020px) {
-  .pipe { grid-template-columns: minmax(0, 1fr); gap: 2.6em; }
-  .stage h3 { min-height: 0; }
-  .stage:not(:last-child)::after {
-    right: auto; left: 50%; top: auto; bottom: -1.9em; transform: translateX(-50%);
-    border: 8px solid transparent; border-top: 12px solid var(--blue); border-bottom: 0;
-  }
+.req .req-t { font-family: var(--topaz); font-size: 1rem; color: var(--blue); text-transform: uppercase; }
+.req .req-b { margin: .1em 0 0; line-height: 1.5; }
+.req .req-ok { font-family: var(--topaz); font-size: 1rem; padding: .3em 1.1em; border: 2px solid var(--black); box-shadow: 2px 2px 0 var(--black); background: var(--orange); color: var(--black); }
+.req .req-ok:hover, .req .req-ok:focus-visible { background: var(--black); color: var(--white); outline: none; }
+.pipe-legend { margin: 1.4em .6em 0; }
+.pipe-legend .k { background: var(--orange); color: var(--black); padding: 0 .6ch; font-weight: 700; border: 1px solid var(--black); }
+@media (max-width: 700px) {
+  .flowwin .w-body { padding: 1.4em .7em 1.6em; }
+  .flow text { font-size: 13px; }
+  .req { grid-template-columns: 1fr; margin: 1.2em 0 0; }
+  .req .req-ok { justify-self: start; }
+  .pipe-legend { margin: 1.2em 0 0; }
 }
 
 /* ── choose your model ─────────────────────────────────────────────── */
 .vs-head { display: grid; gap: .9em; }
 .chart-bar { display: flex; flex-wrap: wrap; gap: .55em; }
 .gadbtn {
-  font-family: var(--topaz); font-size: 1.3rem; line-height: 1.2; padding: .25em .9em;
+  font-family: var(--topaz); font-size: 1rem; line-height: 1.3; padding: .3em .9em;
   border: 2px solid var(--black); background: var(--white); color: var(--black); box-shadow: 2px 2px 0 var(--black);
 }
 .gadbtn[aria-pressed="true"] { background: var(--orange); box-shadow: none; transform: translate(2px, 2px); }
@@ -193,7 +246,7 @@ p + p, p + pre, pre + p, p + .code, .code + p { margin-top: 1em; }
 .gadbtn[aria-pressed="true"]:hover { background: var(--orange); color: var(--black); }
 .kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.8em 3em; margin-top: 2.2em; }
 @media (max-width: 760px) { .kpis { grid-template-columns: 1fr; } }
-.kpi .big { font-family: var(--topaz); font-size: clamp(3.6rem, 7vw, 5.6rem); line-height: .85; margin-top: .15em; }
+.kpi .big { font-family: var(--pix); font-size: clamp(3.8rem, 7vw, 5.8rem); line-height: .85; margin-top: .15em; }
 .kpi .big small { font-size: .42em; margin-left: .3ch; color: var(--blue); }
 .kpi .delta { margin-top: .4em; min-height: 1.5em; color: var(--blue); }
 .bar { display: flex; align-items: center; gap: .8em; margin-top: .6em; }
@@ -203,7 +256,7 @@ p + p, p + pre, pre + p, p + .code, .code + p { margin-top: 1em; }
 .vs-foot { margin-top: 1.8em; padding-top: 1em; border-top: 2px solid var(--blue); }
 
 /* ── shell ─────────────────────────────────────────────────────────── */
-.term { white-space: pre-wrap; word-break: break-word; line-height: 1.5; min-height: 19em; }
+.term { white-space: pre-wrap; word-break: break-word; line-height: 1.5; min-height: 19em; font-family: var(--topaz); font-size: 1.15rem; line-height: 1.35; }
 .term .cmd::before { content: "1.JuL:> "; color: var(--orange); }
 .term .ok { color: var(--orange); }
 .term .out { margin: .5em 0; }
@@ -238,14 +291,14 @@ footer { padding-top: 2.5em; border-top: 2px solid var(--white); }
 .guru {
   position: fixed; left: 0; right: 0; top: 0; z-index: 99; width: 100%;
   background: var(--black); color: #FF2020; border: 5px solid #FF2020;
-  padding: .9em 1em; font-family: var(--topaz); font-size: 1.6rem; line-height: 1.4;
+  padding: .9em 1em; font-family: var(--topaz); font-size: 1.3rem; line-height: 1.5;
   text-align: center; white-space: pre-wrap; animation: guru 1.4s steps(1) infinite;
 }
 .guru[hidden] { display: none; }
 @keyframes guru { 50% { border-color: var(--black); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .blink, .cur, .guru { animation: none; }
+  .blink, .cur, .guru, .boing .ballg, .boing .spin, .boing .shade { animation: none; }
   .bar .fill { transition: none; }
 }
 </style>
@@ -287,9 +340,9 @@ Guru Meditation #00000000.00000000</button>
       </svg>
       <span>JuL</span>
     </button>
-    <div>
+    <div class="htext">
       <p class="eyebrow">Just use Less · v0.5 · Apache-2.0</p>
-      <h1>One JuL to<br>rule them all.</h1>
+      <h1>One <em>JuL</em> to<br>rule them all.</h1>
       <p class="tag">
         Typed decisions from <b>any model</b>. <b>Good out of the box</b>.
         <b>Autotuned</b> on your labels when you want more.
@@ -300,6 +353,20 @@ Guru Meditation #00000000.00000000</button>
       </div>
       <p class="note" style="margin-top:1.6em">Local by default: 0 tokens generated · 0 bytes sent · no key.</p>
     </div>
+    <svg class="boing" viewBox="0 0 150 190" aria-hidden="true">
+      <defs>
+        <pattern id="chk" width="18" height="18" patternUnits="userSpaceOnUse">
+          <rect width="9" height="9" fill="#FF8800"/><rect x="9" y="9" width="9" height="9" fill="#FF8800"/>
+        </pattern>
+        <clipPath id="ballclip"><circle cx="75" cy="52" r="46"/></clipPath>
+      </defs>
+      <ellipse class="shade" cx="75" cy="176" rx="46" ry="9" fill="#000"/>
+      <g class="ballg">
+        <circle cx="75" cy="52" r="46" fill="#fff"/>
+        <g class="spin" clip-path="url(#ballclip)"><rect x="20" y="-3" width="110" height="110" fill="url(#chk)"/></g>
+        <circle cx="75" cy="52" r="46" fill="none" stroke="#000" stroke-width="3"/>
+      </g>
+    </svg>
   </section>
 
   <!-- ── THE THREE IDEAS ───────────────────────────────────────────── -->
@@ -335,66 +402,18 @@ model="fast"       <span class="c"># half the size</span></pre>
     </div>
   </section>
 
-  <!-- ── PIPELINE ──────────────────────────────────────────────────── -->
-  <section class="win c12" data-title="JuL:Pipeline" id="pipeline">
-    <p class="eyebrow">From a text to a decision&nbsp;· pick one option per step, or keep the default</p>
-    <h2 class="h">Your model, your hardware, your way out.</h2>
-    <div class="pipe">
-      <div class="stage">
-        <p class="eyebrow">1&nbsp;· Model</p>
-        <h3>What reads it</h3>
-        <ul>
-          <li class="def">accurate<small>the default model</small></li>
-          <li>fast<small>half the size</small></li>
-          <li>any Hugging Face model<small>jul models add</small></li>
-          <li>a small encoder<small>e5, BERT, XLM-R</small></li>
-          <li>an embeddings API<small>Ollama&nbsp;· OpenAI&nbsp;· Mistral&nbsp;· Voyage</small></li>
-          <li>Laya<small>its own runtime</small></li>
-        </ul>
-      </div>
-      <div class="stage">
-        <p class="eyebrow">2&nbsp;· Hardware</p>
-        <h3>Where it runs</h3>
-        <ul>
-          <li class="def">auto<small>MLX on a Mac, PyTorch elsewhere</small></li>
-          <li>Apple Silicon<small>MLX</small></li>
-          <li>NVIDIA GPU<small>PyTorch&nbsp;· CUDA</small></li>
-          <li>CPU<small>PyTorch, or ONNX without torch</small></li>
-          <li>no weights at all<small>--backend api</small></li>
-        </ul>
-      </div>
-      <div class="stage">
-        <p class="eyebrow">3&nbsp;· Your data</p>
-        <h3>How it fits</h3>
-        <ul>
-          <li class="def">zero-shot<small>nothing to give</small></li>
-          <li>a Context<small>~50 unlabeled examples</small></li>
-          <li>autotune<small>labeled examples, kept if it wins</small></li>
-          <li>jul synth<small>too few labels? synthesize them</small></li>
-        </ul>
-      </div>
-      <div class="stage">
-        <p class="eyebrow">4&nbsp;· Integration</p>
-        <h3>How you call it</h3>
-        <ul>
-          <li class="def">Python<small>the Jev SDK calls</small></li>
-          <li>the CLI<small>jul ask&nbsp;· jul run</small></li>
-          <li>HTTP<small>jul serve, the Jev protocol</small></li>
-          <li>a Lambda<small>jul pack</small></li>
-        </ul>
-      </div>
-      <div class="stage">
-        <p class="eyebrow">5&nbsp;· When unsure</p>
-        <h3>Who gets the rest</h3>
-        <ul>
-          <li class="def">nobody<small>everything stays local</small></li>
-          <li>Jev<small>TypeSafe, hosted</small></li>
-          <li>Clef&nbsp;· Nimble<small>cloudflare&nbsp;· ollama</small></li>
-          <li>any System One server<small>a Kev server, another jul serve</small></li>
-        </ul>
-      </div>
+  <!-- ── PIPELINE: the flow, drawn ─────────────────────────────────── -->
+  <section class="win blue flowwin c12" data-title="JuL:Pipeline" id="pipeline">
+    <div class="intro">
+      <p class="eyebrow">From a text to a decision&nbsp;· pick one option per step, or keep the default</p>
+      <h2 class="h">Your model, your hardware, your way out.</h2>
     </div>
-    <p class="pipe-legend"><span class="k">highlighted</span> = what you get without choosing anything.
+    <div id="flow" role="group" aria-label="The JuL pipeline: a text goes in on the left, passes through five stages, a decision comes out on the right. Each stage has a default and alternatives."></div>
+    <div class="req" id="flow-req" role="status" aria-live="polite">
+      <div><span class="req-t" id="req-t">Requester</span><p class="req-b" id="req-b">Hover or tap any box: the default is on the orange line, the alternatives on the branches.</p></div>
+      <button class="req-ok" type="button" id="req-ok">Okay</button>
+    </div>
+    <p class="pipe-legend"><span class="k">orange</span> = what you get without choosing anything.
       <a href="../docs/hub.html">Every model, backend and provider →</a></p>
   </section>
 
@@ -624,6 +643,282 @@ latency per decision, and the answer to the ticket.</pre>
     setTimeout(() => { copyBtn.textContent = "Copy agent prompt"; }, 1800);
   };
   copyBtn.addEventListener("click", copyPrompt);
+
+  // ── the flow: one text in, five stages, one decision out ─────────────
+  (function flow() {
+    const host = document.getElementById("flow");
+    const reqT = document.getElementById("req-t"), reqB = document.getElementById("req-b");
+    const NS = "http://www.w3.org/2000/svg";
+    const E = (t, a = {}, kids = []) => {
+      const n = document.createElementNS(NS, t);
+      for (const k in a) if (a[k] !== undefined) n.setAttribute(k, a[k]);
+      kids.forEach(c => n.appendChild(typeof c === "string" ? document.createTextNode(c) : c));
+      return n;
+    };
+    const T = (x, y, s, cls, a = {}) => E("text", { x, y, class: cls, ...a }, [s]);
+    const wrap = (s, n) => {
+      const out = []; let line = "";
+      s.split(" ").forEach(w => { if (line && (line + " " + w).length > n) { out.push(line); line = w; } else line = line ? line + " " + w : w; });
+      if (line) out.push(line);
+      return out;
+    };
+    // Workbench icons, 36x36, four colours
+    const ICON = {
+      disk: () => E("g", {}, [
+        E("rect", { x: 2, y: 2, width: 32, height: 32, fill: "#fff", stroke: "#000", "stroke-width": 2 }),
+        E("rect", { x: 10, y: 2, width: 16, height: 11, fill: "#0055AA" }), E("rect", { x: 20, y: 4, width: 3, height: 7, fill: "#fff" }),
+        E("rect", { x: 7, y: 19, width: 22, height: 11, fill: "#0055AA" }), E("rect", { x: 10, y: 22, width: 16, height: 2, fill: "#fff" }), E("rect", { x: 10, y: 26, width: 11, height: 2, fill: "#fff" }),
+        E("rect", { x: 2, y: 32, width: 32, height: 2, fill: "#FF8800" })]),
+      chip: () => { const g = E("g", {}, [E("rect", { x: 7, y: 7, width: 22, height: 22, fill: "#000", stroke: "#fff", "stroke-width": 2 }), E("rect", { x: 14, y: 14, width: 8, height: 8, fill: "#FF8800" })]);
+        for (let i = 0; i < 4; i++) { const p = 9 + i * 6; g.append(E("rect", { x: p, y: 1, width: 3, height: 6, fill: "#fff" }), E("rect", { x: p, y: 29, width: 3, height: 6, fill: "#fff" }), E("rect", { x: 1, y: p, width: 6, height: 3, fill: "#fff" }), E("rect", { x: 29, y: p, width: 6, height: 3, fill: "#fff" })); }
+        return g; },
+      drawer: () => E("g", { transform: "translate(0 4) scale(.6)" }, [
+        E("path", { d: "M3 12h36v25H3z", fill: "#fff", stroke: "#000", "stroke-width": 3 }),
+        E("path", { d: "M39 12l16-9v25l-16 9", fill: "#0055AA", stroke: "#fff", "stroke-width": 3 }),
+        E("path", { d: "M3 12l16-9h36", fill: "#0055AA", stroke: "#fff", "stroke-width": 3 }),
+        E("rect", { x: 15, y: 21, width: 12, height: 5, fill: "#FF8800" })]),
+      shell: () => E("g", {}, [
+        E("rect", { x: 2, y: 4, width: 32, height: 28, fill: "#0055AA", stroke: "#fff", "stroke-width": 2 }),
+        E("rect", { x: 2, y: 4, width: 32, height: 7, fill: "#fff" }), E("rect", { x: 4, y: 6, width: 5, height: 3, fill: "#0055AA" }),
+        T(7, 25, "1>", "cap", { style: "font-size:13px" }), E("rect", { x: 23, y: 15, width: 6, height: 11, fill: "#FF8800" })]),
+      cloud: () => E("g", {}, [
+        E("path", { d: "M3 30H33V22H30V16H26V11H22V7H11V11H8V16H5V22H3Z", fill: "#fff", stroke: "#000", "stroke-width": 2 }),
+        E("rect", { x: 10, y: 19, width: 16, height: 3, fill: "#0055AA" }), E("rect", { x: 10, y: 24, width: 10, height: 3, fill: "#0055AA" }),
+        E("rect", { x: 22, y: 24, width: 4, height: 3, fill: "#FF8800" })]),
+    };
+    // Exact content: one default on the line, alternatives on the branches.
+    const STAGES = [
+      { n: 1, k: "MODEL", q: "What reads it", icon: "disk",
+        def: ["accurate", "the default model", "the default model, jul-decision-wemm-4b. What reads your text when you pick nothing."],
+        alts: [["fast", "half the size", "half the size: jul-decision-minicpm5-2b."],
+               ["any Hugging Face model", "jul models add", "jul models add: bring any Hugging Face model."],
+               ["a small encoder", "e5, BERT, XLM-R", "a small encoder: e5, BERT, XLM-R."],
+               ["an embeddings API", "Ollama · OpenAI · Mistral · Voyage", "an embeddings API: Ollama · OpenAI · Mistral · Voyage."],
+               ["Laya", "its own runtime", "Laya, its own runtime."]] },
+      { n: 2, k: "HARDWARE", q: "Where it runs", icon: "chip",
+        def: ["auto", "MLX on a Mac, PyTorch elsewhere", "auto: MLX on a Mac, PyTorch elsewhere. Torch device order: cuda > mps > cpu."],
+        alts: [["Apple Silicon", "MLX", "Apple Silicon: MLX."],
+               ["NVIDIA GPU", "PyTorch · CUDA", "NVIDIA GPU: PyTorch · CUDA."],
+               ["CPU", "PyTorch, or ONNX without torch", "CPU: PyTorch, or ONNX without torch."],
+               ["no weights at all", "--backend api", "--backend api: no weights at all on your machine."]] },
+      { n: 3, k: "YOUR DATA", q: "How it fits", icon: "drawer",
+        def: ["zero-shot", "nothing to give", "zero-shot: nothing to give."],
+        alts: [["a Context", "~50 unlabeled examples", "a Context: ~50 unlabeled examples."],
+               ["autotune", "labeled examples, kept if it wins", "autotune: labeled examples, kept only if it beats zero-shot."],
+               ["jul synth", "too few labels? synthesize them", "jul synth: too few labels? synthesize them."]] },
+      { n: 4, k: "INTEGRATION", q: "How you call it", icon: "shell",
+        def: ["Python", "the Jev SDK calls", "Python, the Jev SDK calls: from jul import TypeSafeClient."],
+        alts: [["the CLI", "jul ask · jul run", "the CLI: jul ask · jul run."],
+               ["HTTP", "jul serve, the Jev protocol", "HTTP: jul serve, the Jev protocol."],
+               ["a Lambda", "jul pack", "a Lambda: jul pack."]] },
+      { n: 5, k: "WHEN UNSURE", q: "Who gets the rest", icon: "cloud",
+        def: ["nobody", "everything stays local", "nobody: everything stays local. The bar is --min-confidence 0.8 (default)."],
+        alts: [["Jev", "TypeSafe, hosted", "Jev: TypeSafe, hosted. --escalate-to typesafe"],
+               ["Clef · Nimble", "cloudflare · ollama", "Clef · Nimble: cloudflare · ollama."],
+               ["any System One server", "a Kev server, another jul serve", "any System One server: a Kev server, another jul serve."]] },
+    ];
+    const DECISION = [["billing", .88], ["technical", .11], ["sales", .01]];
+
+    let picked = null;
+    const say = (t, b) => { reqT.textContent = t; reqB.textContent = b; };
+    const idle = () => say("Requester", "Hover or tap any box: the default is on the orange line, the alternatives on the branches.");
+    const bind = (g, stage, item, isDef, path) => {
+      const title = `${stage.n} · ${stage.k}${isDef ? " · DEFAULT" : ""}`;
+      g.setAttribute("tabindex", "0"); g.setAttribute("role", "button");
+      g.setAttribute("aria-label", `${title}: ${item[2]}`);
+      g.append(E("title", {}, [`${title}: ${item[2]}`]));
+      const on = () => { if (path) { path.classList.add("hot"); path.parentNode.appendChild(path); } say(title, item[2]); };
+      const off = () => { if (path) path.classList.remove("hot"); if (picked && picked !== g) picked.dispatchEvent(new Event("show")); else if (!picked) idle(); };
+      g.addEventListener("show", on);
+      g.addEventListener("mouseenter", on); g.addEventListener("focus", on);
+      g.addEventListener("mouseleave", off); g.addEventListener("blur", off);
+      g.addEventListener("click", () => {
+        if (picked === g) { picked = null; g.classList.remove("pick"); idle(); return; }
+        if (picked) picked.classList.remove("pick");
+        picked = g; g.classList.add("pick"); on();
+      });
+      g.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); g.dispatchEvent(new MouseEvent("click", { bubbles: true })); } });
+    };
+    document.getElementById("req-ok").addEventListener("click", () => { if (picked) picked.classList.remove("pick"); picked = null; idle(); });
+
+    const shadowBox = (x, y, w, h, cls, dx = 3) => E("g", {}, [E("rect", { class: "sh", x: x + dx, y: y + dx, width: w, height: h }), E("rect", { class: "bx " + cls, x, y, width: w, height: h })]);
+    const boing = (r) => {
+      const g = E("g", { class: "ball round" });
+      const spin = E("g", { class: "spin" }, [E("circle", { r, fill: "#fff" })]);
+      const s = r / 2;
+      for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) if ((i + j) % 2 === 0) spin.append(E("rect", { x: -r + i * s, y: -r + j * s, width: s, height: s, fill: "#FF8800", "clip-path": "url(#fclip)" }));
+      spin.append(E("animateTransform", { attributeName: "transform", type: "rotate", from: "0", to: "360", dur: "1.4s", repeatCount: "indefinite" }));
+      g.append(spin, E("circle", { r, fill: "none", stroke: "#000", "stroke-width": 2 }));
+      return g;
+    };
+    const arrow = (x, y, dir) => { // dir: "r" | "d" | "u"
+      const d = dir === "r" ? `M${x - 9} ${y - 6}L${x} ${y}L${x - 9} ${y + 6}Z` : dir === "d" ? `M${x - 6} ${y - 9}L${x} ${y}L${x + 6} ${y - 9}Z` : `M${x - 6} ${y + 9}L${x} ${y}L${x + 6} ${y + 9}Z`;
+      return E("path", { d, fill: "#fff" });
+    };
+    const decisionCard = (x, y, w, barW) => {
+      const h = 24 + DECISION.length * 24 + 20;
+      const g = E("g", { class: "dec" }, [E("rect", { class: "sh", x: x + 4, y: y + 4, width: w, height: h }), E("rect", { class: "card", x, y, width: w, height: h })]);
+      g.append(T(x + 10, y + 18, "DECISION", "cap kb"));
+      DECISION.forEach(([k, p], i) => {
+        const yy = y + 36 + i * 24;
+        g.append(T(x + 10, yy, k, "sm k", { style: "font-size:10.5px;font-weight:700" }), T(x + w - 10, yy, p.toFixed(2), "sm k", { "text-anchor": "end", style: "font-size:10.5px" }));
+        g.append(E("rect", { x: x + 10, y: yy + 4, width: barW, height: 5, fill: "#fff", stroke: "#000", "stroke-width": 1 }), E("rect", { x: x + 10, y: yy + 4, width: Math.max(1, barW * p), height: 5, fill: "#FF8800" }));
+      });
+      g.append(T(x + 10, y + h - 7, "55 ms · 0 tokens", "sm k", { style: "font-size:10px" }));
+      return { g, h };
+    };
+    const stateDoc = (x, y, w, h, lines) => {
+      const g = E("g", { class: "state" }, [E("rect", { class: "sh", x: x + 4, y: y + 4, width: w, height: h }),
+        E("path", { class: "card", d: `M${x} ${y}H${x + w - 16}L${x + w} ${y + 16}V${y + h}H${x}Z` }),
+        E("path", { d: `M${x + w - 16} ${y}V${y + 16}H${x + w}`, fill: "#0055AA", stroke: "#000", "stroke-width": 2 })]);
+      g.append(T(x + 10, y + 20, "STATE", "cap kb"));
+      lines.forEach((l, i) => g.append(T(x + 10, y + 42 + i * 17, l, "lbl k", { style: "font-size:13px" })));
+      return g;
+    };
+
+    // ── horizontal: the Deluxe Paint view ──────────────────────────────
+    const drawH = () => {
+      const W = 1100, M = 328, PITCH = 158, X0 = 188, BW = 146, NH = 56, GAP = 10, TRUNK = 24;
+      const svg = E("svg", { class: "flow", viewBox: `0 0 ${W} 500`, "aria-hidden": "false" });
+      svg.append(E("defs", {}, [E("clipPath", { id: "fclip" }, [E("circle", { r: 10 })])]));
+      const brs = E("g"), boxes = E("g"), top = E("g"), ballLayer = E("g");
+      const stateR = 96, decX = 990, decW = 110;
+      const main = E("path", { id: "flow-main", class: "main", d: `M${stateR} ${M}H${decX - 10}` });
+      svg.append(main, arrow(decX - 2, M, "r"), brs, ballLayer, boxes, top);
+      boxes.append(stateDoc(4, M - 56, 92, 112, ["\"I was", "charged", "twice\""]));
+      const dec = decisionCard(decX, M - 60, decW, 84); boxes.append(dec.g);
+      STAGES.forEach((s, i) => {
+        const cx = X0 + i * PITCH, left = cx - BW / 2;
+        // header: an icon on the screen with its name
+        const hg = E("g", { transform: `translate(${cx - 18} 0)` }, [ICON[s.icon]()]);
+        top.append(hg, T(cx, 56, `${s.n} · ${s.k}`, "cap", { "text-anchor": "middle" }), T(cx, 76, s.q, "hd", { "text-anchor": "middle" }));
+        // the default node on the line
+        const ng = E("g", { class: "node" }, [shadowBox(left, M - NH / 2, BW, NH, "", 4)]);
+        ng.append(T(cx, M - 6, s.def[0], "lbl", { "text-anchor": "middle", style: "font-size:16px" }));
+        wrap(s.def[1], 22).slice(0, 2).forEach((l, j) => ng.append(T(cx, M + 10 + j * 12, l, "sm", { "text-anchor": "middle" })));
+        bind(ng, s, s.def, true, null);
+        boxes.append(ng);
+        // alternatives: above and below
+        const nUp = s.n === 5 ? s.alts.length : Math.ceil(s.alts.length / 2);
+        const up = s.alts.slice(0, nUp), down = s.alts.slice(nUp);
+        const place = (list, dir) => {
+          const sized = list.map(a => ({ a, tl: wrap(a[0], 18).slice(0, 2), lines: wrap(a[1], 22).slice(0, 2) })).map(o => ({ ...o, h: 22 + (o.tl.length - 1) * 15 + o.lines.length * 12 + 6 }));
+          let y = dir < 0 ? M - NH / 2 - TRUNK : M + NH / 2 + TRUNK; // edge nearest the node
+          const order = dir < 0 ? [...sized].reverse() : sized;
+          order.forEach(o => {
+            const by = dir < 0 ? y - o.h : y;
+            const path = E("path", { class: "br", d: dir < 0 ? `M${cx} ${M - NH / 2}V${by + o.h}` : `M${cx} ${M + NH / 2}V${by}` });
+            brs.append(path);
+            const g = E("g", { class: "alt" }, [shadowBox(left, by, BW, o.h, "")]);
+            o.tl.forEach((l, j) => g.append(T(cx, by + 16 + j * 15, l, "lbl", { "text-anchor": "middle" })));
+            const sy = by + 16 + (o.tl.length - 1) * 15 + 13;
+            o.lines.forEach((l, j) => g.append(T(cx, sy + j * 12, l, "sm", { "text-anchor": "middle" })));
+            bind(g, s, o.a, false, path);
+            boxes.append(g);
+            y = dir < 0 ? by - GAP : by + o.h + GAP;
+          });
+          return y;
+        };
+        const topY = place(up, -1);
+        place(down, 1);
+        if (s.n === 5) {
+          // the confidence fork: unsure goes up to the remote tier, the rest answers locally
+          top.append(T(cx + 8, M - NH / 2 - 9, "unsure", "cap", { style: "font-size:13px" }), arrow(cx, M - NH / 2 - TRUNK + 2, "u"));
+          top.append(T((cx + BW / 2 + decX) / 2, M - 10, "conf >= 0.8", "cap", { "text-anchor": "middle", style: "font-size:13px" }));
+          top.append(T((cx + BW / 2 + decX) / 2, M + 18, "stays local", "sm", { "text-anchor": "middle" }));
+          // the remote answer comes back down into the same decision
+          const rx = cx + BW / 2 + 8, ry = topY + GAP + 19, dcx = decX + decW / 2;
+          brs.append(E("path", { class: "ret", d: `M${rx} ${ry}H${dcx}V${M - 72}` }), arrow(dcx, M - 62, "d"));
+          top.append(T(dcx, ry - 6, "remote tier", "cap", { "text-anchor": "middle", style: "font-size:13px" }));
+          // the bar
+          const by = M + NH / 2 + TRUNK, bw = BW, bx = left;
+          top.append(E("rect", { x: bx, y: by, width: bw, height: 10, fill: "#fff", stroke: "#000", "stroke-width": 1 }),
+            E("rect", { x: bx, y: by, width: bw * .88, height: 10, fill: "#FF8800" }),
+            E("rect", { x: bx + bw * .8 - 1, y: by - 4, width: 3, height: 18, fill: "#000" }),
+            T(bx, by + 28, "--min-confidence 0.8", "sm", {}), T(bx, by + 41, "(default) · this one: 0.88", "sm", {}));
+        }
+      });
+      if (!reduced) {
+        const b = boing(10);
+        b.append(E("animateMotion", { dur: "7s", repeatCount: "indefinite", rotate: "0" }, [E("mpath", { href: "#flow-main" })]));
+        ballLayer.append(b);
+      }
+      return svg;
+    };
+
+    // ── vertical: the same flow, one column, for a phone ───────────────
+    const drawV = () => {
+      const W = 340, LX = 24, NX = 44, NW = 290, AX = 84, AW = 250, TX = 62, GAP = 8;
+      const svg = E("svg", { class: "flow", viewBox: `0 0 ${W} 100` });
+      svg.append(E("defs", {}, [E("clipPath", { id: "fclip" }, [E("circle", { r: 9 })])]));
+      const brs = E("g"), boxes = E("g"), top = E("g"), stubs = E("g", { class: "main" });
+      let y = 4;
+      // state
+      boxes.append(stateDoc(NX, y, NW, 66, ["\"I was charged twice\""]));
+      const stateMid = y + 33; y += 66 + 30;
+      const mainStart = stateMid;
+      stubs.append(E("path", { d: `M${LX} ${stateMid}H${NX}` }));
+      STAGES.forEach(s => {
+        top.append(E("g", { transform: `translate(${NX} ${y - 2}) scale(.8)` }, [ICON[s.icon]()]));
+        top.append(T(NX + 38, y + 11, `${s.n} · ${s.k}`, "cap"), T(NX + 38, y + 29, s.q, "hd"));
+        y += 40;
+        const NH = 50;
+        const ng = E("g", { class: "node" }, [shadowBox(NX, y, NW, NH, "", 4)]);
+        ng.append(T(NX + 12, y + 21, s.def[0], "lbl", { style: "font-size:16px" }), T(NX + 12, y + 38, s.def[1], "sm"));
+        bind(ng, s, s.def, true, null);
+        stubs.append(E("path", { d: `M${LX} ${y + NH / 2}H${NX}` }));
+        boxes.append(ng);
+        const nodeBottom = y + NH; y = nodeBottom + 14;
+        if (s.n === 5) top.append(T(AX, y + 2, "unsure", "cap", { style: "font-size:13px" })), y += 10;
+        s.alts.forEach(a => {
+          const h = 40;
+          const path = E("path", { class: "br", d: `M${TX} ${nodeBottom}V${y + h / 2}H${AX}` });
+          brs.append(path);
+          const g = E("g", { class: "alt" }, [shadowBox(AX, y, AW, h, "")]);
+          g.append(T(AX + 10, y + 17, a[0], "lbl"), T(AX + 10, y + 31, a[1], "sm"));
+          bind(g, s, a, false, path);
+          boxes.append(g);
+          y += h + GAP;
+        });
+        if (s.n === 5) {
+          y += 10;
+          const bx = AX, bw = AW;
+          top.append(E("rect", { x: bx, y, width: bw, height: 10, fill: "#fff", stroke: "#000", "stroke-width": 1 }),
+            E("rect", { x: bx, y, width: bw * .88, height: 10, fill: "#FF8800" }),
+            E("rect", { x: bx + bw * .8 - 1, y: y - 4, width: 3, height: 18, fill: "#000" }),
+            T(bx, y + 27, "--min-confidence 0.8 (default)", "sm"), T(bx, y + 40, "this one: 0.88", "sm"));
+          y += 56;
+        }
+        y += 18;
+      });
+      top.append(T(NX, y + 2, "conf >= 0.8 · stays local", "cap", { style: "font-size:13px" }));
+      y += 14;
+      const dec = decisionCard(NX, y, NW, 150); boxes.append(dec.g);
+      const decMid = y + dec.h / 2;
+      stubs.append(E("path", { d: `M${LX} ${decMid}H${NX - 8}` })); top.append(arrow(NX - 2, decMid, "r"));
+      y += dec.h + 8;
+      const main = E("path", { id: "flow-main", class: "main", d: `M${LX} ${mainStart}V${decMid}` });
+      svg.setAttribute("viewBox", `0 0 ${W} ${y}`);
+      svg.append(main, stubs, brs, boxes, top);
+      if (!reduced) {
+        const b = boing(9);
+        b.append(E("animateMotion", { dur: "9s", repeatCount: "indefinite" }, [E("mpath", { href: "#flow-main" })]));
+        svg.append(b);
+      }
+      return svg;
+    };
+
+    const mq = matchMedia("(max-width: 700px)");
+    let mode = null;
+    const render = () => {
+      const m = mq.matches ? "v" : "h";
+      if (m === mode) return;
+      mode = m; picked = null; idle();
+      host.replaceChildren(m === "v" ? drawV() : drawH());
+    };
+    render();
+    mq.addEventListener("change", render);
+  })();
 
   // ── shell demo ───────────────────────────────────────────────────────
   (function startTerm() {
