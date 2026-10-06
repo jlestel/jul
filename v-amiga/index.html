@@ -188,7 +188,9 @@ p + p, p + pre, pre + p, p + .code, .code + p { margin-top: 1em; }
 /* ── the flow: one text in, one decision out ───────────────────────── */
 .flowwin .w-body { padding: 1.8em 1.6em 2em; }
 .flowwin .intro { padding: 0 .6em; }
-.flow { display: block; width: 100%; height: auto; margin-top: 1.4em; overflow: visible; }
+#flow { margin-top: 1.4em; }
+.flow { display: block; width: 100%; height: auto; overflow: visible; }
+.flow.v { max-width: 420px; }
 .flow text { font-family: var(--mono); fill: var(--white); font-size: 13px; text-rendering: geometricPrecision; pointer-events: none; }
 .flow .lbl { font-weight: 700; font-size: 13px; }
 .flow .sm { font-size: 10.5px; }
@@ -224,6 +226,20 @@ p + p, p + pre, pre + p, p + .code, .code + p { margin-top: 1em; }
 .req .req-b { margin: .1em 0 0; line-height: 1.5; }
 .req .req-ok { font-family: var(--topaz); font-size: 1rem; padding: .3em 1.1em; border: 2px solid var(--black); box-shadow: 2px 2px 0 var(--black); background: var(--orange); color: var(--black); }
 .req .req-ok:hover, .req .req-ok:focus-visible { background: var(--black); color: var(--white); outline: none; }
+/* ── compatibility table: Workbench colours ── */
+.compat-wrap { margin: 2em .6em 0; overflow-x: auto; min-width: 0; max-width: 100%; }
+.compat { border-collapse: collapse; width: 100%; min-width: 720px; font-size: 13px; color: var(--white); }
+.compat caption { text-align: left; font-family: var(--pix); font-size: 2rem; line-height: 1.1; margin-bottom: .3em; color: var(--white); }
+.compat th, .compat td { border: 2px solid var(--white); padding: .45em .7em; text-align: center; vertical-align: middle; }
+.compat thead th { background: var(--orange); color: var(--black); border-color: var(--white); font-family: var(--pix); font-size: 19px; line-height: 1.1; font-weight: 400; }
+.compat thead th small { display: block; font: 400 10px/1.3 var(--mono); }
+.compat tbody th { text-align: left; font-weight: 700; }
+.compat tbody th small { display: block; font-weight: 400; font-size: .85em; }
+.compat td.y::before { content: "■"; }
+.compat td.n::before { content: "—"; }
+.compat td.p::before { content: "□"; }
+.compat td.q::before { content: "?"; }
+.compat-note { margin: .8em .6em 0; font-size: 12px; }
 .pipe-legend { margin: 1.4em .6em 0; }
 .pipe-legend .k { background: var(--orange); color: var(--black); padding: 0 .6ch; font-weight: 700; border: 1px solid var(--black); }
 @media (max-width: 700px) {
@@ -232,6 +248,7 @@ p + p, p + pre, pre + p, p + .code, .code + p { margin-top: 1em; }
   .req { grid-template-columns: 1fr; margin: 1.2em 0 0; }
   .req .req-ok { justify-self: start; }
   .pipe-legend { margin: 1.2em 0 0; }
+  .compat-wrap, .compat-note { margin-left: 0; margin-right: 0; }
 }
 
 /* ── choose your model ─────────────────────────────────────────────── */
@@ -410,9 +427,26 @@ model="fast"       <span class="c"># half the size</span></pre>
     </div>
     <div id="flow" role="group" aria-label="The JuL pipeline: a text goes in on the left, passes through five stages, a decision comes out on the right. Each stage has a default and alternatives."></div>
     <div class="req" id="flow-req" role="status" aria-live="polite">
-      <div><span class="req-t" id="req-t">Requester</span><p class="req-b" id="req-b">Hover or tap any box: the default is on the orange line, the alternatives on the branches.</p></div>
+      <div><span class="req-t" id="req-t">Requester</span><p class="req-b" id="req-b">Hover or tap any box: the orange box on the line is the default, the white ones below it are the alternatives.</p></div>
       <button class="req-ok" type="button" id="req-ok">Okay</button>
     </div>
+      <div class="compat-wrap" id="compat">
+      <table class="compat">
+        <caption>Runs on what?</caption>
+        <thead><tr><th>Model family<small>examples</small></th><th>MLX<small>Apple Silicon</small></th><th>PyTorch<small>NVIDIA GPU · CPU</small></th><th>ONNX<small>CPU · Lambda</small></th><th>API<small>no weights</small></th><th>autotune</th><th>jul pack</th></tr></thead>
+        <tbody>
+          <tr><th>Built-in<small>accurate, fast</small></th><td class="y"></td><td class="y"></td><td class="n"></td><td class="n"></td><td class="y"></td><td class="p"></td></tr>
+          <tr><th>Embedding LLMs<small>WeMM, F2LLM, Qwen3-Embedding, Harrier</small></th><td class="y"></td><td class="y"></td><td class="p"></td><td class="n"></td><td class="y"></td><td class="y"></td></tr>
+          <tr><th>Any decoder<small>MiniCPM, any instruct model</small></th><td class="y"></td><td class="y"></td><td class="p"></td><td class="n"></td><td class="y"></td><td class="y"></td></tr>
+          <tr><th>Encoders<small>e5, BERT, XLM-R, jul-decision-e5-small</small></th><td class="n"></td><td class="y"></td><td class="y"></td><td class="n"></td><td class="y"></td><td class="y"></td></tr>
+          <tr><th>Decision models<small>Kev format, jul-decision-minicpm5-2b</small></th><td class="y"></td><td class="y"></td><td class="n"></td><td class="n"></td><td class="y"></td><td class="n"></td></tr>
+          <tr><th>Contrastive heads<small>CLM-8B</small></th><td class="y"></td><td class="y"></td><td class="y"></td><td class="n"></td><td class="y"></td><td class="n"></td></tr>
+          <tr><th>Embeddings APIs<small>Ollama, OpenAI, Mistral, Voyage</small></th><td class="n"></td><td class="n"></td><td class="n"></td><td class="y"></td><td class="q"></td><td class="q"></td></tr>
+          <tr><th>Laya<small>its own runtime</small></th><td class="n"></td><td class="y"></td><td class="n"></td><td class="n"></td><td class="n"></td><td class="n"></td></tr>
+        </tbody>
+      </table>
+      <p class="compat-note">■ yes · □ partly (built-in: accurate packs, fast does not; ONNX: decoders the exporter supports) · ? not measured yet · — no. ONNX runs a model exported by <code>jul.backends.onnx_export</code>.</p>
+      </div>
     <p class="pipe-legend"><span class="k">orange</span> = what you get without choosing anything.
       <a href="../docs/hub.html">Every model, backend and provider →</a></p>
   </section>
@@ -686,42 +720,49 @@ latency per decision, and the answer to the ticket.</pre>
         E("rect", { x: 10, y: 19, width: 16, height: 3, fill: "#0055AA" }), E("rect", { x: 10, y: 24, width: 10, height: 3, fill: "#0055AA" }),
         E("rect", { x: 22, y: 24, width: 4, height: 3, fill: "#FF8800" })]),
     };
-    // Exact content: one default on the line, alternatives on the branches.
-    const STAGES = [
-      { n: 1, k: "MODEL", q: "What reads it", icon: "disk",
-        def: ["accurate", "the default model", "the default model, jul-decision-wemm-4b. What reads your text when you pick nothing."],
-        alts: [["fast", "half the size", "half the size: jul-decision-minicpm5-2b."],
-               ["any Hugging Face model", "jul models add", "jul models add: bring any Hugging Face model."],
-               ["a small encoder", "e5, BERT, XLM-R", "a small encoder: e5, BERT, XLM-R."],
-               ["an embeddings API", "Ollama · OpenAI · Mistral · Voyage", "an embeddings API: Ollama · OpenAI · Mistral · Voyage."],
-               ["Laya", "its own runtime", "Laya, its own runtime."]] },
-      { n: 2, k: "HARDWARE", q: "Where it runs", icon: "chip",
-        def: ["auto", "MLX on a Mac, PyTorch elsewhere", "auto: MLX on a Mac, PyTorch elsewhere. Torch device order: cuda > mps > cpu."],
-        alts: [["Apple Silicon", "MLX", "Apple Silicon: MLX."],
-               ["NVIDIA GPU", "PyTorch · CUDA", "NVIDIA GPU: PyTorch · CUDA."],
-               ["CPU", "PyTorch, or ONNX without torch", "CPU: PyTorch, or ONNX without torch."],
-               ["no weights at all", "--backend api", "--backend api: no weights at all on your machine."]] },
-      { n: 3, k: "YOUR DATA", q: "How it fits", icon: "drawer",
-        def: ["zero-shot", "nothing to give", "zero-shot: nothing to give."],
-        alts: [["a Context", "~50 unlabeled examples", "a Context: ~50 unlabeled examples."],
-               ["autotune", "labeled examples, kept if it wins", "autotune: labeled examples, kept only if it beats zero-shot."],
-               ["jul synth", "too few labels? synthesize them", "jul synth: too few labels? synthesize them."]] },
-      { n: 4, k: "INTEGRATION", q: "How you call it", icon: "shell",
-        def: ["Python", "the Jev SDK calls", "Python, the Jev SDK calls: from jul import TypeSafeClient."],
-        alts: [["the CLI", "jul ask · jul run", "the CLI: jul ask · jul run."],
-               ["HTTP", "jul serve, the Jev protocol", "HTTP: jul serve, the Jev protocol."],
-               ["a Lambda", "jul pack", "a Lambda: jul pack."]] },
-      { n: 5, k: "WHEN UNSURE", q: "Who gets the rest", icon: "cloud",
-        def: ["nobody", "everything stays local", "nobody: everything stays local. The bar is --min-confidence 0.8 (default)."],
-        alts: [["Jev", "TypeSafe, hosted", "Jev: TypeSafe, hosted. --escalate-to typesafe"],
-               ["Clef · Nimble", "cloudflare · ollama", "Clef · Nimble: cloudflare · ollama."],
-               ["any System One server", "a Kev server, another jul serve", "any System One server: a Kev server, another jul serve."]] },
+    // Exact content (same data as the Mac page): one default on the line, alternatives below it.
+    const S = [
+      { name: "Model", q: "What reads it", icon: "mac",
+        def: ["accurate", "the default model", "accurate — the default model, jul-decision-wemm-4b. What reads your text when you choose nothing."],
+        alts: [
+          ["fast", "half the size", "fast — half the size of the default: jul-decision-minicpm5-2b."],
+          ["any Hugging Face model", "LLM, embedding model, encoder, decision model", "any Hugging Face model — an LLM, an embedding model, a small encoder (e5, BERT, XLM-R) or a decision model: jul models add fits it once. See the table below."],
+          ["an embeddings API", "no weights here: Ollama · OpenAI · Mistral · Voyage", "an embeddings API — the model runs elsewhere, JuL reads its embeddings over HTTP (--backend api)."],
+          ["Laya", "its own runtime: no autotune, no pack", "Laya — a decision model with its own runtime: JuL hands it the questions; autotune and jul pack do not apply."]] },
+      { name: "Hardware", q: "Where it runs", icon: "chip",
+        def: ["auto", "MLX on a Mac, PyTorch elsewhere", "auto — MLX on a Mac, PyTorch elsewhere. Torch device order: cuda > mps > cpu."],
+        alts: [
+          ["Apple Silicon", "MLX", "Apple Silicon — MLX."],
+          ["NVIDIA GPU", "PyTorch · CUDA", "NVIDIA GPU — PyTorch · CUDA."],
+          ["CPU", "PyTorch, or ONNX without torch", "CPU — PyTorch, or ONNX without torch."],
+          ["no weights at all", "--backend api", "no weights at all — --backend api."]] },
+      { name: "Your data", q: "How it fits", icon: "db",
+        def: ["zero-shot", "nothing to give", "zero-shot — nothing to give. The default."],
+        alts: [
+          ["a Context", "~50 unlabeled examples", "a Context — ~50 unlabeled examples."],
+          ["autotune", "labeled examples, kept if it wins", "autotune — labeled examples; the head is kept only if it beats zero-shot."],
+          ["jul synth", "too few labels? synthesize them", "jul synth — too few labels? synthesize them."]] },
+      { name: "Integration", q: "How you call it", icon: "term",
+        def: ["Python", "the Jev SDK calls", "Python — the Jev SDK calls: from jul import TypeSafeClient."],
+        alts: [
+          ["the CLI", "jul ask · jul run", "the CLI — jul ask · jul run."],
+          ["HTTP", "jul serve, the Jev protocol", "HTTP — jul serve, speaking the Jev protocol."],
+          ["a Lambda", "jul pack", "a Lambda — jul pack."]] },
+      { name: "When unsure", q: "Who gets the rest", icon: "cloud", or: "or, when unsure →", foot: "--min-confidence 0.8 (default)",
+        def: ["nobody", "everything stays local", "nobody — everything stays local. The default."],
+        alts: [
+          ["Jev", "TypeSafe, hosted", "Jev — TypeSafe, hosted: --escalate-to typesafe."],
+          ["Clef · Nimble", "cloudflare · ollama", "Clef · Nimble — cloudflare · ollama."],
+          ["any System One server", "a Kev server, another jul serve", "any System One server — a Kev server, another jul serve."]] },
     ];
+    S.forEach((s, i) => { s.n = i + 1; s.k = s.name.toUpperCase(); });
+    ICON.mac = ICON.disk; ICON.db = ICON.drawer; ICON.term = ICON.shell;
+    const STAGES = S;
     const DECISION = [["billing", .88], ["technical", .11], ["sales", .01]];
 
     let picked = null;
     const say = (t, b) => { reqT.textContent = t; reqB.textContent = b; };
-    const idle = () => say("Requester", "Hover or tap any box: the default is on the orange line, the alternatives on the branches.");
+    const idle = () => say("Requester", "Hover or tap any box: the orange box on the line is the default, the white ones below it are the alternatives.");
     const bind = (g, stage, item, isDef, path) => {
       const title = `${stage.n} · ${stage.k}${isDef ? " · DEFAULT" : ""}`;
       g.setAttribute("tabindex", "0"); g.setAttribute("role", "button");
@@ -776,148 +817,106 @@ latency per decision, and the answer to the ticket.</pre>
       return g;
     };
 
-    // ── horizontal: the Deluxe Paint view ──────────────────────────────
-    const drawH = () => {
-      const W = 1100, M = 328, PITCH = 158, X0 = 188, BW = 146, NH = 56, GAP = 10, TRUNK = 24;
-      const svg = E("svg", { class: "flow", viewBox: `0 0 ${W} 500`, "aria-hidden": "false" });
+    // ── option boxes: the default (orange, on the line) and the alternatives (white outline, below) ──
+    const CW12 = 7.4, CW10 = 6.4; // IBM Plex Mono advance at bold 12px / 10.5px
+    const optBox = (stage, opt, x, y, w, def, path, minH = 0) => {
+      const lab = wrap(opt[0], Math.floor((w - 12) / CW12)), sub = wrap(opt[1], Math.floor((w - 12) / CW10));
+      const need = 6 + 13 * lab.length + 12 * sub.length + 7, h = Math.max(minH, need);
+      const g = E("g", { class: def ? "node" : "alt" }, [shadowBox(x, y, w, h, "", def ? 4 : 3)]);
+      let yy = y + 16 + (def ? Math.floor((h - need) / 2) : 0);
+      lab.forEach(s => { g.append(T(x + 6, yy, s, "lbl", { style: "font-size:12px" })); yy += 13; });
+      sub.forEach(s => { g.append(T(x + 6, yy, s, "sm")); yy += 12; });
+      bind(g, stage, opt, def, path);
+      return { g, h };
+    };
+    const svgRoot = (W, H, cls) => {
+      const svg = E("svg", { class: "flow " + cls, viewBox: `0 0 ${W} ${H}`, width: W, height: H, "aria-hidden": "false" });
       svg.append(E("defs", {}, [E("clipPath", { id: "fclip" }, [E("circle", { r: 10 })])]));
-      const brs = E("g"), boxes = E("g"), top = E("g"), ballLayer = E("g");
-      const stateR = 96, decX = 990, decW = 110;
-      const main = E("path", { id: "flow-main", class: "main", d: `M${stateR} ${M}H${decX - 10}` });
-      svg.append(main, arrow(decX - 2, M, "r"), brs, ballLayer, boxes, top);
-      boxes.append(stateDoc(4, M - 56, 92, 112, ["\"I was", "charged", "twice\""]));
-      const dec = decisionCard(decX, M - 60, decW, 84); boxes.append(dec.g);
-      STAGES.forEach((s, i) => {
-        const cx = X0 + i * PITCH, left = cx - BW / 2;
-        // header: an icon on the screen with its name
-        const hg = E("g", { transform: `translate(${cx - 18} 0)` }, [ICON[s.icon]()]);
-        top.append(hg, T(cx, 56, `${s.n} · ${s.k}`, "cap", { "text-anchor": "middle" }), T(cx, 76, s.q, "hd", { "text-anchor": "middle" }));
-        // the default node on the line
-        const ng = E("g", { class: "node" }, [shadowBox(left, M - NH / 2, BW, NH, "", 4)]);
-        ng.append(T(cx, M - 6, s.def[0], "lbl", { "text-anchor": "middle", style: "font-size:16px" }));
-        wrap(s.def[1], 22).slice(0, 2).forEach((l, j) => ng.append(T(cx, M + 10 + j * 12, l, "sm", { "text-anchor": "middle" })));
-        bind(ng, s, s.def, true, null);
-        boxes.append(ng);
-        // alternatives: above and below
-        const nUp = s.n === 5 ? s.alts.length : Math.ceil(s.alts.length / 2);
-        const up = s.alts.slice(0, nUp), down = s.alts.slice(nUp);
-        const place = (list, dir) => {
-          const sized = list.map(a => ({ a, tl: wrap(a[0], 18).slice(0, 2), lines: wrap(a[1], 22).slice(0, 2) })).map(o => ({ ...o, h: 22 + (o.tl.length - 1) * 15 + o.lines.length * 12 + 6 }));
-          let y = dir < 0 ? M - NH / 2 - TRUNK : M + NH / 2 + TRUNK; // edge nearest the node
-          const order = dir < 0 ? [...sized].reverse() : sized;
-          order.forEach(o => {
-            const by = dir < 0 ? y - o.h : y;
-            const path = E("path", { class: "br", d: dir < 0 ? `M${cx} ${M - NH / 2}V${by + o.h}` : `M${cx} ${M + NH / 2}V${by}` });
-            brs.append(path);
-            const g = E("g", { class: "alt" }, [shadowBox(left, by, BW, o.h, "")]);
-            o.tl.forEach((l, j) => g.append(T(cx, by + 16 + j * 15, l, "lbl", { "text-anchor": "middle" })));
-            const sy = by + 16 + (o.tl.length - 1) * 15 + 13;
-            o.lines.forEach((l, j) => g.append(T(cx, sy + j * 12, l, "sm", { "text-anchor": "middle" })));
-            bind(g, s, o.a, false, path);
-            boxes.append(g);
-            y = dir < 0 ? by - GAP : by + o.h + GAP;
-          });
-          return y;
-        };
-        const topY = place(up, -1);
-        place(down, 1);
-        if (s.n === 5) {
-          // the confidence fork: unsure goes up to the remote tier, the rest answers locally
-          top.append(T(cx + 8, M - NH / 2 - 9, "unsure", "cap", { style: "font-size:13px" }), arrow(cx, M - NH / 2 - TRUNK + 2, "u"));
-          top.append(T((cx + BW / 2 + decX) / 2, M - 10, "conf >= 0.8", "cap", { "text-anchor": "middle", style: "font-size:13px" }));
-          top.append(T((cx + BW / 2 + decX) / 2, M + 18, "stays local", "sm", { "text-anchor": "middle" }));
-          // the remote answer comes back down into the same decision
-          const rx = cx + BW / 2 + 8, ry = topY + GAP + 19, dcx = decX + decW / 2;
-          brs.append(E("path", { class: "ret", d: `M${rx} ${ry}H${dcx}V${M - 72}` }), arrow(dcx, M - 62, "d"));
-          top.append(T(dcx, ry - 6, "remote tier", "cap", { "text-anchor": "middle", style: "font-size:13px" }));
-          // the bar
-          const by = M + NH / 2 + TRUNK, bw = BW, bx = left;
-          top.append(E("rect", { x: bx, y: by, width: bw, height: 10, fill: "#fff", stroke: "#000", "stroke-width": 1 }),
-            E("rect", { x: bx, y: by, width: bw * .88, height: 10, fill: "#FF8800" }),
-            E("rect", { x: bx + bw * .8 - 1, y: by - 4, width: 3, height: 18, fill: "#000" }),
-            T(bx, by + 28, "--min-confidence 0.8", "sm", {}), T(bx, by + 41, "(default) · this one: 0.88", "sm", {}));
-        }
-      });
-      if (!reduced) {
-        const b = boing(10);
-        b.append(E("animateMotion", { dur: "7s", repeatCount: "indefinite", rotate: "0" }, [E("mpath", { href: "#flow-main" })]));
-        ballLayer.append(b);
-      }
       return svg;
     };
+    const ball = (svg, dur) => {
+      if (reduced) return;
+      const b = boing(10);
+      b.append(E("animateMotion", { dur, repeatCount: "indefinite", rotate: "0" }, [E("mpath", { href: "#flow-main" })]));
+      svg.append(b);
+    };
 
-    // ── vertical: the same flow, one column, for a phone ───────────────
-    const drawV = () => {
-      const W = 340, LX = 24, NX = 44, NW = 290, AX = 84, AW = 250, TX = 62, GAP = 8;
-      const svg = E("svg", { class: "flow", viewBox: `0 0 ${W} 100` });
-      svg.append(E("defs", {}, [E("clipPath", { id: "fclip" }, [E("circle", { r: 9 })])]));
-      const brs = E("g"), boxes = E("g"), top = E("g"), stubs = E("g", { class: "main" });
-      let y = 4;
-      // state
-      boxes.append(stateDoc(NX, y, NW, 66, ["\"I was charged twice\""]));
-      const stateMid = y + 33; y += 66 + 30;
-      const mainStart = stateMid;
-      stubs.append(E("path", { d: `M${LX} ${stateMid}H${NX}` }));
-      STAGES.forEach(s => {
-        top.append(E("g", { transform: `translate(${NX} ${y - 2}) scale(.8)` }, [ICON[s.icon]()]));
-        top.append(T(NX + 38, y + 11, `${s.n} · ${s.k}`, "cap"), T(NX + 38, y + 29, s.q, "hd"));
-        y += 40;
-        const NH = 50;
-        const ng = E("g", { class: "node" }, [shadowBox(NX, y, NW, NH, "", 4)]);
-        ng.append(T(NX + 12, y + 21, s.def[0], "lbl", { style: "font-size:16px" }), T(NX + 12, y + 38, s.def[1], "sm"));
-        bind(ng, s, s.def, true, null);
-        stubs.append(E("path", { d: `M${LX} ${y + NH / 2}H${NX}` }));
-        boxes.append(ng);
-        const nodeBottom = y + NH; y = nodeBottom + 14;
-        if (s.n === 5) top.append(T(AX, y + 2, "unsure", "cap", { style: "font-size:13px" })), y += 10;
-        s.alts.forEach(a => {
-          const h = 40;
-          const path = E("path", { class: "br", d: `M${TX} ${nodeBottom}V${y + h / 2}H${AX}` });
-          brs.append(path);
-          const g = E("g", { class: "alt" }, [shadowBox(AX, y, AW, h, "")]);
-          g.append(T(AX + 10, y + 17, a[0], "lbl"), T(AX + 10, y + 31, a[1], "sm"));
-          bind(g, s, a, false, path);
-          boxes.append(g);
-          y += h + GAP;
+    // ── horizontal: one main line, the default on it, the alternatives in a tree below ──
+    const horizontal = W => {
+      const stateW = 86, cardW = 110, seg = 72, colW = Math.floor((W - stateW - cardW - seg) / 5), BW = 124, Y0 = 128;
+      const cardX = W - cardW - 6;
+      const brs = E("g"), boxes = E("g"), top = E("g");
+      let maxY = Y0 + 72, lastRight = 0;
+      boxes.append(stateDoc(2, Y0 - 56, 72, 112, ["\"I was", "charged", "twice\""]));
+      STAGES.forEach((st, i) => {
+        const cx = stateW + colW * i + (colW >> 1), bx = cx - (BW >> 1);
+        top.append(E("g", { transform: `translate(${cx - 18} 0)` }, [ICON[st.icon]()]));
+        top.append(T(cx, 60, st.name, "hd", { "text-anchor": "middle" }), T(cx, 78, `${st.n} · ${st.q}`, "cap", { "text-anchor": "middle", style: "font-size:12.5px" }));
+        boxes.append(optBox(st, st.def, bx, Y0 - 27, BW, true, null, 54).g);
+        top.append(T(bx, Y0 + 46, st.or || "or:", "sm", { style: "font-style:italic;font-size:11px" }));
+        const tx = bx - 10; let y = Y0 + 56, lastMy = Y0 + 10;
+        const branches = [];
+        st.alts.forEach(a => {
+          const path = E("path", { class: "br" });
+          const o = optBox(st, a, bx, y, BW, false, path), my = y + (o.h >> 1);
+          path.setAttribute("d", `M${tx} ${my}H${bx}`); lastMy = my; branches.push(path); boxes.append(o.g); y += o.h + 6;
         });
-        if (s.n === 5) {
-          y += 10;
-          const bx = AX, bw = AW;
-          top.append(E("rect", { x: bx, y, width: bw, height: 10, fill: "#fff", stroke: "#000", "stroke-width": 1 }),
-            E("rect", { x: bx, y, width: bw * .88, height: 10, fill: "#FF8800" }),
-            E("rect", { x: bx + bw * .8 - 1, y: y - 4, width: 3, height: 18, fill: "#000" }),
-            T(bx, y + 27, "--min-confidence 0.8 (default)", "sm"), T(bx, y + 40, "this one: 0.88", "sm"));
-          y += 56;
-        }
-        y += 18;
+        brs.append(E("path", { class: "br", d: `M${bx - 20} ${Y0}l10 10V${lastMy}` }), ...branches);
+        if (st.foot) wrap(st.foot, 20).forEach(s => { top.append(T(bx, y + 8, s, "sm")); y += 12; });
+        maxY = Math.max(maxY, y + 4); lastRight = bx + BW;
       });
-      top.append(T(NX, y + 2, "conf >= 0.8 · stays local", "cap", { style: "font-size:13px" }));
-      y += 14;
-      const dec = decisionCard(NX, y, NW, 150); boxes.append(dec.g);
-      const decMid = y + dec.h / 2;
-      stubs.append(E("path", { d: `M${LX} ${decMid}H${NX - 8}` })); top.append(arrow(NX - 2, decMid, "r"));
-      y += dec.h + 8;
-      const main = E("path", { id: "flow-main", class: "main", d: `M${LX} ${mainStart}V${decMid}` });
-      svg.setAttribute("viewBox", `0 0 ${W} ${y}`);
-      svg.append(main, stubs, brs, boxes, top);
-      if (!reduced) {
-        const b = boing(9);
-        b.append(E("animateMotion", { dur: "9s", repeatCount: "indefinite" }, [E("mpath", { href: "#flow-main" })]));
-        svg.append(b);
-      }
+      const mid = (lastRight + cardX) >> 1;
+      top.append(T(mid, Y0 - 8, "≥ 0.8 →", "lbl", { "text-anchor": "middle", style: "font-size:11px" }), T(mid, Y0 + 20, "answer", "sm", { "text-anchor": "middle", style: "font-style:italic;font-size:11px" }));
+      const dec = decisionCard(cardX, Y0 - 58, cardW, cardW - 20); boxes.append(dec.g);
+      const H = Math.max(maxY + 6, Y0 - 58 + dec.h + 8);
+      const svg = svgRoot(W, H, "h");
+      svg.append(E("path", { id: "flow-main", class: "main", d: `M78 ${Y0}H${cardX - 10}` }), arrow(cardX - 2, Y0, "r"), brs, boxes, top);
+      ball(svg, "9s");
       return svg;
     };
 
-    const mq = matchMedia("(max-width: 700px)");
-    let mode = null;
+    // ── vertical: the same tree, one column, for a phone ──
+    const vertical = W => {
+      const X = 20, BW = 120, bx = 8, tx = 150, ax = 160, aw = W - ax - 4;
+      const brs = E("g"), boxes = E("g"), top = E("g");
+      let y = 72;
+      boxes.append(stateDoc(bx, 2, Math.min(210, W - 12), 52, ["\"I was charged twice\""]));
+      STAGES.forEach(st => {
+        top.append(E("g", { transform: `translate(36 ${y - 4}) scale(.8)` }, [ICON[st.icon]()]));
+        top.append(T(36 + 29 + 10, y + 20, st.name, "hd"), T(36, y + 42, `${st.n} · ${st.q}`, "cap"));
+        const ys = y + 50;
+        boxes.append(optBox(st, st.def, bx, y + 66, BW, true, null, 54).g);
+        top.append(T(ax, y + 58, st.or || "or:", "sm", { style: "font-style:italic;font-size:11px" }));
+        let ay = y + 66, lastMy = ys + 10;
+        const branches = [];
+        st.alts.forEach(a => {
+          const path = E("path", { class: "br" });
+          const o = optBox(st, a, ax, ay, aw, false, path), my = ay + (o.h >> 1);
+          path.setAttribute("d", `M${tx} ${my}H${ax}`); lastMy = my; branches.push(path); boxes.append(o.g); ay += o.h + 6;
+        });
+        brs.append(E("path", { class: "br", d: `M${X} ${ys}l10 10H${tx}V${lastMy}` }), ...branches);
+        if (st.foot) { top.append(T(ax, ay + 8, st.foot, "sm")); ay += 14; }
+        y = Math.max(y + 124, ay) + 24;
+      });
+      top.append(T(34, y + 4, "≥ 0.8 → answer", "lbl", { style: "font-size:11px" }));
+      const cardY = y + 18, cw = Math.min(220, W - 14);
+      const dec = decisionCard(bx, cardY, cw, cw - 20); boxes.append(dec.g);
+      const svg = svgRoot(W, cardY + dec.h + 8, "v");
+      svg.append(E("path", { id: "flow-main", class: "main", d: `M${X} 54V${cardY - 2}` }), arrow(X, cardY - 2, "d"), brs, boxes, top);
+      ball(svg, "9s");
+      return svg;
+    };
+
+    let mode = null, lastW = 0;
     const render = () => {
-      const m = mq.matches ? "v" : "h";
-      if (m === mode) return;
-      mode = m; picked = null; idle();
-      host.replaceChildren(m === "v" ? drawV() : drawH());
+      const W = host.clientWidth; if (!W) return;
+      const m = W >= 935 ? "h" : "v";
+      if (m === mode && W === lastW) return;
+      mode = m; lastW = W; picked = null; idle();
+      host.replaceChildren(m === "h" ? horizontal(W) : vertical(Math.min(W, 420)));
     };
     render();
-    mq.addEventListener("change", render);
+    let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(render, 120); });
   })();
 
   // ── shell demo ───────────────────────────────────────────────────────
