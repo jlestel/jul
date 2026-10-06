@@ -3,7 +3,7 @@
 Versions come from git tags (see [publishing](docs/publishing.md)): a `v*` tag releases to PyPI, every push to
 `main` publishes a dev build to TestPyPI.
 
-## Unreleased
+## 0.5.1 — 2026-10-07
 
 ### Fixed
 
@@ -13,6 +13,10 @@ Versions come from git tags (see [publishing](docs/publishing.md)): a `v*` tag r
 - **MLX with mlx-lm 0.32, hybrid models** (WeMM / Qwen3.5): the state snapshot kept after a cached prefix was
   shared with the queries restored from it, so a query could start from the previous query's recurrent state.
   Each query now restores a copy.
+
+### Changed
+
+- The homepage and the docs take a Macintosh System 1 look, with one amber accent.
 
 ## 0.5.0 — 2026-10-06
 

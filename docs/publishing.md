@@ -7,7 +7,7 @@ continuously and publishes an unstable build; a tag cuts a release.
 
 | Trigger | Version built | Index |
 |---|---|---|
-| push to `main` | the next patch as a dev release: `0.5.1.dev7` = 7 commits after `v0.5.0` | TestPyPI, when the repo variable `PUBLISH_TESTPYPI` is `true` (the unstable channel) |
+| push to `main` | the next patch as a dev release: `0.5.2.dev7` = 7 commits after `v0.5.1` | TestPyPI, when the repo variable `PUBLISH_TESTPYPI` is `true` (the unstable channel) |
 | tag `v0.6.0rc1` (any pre-release: `aN`, `bN`, `rcN`, `.devN`) | `0.6.0rc1` | TestPyPI |
 | tag `v0.6.0` | `0.6.0` | PyPI |
 | `workflow_dispatch` | as for `main` | nothing, it builds and stops |
