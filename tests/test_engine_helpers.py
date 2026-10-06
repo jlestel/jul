@@ -1,7 +1,6 @@
 """Engine pieces that need no model."""
 
 import numpy as np
-import pytest
 
 from jul.engine import normalize, short_names, softmax
 from jul.presets import PRESETS, one_word_preset, resolve
