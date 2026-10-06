@@ -313,9 +313,7 @@ ul.mac li::before { content: ""; position: absolute; left: 0; top: .55em; width:
 .menubar .apple b.hop .ltr:nth-child(2) { animation-delay: .09s; }
 .menubar .apple b.hop .ltr:nth-child(3) { animation-delay: .18s; }
 @keyframes ltr-hop { 0%, 100% { transform: none; } 50% { transform: translateY(-5px); } }
-.hero .mac { position: relative; cursor: pointer; }
-.hero .mac svg { animation: mac-bob 2.4s steps(1) infinite; }
-.hero .mac.jump svg { animation: mac-jump .5s steps(4) both; }
+.hero .mac { position: relative; }
 @keyframes mac-bob { 0%, 100% { transform: none; } 50% { transform: translateY(-3px); } }
 @keyframes mac-jump { 0%, 100% { transform: none; } 40% { transform: translateY(-24px); } 70% { transform: translateY(-6px); } }
 .flow .ants { stroke: #000; stroke-width: 1; fill: none; stroke-dasharray: 2 8; animation: ants .6s linear infinite; }
@@ -328,6 +326,35 @@ ul.mac li::before { content: ""; position: absolute; left: 0; top: .55em; width:
 @media (prefers-reduced-motion: reduce) {
   .hero .mac svg, .flow .ants, .flow .fl-opt.def, .flow .fl-fill, .menubar .apple b .ltr { animation: none !important; }
 }
+
+/* ── the Mac talks: a question bubble, then the answer bubble ── */
+.hero .mac { display: flex; flex-direction: column; align-items: center; gap: 18px; width: 270px; }
+.bubble {
+  position: relative; width: 100%; min-height: 128px; padding: 10px 14px 12px;
+  background: #fff; border: 1px solid #000; border-radius: 12px; box-shadow: 2px 2px 0 #000;
+  font: 400 13px/1.4 var(--mono); line-height: 1.4;
+}
+.bubble::before, .bubble::after { content: ""; position: absolute; left: 50%; border: solid transparent; }
+.bubble::before { top: -15px; margin-left: -9px; border-width: 0 9px 15px; border-bottom-color: #000; }
+.bubble::after { top: -13px; margin-left: -8px; border-width: 0 8px 14px; border-bottom-color: #fff; }
+.bubble .who { font: 400 11px/1 var(--silk); text-transform: uppercase; letter-spacing: .04em; display: block; margin-bottom: 6px; }
+.bubble .st { font-style: italic; display: block; }
+.bubble .qq { display: block; margin-top: 6px; font-weight: 700; }
+.bubble .row { display: grid; grid-template-columns: 9ch 1fr 4ch; gap: 8px; align-items: center; margin-top: 4px; }
+.bubble .row.top { font-weight: 700; }
+.bubble .row i { display: block; height: 9px; border: 1px solid #000; background: #fff; }
+.bubble .row i b { display: block; height: 100%; background: var(--acc); width: 0; transition: width .5s steps(6); }
+.bubble .row span:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+.bubble.out { opacity: 0; }
+.bubble { transition: opacity .15s steps(2); }
+@media (max-width: 760px) { .hero .mac { flex-direction: row; align-items: center; width: auto; gap: 22px; }
+  .bubble { flex: 1; min-width: 0; }
+  .bubble::before { top: 50%; left: -15px; margin: -9px 0 0; border-width: 9px 15px 9px 0; border-color: transparent #000 transparent transparent; }
+  .bubble::after { top: 50%; left: -13px; margin: -8px 0 0; border-width: 8px 14px 8px 0; border-color: transparent #fff transparent transparent; } }
+@media (max-width: 420px) { .hero .mac { flex-direction: column; } .bubble { width: 100%; }
+  .bubble::before { top: -15px; left: 50%; margin: 0 0 0 -9px; border-width: 0 9px 15px; border-color: transparent transparent #000; }
+  .bubble::after { top: -13px; left: 50%; margin: 0 0 0 -8px; border-width: 0 8px 14px; border-color: transparent transparent #fff; } }
+.pillars > * { min-width: 0; }
 </style>
 </head>
 <body>
@@ -375,7 +402,8 @@ ul.mac li::before { content: ""; position: absolute; left: 0; top: .55em; width:
   <section class="dialog c12" id="top" aria-label="Welcome">
     <div class="wbody">
       <div class="hero">
-        <div class="mac"><span class="icon" data-icon="mac" data-scale="6" aria-label="JuL"></span></div>
+        <div class="mac"><span class="icon" data-icon="mac" data-scale="6" aria-label="JuL"></span>
+          <div class="bubble" id="bubble" aria-live="off"></div></div>
         <div>
           <p class="eyebrow">Just use Less · v0.5 · Apache-2.0</p>
           <h1>One JuL to<br>rule them all.</h1>
@@ -413,8 +441,8 @@ ul.mac li::before { content: ""; position: absolute; left: 0; top: .55em; width:
           <h2 class="h">Great by default.</h2>
           <p>No model to pick, no prompt to write, no layer to choose. <code>jul setup</code> downloads a model
           picked and calibrated for typed questions: probabilities you can threshold on.</p>
-<pre class="scroll">model="accurate"   <span class="dim"># the default</span>
-model="fast"       <span class="dim"># half the size</span></pre>
+<pre class="scroll">model="accurate"   <span class="dim"># default · 4B · 2.6 GB</span>
+model="fast"       <span class="dim"># 2B · 1.3 GB</span></pre>
         </div>
         <div class="pillar" id="autotune">
           <p class="num">3</p>
@@ -442,7 +470,7 @@ model="fast"       <span class="dim"># half the size</span></pre>
         <caption>Runs on what?</caption>
         <thead><tr><th>Model family<small>examples</small></th><th>MLX<small>Apple Silicon</small></th><th>PyTorch<small>NVIDIA GPU · CPU</small></th><th>ONNX<small>CPU · Lambda</small></th><th>API<small>no weights</small></th><th>autotune</th><th>jul pack</th></tr></thead>
         <tbody>
-          <tr><th>Built-in<small>accurate, fast</small></th><td class="y"></td><td class="y"></td><td class="n"></td><td class="n"></td><td class="y"></td><td class="p"></td></tr>
+          <tr><th>Built-in<small>accurate (4B), fast (2B)</small></th><td class="y"></td><td class="y"></td><td class="n"></td><td class="n"></td><td class="y"></td><td class="p"></td></tr>
           <tr><th>Embedding LLMs<small>WeMM, F2LLM, Qwen3-Embedding, Harrier</small></th><td class="y"></td><td class="y"></td><td class="p"></td><td class="n"></td><td class="y"></td><td class="y"></td></tr>
           <tr><th>Any decoder<small>MiniCPM, any instruct model</small></th><td class="y"></td><td class="y"></td><td class="p"></td><td class="n"></td><td class="y"></td><td class="y"></td></tr>
           <tr><th>Encoders<small>e5, BERT, XLM-R, jul-decision-e5-small</small></th><td class="n"></td><td class="y"></td><td class="y"></td><td class="n"></td><td class="y"></td><td class="y"></td></tr>
@@ -818,7 +846,35 @@ latency per decision, and the answer to the ticket.</pre>
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w * scale}" height="${h * scale}" shape-rendering="crispEdges"><path fill="${fill}" d="${bits(rows)}"/></svg>`;
   };
   document.querySelectorAll("[data-icon]").forEach(el => { el.innerHTML = svg(BMP[el.dataset.icon], +el.dataset.scale || 1); });
-  // ── the Mac blinks, winks now and then, and jumps when clicked; the logo letters hop ──
+
+  // ── the Mac talks: a question, then JuL's answer, over ten real examples ──
+  (() => {
+    const el = document.getElementById("bubble");
+    if (!el) return;
+    // Real outputs of model="accurate" (jul-decision-wemm-4b, PyTorch), rounded to 2 decimals.
+    const EX = [{"state": "I was charged twice this month.", "q": "Which team?", "probs": {"billing": 1.0, "technical": 0.0, "sales": 0.0}}, {"state": "The app crashes every time I open settings.", "q": "Is this a bug report?", "probs": {"yes": 0.99, "no": 0.01}}, {"state": "Best pizza I've had in years!", "q": "Sentiment?", "probs": {"positive": 1.0, "neutral": 0.0, "negative": 0.0}}, {"state": "Can I get a quote for 50 seats?", "q": "Which team?", "probs": {"sales": 1.0, "billing": 0.0, "technical": 0.0}}, {"state": "URGENT: verify your account or it will be closed", "q": "Is this spam?", "probs": {"yes": 0.84, "no": 0.16}}, {"state": "Where is my parcel? It's been 10 days.", "q": "Topic?", "probs": {"delivery": 1.0, "returns": 0.0, "product": 0.0}}, {"state": "Lakers beat the Celtics 112-108.", "q": "Section?", "probs": {"sports": 1.0, "business": 0.0, "tech": 0.0}}, {"state": "I want to cancel my subscription.", "q": "Is the customer about to churn?", "probs": {"yes": 1.0, "no": 0.0}}, {"state": "Le colis est arrivé cassé.", "q": "Sentiment?", "probs": {"negative": 1.0, "positive": 0.0, "neutral": 0.0}}, {"state": "How do I reset my password?", "q": "Which team?", "probs": {"technical": 1.0, "billing": 0.0, "sales": 0.0}}];
+    const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    const ask = e => `<span class="who">you ask</span><span class="st">“${esc(e.state)}”</span><span class="qq">${esc(e.q)}</span>`;
+    const answer = e => `<span class="who">JuL answers</span>` + Object.entries(e.probs).slice(0, 3).map(([k, p], i) =>
+      `<span class="row${i ? "" : " top"}"><span>${esc(k)}</span><i><b data-w="${Math.round(p * 100)}"></b></i><span>${p.toFixed(2)}</span></span>`).join("");
+    const show = (html, bars) => {
+      el.classList.add("out");
+      setTimeout(() => {
+        el.innerHTML = html; el.classList.remove("out");
+        if (bars) requestAnimationFrame(() => el.querySelectorAll("b[data-w]").forEach(b => { b.style.width = b.dataset.w + "%"; }));
+      }, reduced ? 0 : 160);
+    };
+    if (reduced) { el.innerHTML = ask(EX[0]) + "<br>" + answer(EX[0]); el.querySelectorAll("b[data-w]").forEach(b => { b.style.width = b.dataset.w + "%"; }); return; }
+    let i = 0;
+    const step = () => {
+      const e = EX[i];
+      show(ask(e));
+      setTimeout(() => show(answer(e), true), 2600);
+      i = (i + 1) % EX.length;
+    };
+    step(); setInterval(step, 5600);
+  })();
+  // ── the Mac blinks and winks now and then; the logo letters hop ──
   (() => {
     const face = (l, r) => BMP.mac.map((row, y) => {
       if (y !== 4) return row;   // the eyes are the two dots of row 4 (row 6 holds the smile's corners)
@@ -838,8 +894,6 @@ latency per decision, and the answer to the ticket.</pre>
     let n = 0;
     setInterval(() => { n++; if (n % 4 === 0) blink("open", "shut", 420); else blink(); }, 3200);
     const mac = host.closest(".mac");
-    mac.addEventListener("click", () => { mac.classList.remove("jump"); void mac.offsetWidth; mac.classList.add("jump"); blink("shut", "shut", 300); hopLogo(); });
-    mac.addEventListener("animationend", () => mac.classList.remove("jump"));
   })();
   const uri = rows => `url("data:image/svg+xml,${encodeURIComponent(svg(rows))}")`;
   document.documentElement.style.setProperty("--arrow-r", uri(BMP.arrowR));
@@ -888,9 +942,9 @@ latency per decision, and the answer to the ticket.</pre>
     // [label, sub, one-line explanation]
     const S = [
       { name: "Model", q: "What reads it", icon: "mac",
-        def: ["accurate", "the default model", "accurate — the default model, jul-decision-wemm-4b. What reads your text when you choose nothing."],
+        def: ["accurate", "the default · 4B", "accurate — the default model, jul-decision-wemm-4b: 4B parameters, 2.6 GB on a Mac in 4-bit. What reads your text when you choose nothing."],
         alts: [
-          ["fast", "half the size", "fast — half the size of the default: jul-decision-minicpm5-2b."],
+          ["fast", "2B · half the size", "fast — jul-decision-minicpm5-2b: 2B parameters, 1.3 GB on a Mac in 4-bit, half the size of the default."],
           ["any Hugging Face model", "LLM, embedding model, encoder, decision model", "any Hugging Face model — an LLM, an embedding model, a small encoder (e5, BERT, XLM-R) or a decision model: jul models add fits it once. See the table below."],
           ["an embeddings API", "no weights here: Ollama · OpenAI · Mistral · Voyage", "an embeddings API — the model runs elsewhere, JuL reads its embeddings over HTTP (--backend api)."],
           ["Laya", "its own runtime: no autotune, no pack", "Laya — a decision model with its own runtime: JuL hands it the questions; autotune and jul pack do not apply."]] },
