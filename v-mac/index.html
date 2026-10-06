@@ -291,6 +291,11 @@ ul.mac li::before { content: ""; position: absolute; left: 0; top: .55em; width:
 .kpi .big small { color: #000; }
 .kpi .bar i { background: var(--acc); }
 .compat td.y::before { color: var(--acc); }
+
+/* ── finer menu bar, closer to the real 20px System 1 bar ── */
+.menubar { height: 26px !important; font-size: 20px !important; padding: 0 8px !important; }
+.menubar a, .menubar button { padding: 0 9px !important; }
+@media (max-width: 560px) { .menubar { font-size: 18px !important; } .menubar a, .menubar button { padding: 0 6px !important; } }
 </style>
 </head>
 <body>
