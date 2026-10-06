@@ -855,8 +855,8 @@ latency per decision, and the answer to the ticket.</pre>
       S.forEach((st, i) => {
         const cx = stateW + colW * i + (colW >> 1), bx = cx - (BW >> 1), rows = BMP[st.icon];
         g += pix(rows, cx - rows[0].length, 36 - rows.length * 2, 2);
-        g += txt(cx, 64, st.name, "fl-name", 'text-anchor="middle"');
-        g += txt(cx, 80, `${i + 1} · ${st.q}`, "fl-q", 'text-anchor="middle"');
+        g += txt(cx, 64, `${i + 1} · ${st.name}`, "fl-name", 'text-anchor="middle"');
+        g += txt(cx, 80, st.q, "fl-q", 'text-anchor="middle"');
         top += optBox(`${i}-d`, st.def, bx, Y0 - 27, BW, true, 54).svg;
         g += txt(bx, Y0 + 46, st.or || "or:", "fl-s11");
         const tx = bx - 10; let y = Y0 + 56, branches = "", lastMy = Y0 + 10;
