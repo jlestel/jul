@@ -185,6 +185,25 @@ p + p, p + pre, pre + p { margin-top: 1em; }
 .w-body > .term { flex: 1; }
 .term-bar { display: flex; justify-content: space-between; gap: 2ch; flex-wrap: wrap; margin-top: .8em; color: var(--dim); }
 
+/* ── pipeline: stages left to right, alternatives stacked ── */
+.pipe { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); column-gap: 4ch; margin-top: 1.6em; }
+.stage { position: relative; min-width: 0; }
+.stage:not(:last-child)::after { content: "─►"; position: absolute; right: -3.2ch; top: 3.1em; color: var(--ph); white-space: pre; }
+.stage .eyebrow { margin-bottom: .2em; }
+.stage h3 { font-family: var(--crt); font-weight: 400; font-size: 1.45rem; line-height: 1.1; margin-bottom: .7em; white-space: nowrap; }
+.stage ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .45em; }
+.stage li { border: 1px solid var(--faint); padding: .1em 1ch; }
+.stage li.def { min-height: 4.4em; font-weight: 700; background: var(--ph); color: var(--ink); text-shadow: none; border-color: var(--ph); }
+.stage li small { display: block; font-size: .85em; opacity: .8; }
+.stage li.def small { opacity: 1; }
+.stage code, .stage .nw { white-space: nowrap; }
+.pipe-legend { margin-top: 1.4em; color: var(--dim); }
+.pipe-legend .k { background: var(--ph); color: var(--ink); text-shadow: none; padding: 0 .6ch; }
+@media (max-width: 1020px) {
+  .pipe { grid-template-columns: minmax(0, 1fr); gap: 2.2em; }
+  .stage:not(:last-child)::after { content: "│\A▼"; white-space: pre; right: auto; left: 50%; top: auto; bottom: -2.4em; line-height: 1; }
+}
+
 /* ── choose your model ── */
 .vs-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: .4em 3ch; }
 .vs-head .eyebrow { flex: 1 1 100%; }
@@ -357,6 +376,69 @@ model="fast"       <span class="dim"># half the size</span></pre>
     </div>
   </section>
 
+
+  <!-- ── PIPELINE ─────────────────────────────────────────── -->
+  <section class="win c12" data-title="PIPELINE.EXE" id="pipeline">
+    <p class="eyebrow">FROM A TEXT TO A DECISION&nbsp;· PICK ONE OPTION PER STEP, OR KEEP THE DEFAULT</p>
+    <h2 class="h">Your model, your hardware, your way out.</h2>
+    <div class="pipe">
+      <div class="stage">
+        <p class="eyebrow">1&nbsp;· MODEL</p>
+        <h3>What reads it</h3>
+        <ul>
+          <li class="def">accurate<small>the default model</small></li>
+          <li>fast<small>half the size</small></li>
+          <li>any Hugging Face model<small>jul models add</small></li>
+          <li>a small encoder<small>e5, BERT, XLM-R</small></li>
+          <li>an embeddings API<small>Ollama&nbsp;· OpenAI&nbsp;· Mistral&nbsp;· Voyage</small></li>
+          <li>Laya<small>its own runtime</small></li>
+        </ul>
+      </div>
+      <div class="stage">
+        <p class="eyebrow">2&nbsp;· HARDWARE</p>
+        <h3>Where it runs</h3>
+        <ul>
+          <li class="def">auto<small>MLX on a Mac, PyTorch elsewhere</small></li>
+          <li>Apple Silicon<small>MLX</small></li>
+          <li>NVIDIA GPU<small>PyTorch&nbsp;· CUDA</small></li>
+          <li>CPU<small>PyTorch, or ONNX without torch</small></li>
+          <li>no weights at all<small>--backend api</small></li>
+        </ul>
+      </div>
+      <div class="stage">
+        <p class="eyebrow">3&nbsp;· YOUR DATA</p>
+        <h3>How it fits</h3>
+        <ul>
+          <li class="def">zero-shot<small>nothing to give</small></li>
+          <li>a Context<small>~50 unlabeled examples</small></li>
+          <li>autotune<small>labeled examples, kept if it wins</small></li>
+          <li>jul synth<small>too few labels? synthesize them</small></li>
+        </ul>
+      </div>
+      <div class="stage">
+        <p class="eyebrow">4&nbsp;· INTEGRATION</p>
+        <h3>How you call it</h3>
+        <ul>
+          <li class="def">Python<small>the Jev SDK calls</small></li>
+          <li>the CLI<small>jul ask&nbsp;· jul run</small></li>
+          <li>HTTP<small>jul serve, the Jev protocol</small></li>
+          <li>a Lambda<small>jul pack</small></li>
+        </ul>
+      </div>
+      <div class="stage">
+        <p class="eyebrow">5&nbsp;· WHEN UNSURE</p>
+        <h3>Who gets the rest</h3>
+        <ul>
+          <li class="def">nobody<small>everything stays local</small></li>
+          <li>Jev<small>TypeSafe, hosted</small></li>
+          <li>Clef&nbsp;· Nimble<small>cloudflare&nbsp;· ollama</small></li>
+          <li>any System One server<small>a Kev server, another jul serve</small></li>
+        </ul>
+      </div>
+    </div>
+    <p class="pipe-legend"><span class="k">highlighted</span> = what you get without choosing anything.
+      <a href="docs/hub.html">Every model, backend and provider →</a></p>
+  </section>
 
   <section class="win c12" data-title="CHOOSE.EXE" id="vs">
     <div class="vs-head">
