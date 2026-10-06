@@ -1,41 +1,23 @@
-// JuL docs: box-drawn windows, phosphor, copy buttons, the table of contents that follows, and search.
+// JuL docs: Mac windows, copy buttons, the table of contents that follows, and search.
 (() => {
   const store = {
     get(k) { try { return localStorage.getItem(k); } catch { return null; } },
     set(k, v) { try { localStorage.setItem(k, v); } catch {} },
   };
 
-  // ── windows: frame each one in box-drawing characters, as on the home page ──
-  const H = "─".repeat(600), V = "│\n".repeat(600);
+  // ── windows: a Mac title bar (stripes, close box, centred title) on each one ──
   document.querySelectorAll(".win").forEach(win => {
     const body = document.createElement("div");
-    body.className = "w-body";
+    body.className = "wbody";
     while (win.firstChild) body.appendChild(win.firstChild);
-    win.innerHTML =
-      `<div class="w-top" aria-hidden="true"><span>┌─</span><span>[■]</span><span>─</span><span class="w-title"></span>` +
-      `<span class="w-fill">${H}</span><span>─┐</span></div>` +
-      `<div class="w-mid"><span class="w-side" aria-hidden="true"><span>${V}</span></span>` +
-      `<span class="w-side" aria-hidden="true"><span>${V}</span></span></div>` +
-      `<div class="w-bot" aria-hidden="true"><span>└</span><span class="w-fill">${H}</span><span>┘</span></div>`;
-    win.querySelector(".w-title").textContent = win.dataset.title || "";
-    const mid = win.querySelector(".w-mid");
-    mid.insertBefore(body, mid.lastElementChild);
-    win.classList.add("ascii");
+    const bar = document.createElement("div");
+    bar.className = "tbar";
+    bar.setAttribute("aria-hidden", "true");
+    bar.innerHTML = '<span class="cbox"></span><span class="ttl"></span>';
+    bar.querySelector(".ttl").textContent = win.dataset.title || "";
+    win.append(bar, body);
+    win.classList.add("framed");
   });
-
-  // ── phosphor, shared with the home page ──
-  const phosphors = [["amber", "AMB"], ["green", "GRN"], ["white", "WHT"]];
-  if (store.get("jul-konami")) phosphors.push(["rgb", "RGB"]);
-  let ph = Math.max(0, phosphors.findIndex(p => p[0] === store.get("jul-phosphor")));
-  const applyPh = () => {
-    document.documentElement.dataset.phosphor = phosphors[ph][0];
-    document.getElementById("ph-name").textContent = phosphors[ph][1];
-    document.querySelector('meta[name="theme-color"]').content =
-      getComputedStyle(document.documentElement).getPropertyValue("--bg").trim();
-  };
-  applyPh();
-  const nextPh = () => { ph = (ph + 1) % phosphors.length; store.set("jul-phosphor", phosphors[ph][0]); applyPh(); };
-  document.getElementById("phosphor").addEventListener("click", nextPh);
 
   // ── mobile: fold the contents ──
   const toggle = document.querySelector(".nav-toggle");
@@ -47,12 +29,12 @@
   // ── copy buttons on code blocks ──
   document.querySelectorAll(".prose pre").forEach(pre => {
     const b = document.createElement("button");
-    b.type = "button"; b.className = "copy"; b.textContent = "[ COPY ]";
+    b.type = "button"; b.className = "copy"; b.textContent = "Copy";
     b.addEventListener("click", async () => {
-      const text = pre.querySelector("code") ? pre.querySelector("code").innerText : pre.innerText.replace(/\[ COPY \]$/, "");
-      try { await navigator.clipboard.writeText(text.replace(/\n$/, "")); b.textContent = "[ COPIED ✓ ]"; }
-      catch { b.textContent = "[ ⌘C ]"; }
-      setTimeout(() => { b.textContent = "[ COPY ]"; }, 1500);
+      const text = pre.querySelector("code") ? pre.querySelector("code").innerText : pre.innerText.replace(/Copy$/, "");
+      try { await navigator.clipboard.writeText(text.replace(/\n$/, "")); b.textContent = "Copied ✓"; }
+      catch { b.textContent = "⌘C"; }
+      setTimeout(() => { b.textContent = "Copy"; }, 1500);
     });
     pre.appendChild(b);
   });
@@ -100,7 +82,7 @@
     terms.forEach(w => { s = s.replace(new RegExp("(" + w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ")", "ig"), "<mark>$1</mark>"); });
     return s;
   };
-  const body = () => box.querySelector(".w-body") || box;
+  const body = () => box.querySelector(".wbody") || box;
   const show = async () => {
     const v = q.value.trim().toLowerCase();
     if (v.length < 2) { box.hidden = true; return; }
@@ -139,7 +121,6 @@
     const k = e.key.toLowerCase();
     const go = { d: "index.html", q: "quickstart.html", a: "python-api.html", l: "cli-reference.html" };
     if (e.key === "/") { e.preventDefault(); q.focus(); }
-    else if (k === "p") nextPh();
     else if (k === "g") location.href = "https://github.com/usejul/jul";
     else if (go[k]) location.href = go[k];
   });
