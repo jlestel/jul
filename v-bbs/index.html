@@ -1,0 +1,968 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JuL — Just use Less</title>
+<meta name="description" content="One JuL to rule them all: typed decisions from any model, good out of the box, autotuned on your labels.">
+<meta property="og:title" content="JuL — Just use Less">
+<meta property="og:description" content="Any model, tested as a decider. Local by default, escalate only the hard ones. Same calls as Jev's SDK.">
+<meta name="theme-color" content="#0a0600">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230a0600'/%3E%3Ctext x='2' y='12' font-family='monospace' font-size='11' fill='%23ffb000'%3E%3E_%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ph: #ffb000;          /* phosphor: amber by default */
+  --ph-rgb: 255, 176, 0;
+  --bg: #0a0600;
+  --ink: #0a0600;         /* text on inverted phosphor */
+  --dim: rgba(var(--ph-rgb), .78);
+  --faint: rgba(var(--ph-rgb), .22);
+  --glow: rgba(var(--ph-rgb), .5);
+  --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  --crt: "VT323", var(--mono);
+  --fs: 15px;
+}
+:root[data-phosphor="green"] { --ph: #33ff66; --ph-rgb: 51, 255, 102; --bg: #050805; --ink: #050805; }
+:root[data-phosphor="white"] { --ph: #e8f0ff; --ph-rgb: 232, 240, 255; --bg: #07080b; --ink: #07080b; }
+
+* { box-sizing: border-box; }
+html { background: var(--bg); scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ph);
+  font: 400 var(--fs)/1.6 var(--mono);
+  text-shadow: 0 0 2px var(--glow);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  font-variant-ligatures: none;
+}
+::selection { background: var(--ph); color: var(--ink); text-shadow: none; }
+
+/* CRT: scanlines barely there, soft vignette at the edges only */
+body::before, body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 100; }
+body::before { background: repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0 3px, rgba(0,0,0,.07) 3px 4px); }
+body::after {
+  background: radial-gradient(ellipse at center, rgba(0,0,0,0) 70%, rgba(0,0,0,.45) 100%);
+  animation: flicker 7s infinite steps(1);
+}
+@keyframes flicker { 0%, 97%, 100% { opacity: 1; } 98% { opacity: .9; } }
+
+a { color: inherit; text-decoration: underline dashed 1px; text-underline-offset: 3px; }
+a:hover, a:focus-visible, button:hover, button:focus-visible { background: var(--ph); color: var(--ink); text-shadow: none; outline: none; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+h1, h2, h3, p, ul { margin: 0; }
+ul { padding: 0; list-style: none; }
+pre { margin: 0; font: inherit; line-height: 1.35; }
+code { font: inherit; }
+.dim { color: var(--dim); }
+.inv { background: var(--ph); color: var(--ink); text-shadow: none; padding: 0 .5ch; }
+.blink { animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+[hidden] { display: none !important; }
+
+/* ── the one screen ──────────────────────────────────────────────────── */
+.screen { max-width: 96ch; margin: 0 auto; padding: 1.5em 2ch 6em; }
+section { padding: 5em 0 1em; scroll-margin-top: 1em; }
+.rule, .rule2 { overflow: hidden; white-space: pre; line-height: 1; color: var(--dim); }
+.rule::before  { content: "════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════"; }
+.rule2::before { content: "────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────"; }
+.rule { color: var(--ph); }
+
+/* ── top of screen: status line + BBS menu ──────────────────────────── */
+.status { display: flex; flex-wrap: wrap; gap: .2em 2ch; justify-content: space-between; color: var(--dim); padding: .3em 0; }
+.status b { font-weight: 400; color: var(--ph); }
+.status button { color: var(--dim); }
+.status button:hover, .status button:focus-visible { color: var(--ink); }
+.menu { padding: 1.1em 0 1.3em; font-family: var(--crt); font-size: 1.55rem; line-height: 1.4; }
+.menu ul { display: flex; flex-wrap: wrap; gap: .2em 3ch; }
+.menu a, .menu button { text-decoration: none; white-space: nowrap; font-family: inherit; font-size: inherit; }
+.menu .key { background: var(--ph); color: var(--ink); text-shadow: none; padding: 0 .3ch; margin-right: .5ch; }
+.menu a:hover .key, .menu button:hover .key, .menu a:focus-visible .key, .menu button:focus-visible .key { background: var(--ink); color: var(--ph); }
+.menu .prompt-line { margin-top: .6em; color: var(--dim); font-family: var(--mono); font-size: var(--fs); }
+
+/* ── keyboard help + cheat, inline, no windows ─────────────────────────── */
+.inline-box { margin-top: 1.5em; padding: 1em 2ch; border-top: 1px dashed var(--dim); border-bottom: 1px dashed var(--dim); }
+
+/* ── figlet headings ─────────────────────────────────────────────────── */
+.fig { line-height: 1.05; font-size: 16px; font-weight: 700; margin-bottom: 1.2em; white-space: pre; overflow: hidden; }
+@media (max-width: 1000px) { .fig.big { font-size: 12px; } }
+.fig.small { display: none; font-size: 1.15rem; line-height: 1.1; font-weight: 400; text-shadow: none; }
+.eyebrow { font-family: var(--crt); font-size: 1.35rem; line-height: 1.3; color: var(--dim); letter-spacing: .04em; text-transform: uppercase; }
+h2.h { font-family: var(--crt); font-weight: 400; font-size: 2.3rem; line-height: 1.05; margin: .25em 0 .7em; }
+h3 { font-family: var(--crt); font-weight: 400; font-size: 1.6rem; line-height: 1.1; }
+.sh { margin-bottom: 2.6em; }
+p + p, p + pre, pre + p, pre + pre, ul + p, p + ul { margin-top: 1em; }
+.lead { max-width: 64ch; }
+.note { color: var(--dim); }
+.scroll { overflow-x: auto; scrollbar-color: var(--ph) var(--bg); max-width: 100%; }
+
+/* ── hero ─────────────────────────────────────────────────────────────── */
+.hero { padding-top: 3.5em; }
+.logo { font-size: 20px; line-height: 1; font-weight: 700; white-space: pre; overflow: hidden; text-shadow: none; }
+@media (max-width: 640px) { .logo { font-size: 13px; } }
+.hero h1 { font-family: var(--crt); font-weight: 400; font-size: clamp(3rem, 8vw, 5.4rem); line-height: .92; margin: .45em 0 .35em; }
+.hero .tag { max-width: 56ch; font-size: 1.1em; line-height: 1.7; }
+.hero .tag b { font-weight: 400; background: var(--ph); color: var(--ink); text-shadow: none; padding: 0 .4ch; }
+.cta { display: flex; gap: 1em 3ch; flex-wrap: wrap; margin-top: 2em; font-family: var(--crt); font-size: 1.7rem; }
+.cta a { text-decoration: none; padding: 0 .4ch; }
+.cta a.primary { background: var(--ph); color: var(--ink); text-shadow: none; }
+.cta a.primary:hover { background: var(--bg); color: var(--ph); outline: 1px solid var(--ph); }
+
+/* ── three ideas, numbered like a BBS board list ───────────────────────── */
+.pillars { display: grid; gap: 3.2em; }
+.pillar { display: grid; grid-template-columns: 7ch minmax(0, 1fr); gap: 0 2ch; }
+.pillar .num { font-family: var(--crt); font-size: 4.2rem; line-height: .8; color: var(--dim); }
+.pillar h2.h { font-size: 2rem; margin-top: 0; margin-bottom: .45em; }
+.pillar p { max-width: 62ch; }
+.pillar pre { margin-top: 1.1em; color: var(--dim); }
+.chips { display: flex; flex-wrap: wrap; gap: .5em 1ch; margin-top: 1.1em; color: var(--dim); }
+.chips span { white-space: nowrap; }
+.chips span::before { content: "["; } .chips span::after { content: "]"; }
+
+/* ── pipeline: 5 columns, one choice per column ────────────────────────── */
+.pipe { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); column-gap: 3ch; margin-top: 2em; font-size: .93em; }
+.stage { position: relative; min-width: 0; }
+.stage:not(:last-child)::after { content: "─►"; position: absolute; right: -2.9ch; top: 2.6em; color: var(--dim); white-space: pre; }
+.stage .eyebrow { font-size: 1.15rem; margin-bottom: .1em; }
+.stage h3 { font-size: 1.4rem; margin-bottom: .8em; }
+.stage ul { display: grid; gap: .55em; }
+.stage li { padding: 0; }
+.stage li::before { content: "· "; color: var(--dim); }
+.stage li.def { display: block; background: var(--ph); color: var(--ink); text-shadow: none; padding: .15em 1ch; font-weight: 700; margin-left: -1ch; margin-right: -1ch; }
+.stage li.def::before { content: "► "; color: var(--ink); }
+.stage li small { display: block; font-size: .86em; color: var(--dim); padding-left: 2ch; }
+.stage li.def small { color: var(--ink); font-weight: 400; }
+.stage code, .stage .nw { white-space: nowrap; }
+.pipe-legend { margin-top: 2.2em; color: var(--dim); }
+.pipe-legend .k { background: var(--ph); color: var(--ink); text-shadow: none; padding: 0 .6ch; }
+
+/* ── choose your model ───────────────────────────────────────────────── */
+.chart-bar { display: flex; flex-wrap: wrap; gap: .35em 1.5ch; margin-top: .6em; }
+.chart-bar button { color: var(--dim); }
+.chart-bar button[aria-pressed="true"] { background: var(--ph); color: var(--ink); text-shadow: none; }
+.chart-bar button:hover, .chart-bar button:focus-visible { background: none; color: var(--ph); text-shadow: 0 0 3px var(--glow); outline: 1px dashed var(--ph); }
+.chart-bar button[aria-pressed="true"]:hover, .chart-bar button[aria-pressed="true"]:focus-visible { background: var(--ph); color: var(--ink); text-shadow: none; }
+.kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2em 4ch; margin-top: 2.4em; }
+.kpi .big { font-family: var(--crt); font-size: clamp(3.4rem, 7vw, 5rem); line-height: .9; margin-top: .1em; }
+.kpi .big small { font-size: .45em; margin-left: .3ch; }
+.kpi .delta { margin-top: .4em; min-height: 1.5em; color: var(--dim); }
+.minibars { margin-top: .5em; line-height: 1.35; overflow: hidden; }
+.vs-foot { margin-top: 2.2em; padding-top: 1em; border-top: 1px dashed var(--dim); }
+
+/* ── terminal demo ───────────────────────────────────────────────────── */
+.term { white-space: pre-wrap; word-break: break-word; line-height: 1.45; font-size: 1.03em; min-height: 19em; }
+.term .cmd::before { content: "$ "; color: var(--dim); }
+.term .ok { color: var(--dim); }
+.term .out { margin: .5em 0; }
+.term-bar { display: flex; justify-content: space-between; gap: 1em 2ch; flex-wrap: wrap; margin-top: 1.2em; color: var(--dim); }
+.term-bar button { color: var(--ph); }
+
+/* ── go further ──────────────────────────────────────────────────────── */
+.steps { display: grid; gap: 2.6em; margin-top: 1.4em; }
+.steps > div { display: grid; grid-template-columns: 12ch minmax(0, 1fr); gap: .3em 2ch; }
+.steps .eyebrow { padding-top: .1em; }
+.steps p { max-width: 60ch; }
+.steps .note { margin-top: .6em; }
+
+/* ── lists ───────────────────────────────────────────────────────────── */
+ul.bbs li { padding-left: 3ch; text-indent: -3ch; margin-bottom: .55em; }
+ul.bbs li::before { content: "»  "; color: var(--dim); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 1em 4ch; margin-top: 1em; }
+
+/* ── install + agent prompt ──────────────────────────────────────────── */
+.prompt { margin-top: 1.2em; padding: 1em 2ch; border: 1px dashed var(--dim); white-space: pre-wrap; word-break: break-word; font-size: .9em; max-height: 24em; overflow-y: auto; }
+#copy-prompt { color: var(--ph); white-space: nowrap; }
+
+/* ── footer ──────────────────────────────────────────────────────────── */
+.foot { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2em 5ch; align-items: start; }
+.credits { margin-top: 1.2em; }
+.life { line-height: 1; letter-spacing: .1ch; color: var(--dim); white-space: pre; }
+.life b { color: var(--ph); font-weight: 400; }
+
+/* ── boot screen ─────────────────────────────────────────────────────── */
+#boot {
+  position: fixed; inset: 0; z-index: 90; background: var(--bg);
+  padding: 2em 3ch; font-family: var(--crt); font-size: clamp(1.15rem, 2.4vw, 1.6rem); line-height: 1.25;
+  white-space: pre-wrap; cursor: pointer;
+}
+#boot .skip { position: absolute; right: 3ch; bottom: 1.5em; color: var(--dim); }
+
+/* ── unlocked phosphor ───────────────────────────────────────────────── */
+:root[data-phosphor="rgb"] .screen { animation: hue 5s linear infinite; }
+@keyframes hue { to { filter: hue-rotate(360deg); } }
+
+/* ── small screens: smaller type, small figlets, everything stacks ───── */
+@media (max-width: 900px) {
+  .pipe { grid-template-columns: minmax(0, 1fr); gap: 2.4em; }
+  .stage:not(:last-child)::after { content: "│\A▼"; right: auto; left: 2ch; top: auto; bottom: -2.2em; line-height: 1; }
+  .kpis { grid-template-columns: 1fr; }
+  .foot { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  :root { --fs: 13px; }
+  .screen { padding: 1em 1.5ch 4em; }
+  section { padding-top: 3.5em; }
+  .fig.big { display: none; }
+  .fig.small { display: block; }
+  .menu { font-size: 1.35rem; }
+  .menu ul { gap: .1em 2ch; }
+  .pillar { grid-template-columns: 1fr; gap: .3em; }
+  .pillar .num { font-size: 3rem; }
+  .steps > div { grid-template-columns: 1fr; }
+  .two { grid-template-columns: 1fr; }
+  .hide-sm { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::after, .blink { animation: none; }
+  :root[data-phosphor="rgb"] .screen { animation: none; filter: hue-rotate(160deg); }
+  html { scroll-behavior: auto; }
+}
+</style>
+</head>
+<body>
+
+<div id="boot" hidden aria-hidden="true"><span id="boot-text"></span><span class="blink">█</span><span class="skip">press any key</span></div>
+
+<div class="screen">
+
+  <!-- ── status line + main menu ───────────────────────────────────── -->
+  <header id="top">
+    <div class="status" aria-label="Status">
+      <span><b>JuL BBS</b> · NODE 1 · v0.5 · APACHE-2.0</span>
+      <span><button id="phosphor" type="button" title="Change phosphor">PHOSPHOR:<span id="ph-name">AMB</span></button> <span class="hide-sm" id="clock" aria-hidden="true">00:00:00</span></span>
+    </div>
+    <div class="rule" aria-hidden="true"></div>
+    <nav class="menu" aria-label="Main">
+      <ul>
+        <li><a href="#install"><span class="key">1</span>Install</a></li>
+        <li><a href="#autotune"><span class="key">2</span>Autotune</a></li>
+        <li><a href="#new"><span class="key">3</span>New</a></li>
+        <li><a href="../docs/"><span class="key">D</span>ocs</a></li>
+        <li><a href="https://github.com/usejul/jul"><span class="key">G</span>itHub</a></li>
+        <li><button id="keys" type="button" aria-expanded="false" aria-controls="help"><span class="key">?</span>Keys</button></li>
+      </ul>
+      <p class="prompt-line">Make your selection: <span class="blink">█</span></p>
+    </nav>
+    <div class="rule" aria-hidden="true"></div>
+
+    <pre class="inline-box" id="help" hidden>  1 2 3 ........ Install · Autotune · New
+  D ............ the documentation
+  G ............ GitHub
+  P ............ change phosphor
+  R ............ run the demo again
+  C ............ copy the install prompt
+  ? ............ this help
+  Esc .......... close
+
+  <span class="dim">psst. try the old code.</span></pre>
+
+    <pre class="inline-box" id="cheat" hidden>  ↑ ↑ ↓ ↓ ← → ← → B A
+
+  CHEAT CODE ACCEPTED
+  ───────────────────────────────
+  +30 LIVES ............... OK
+  output_tokens ........... still 0
+  latency ................. still 55 ms
+                            (we checked)
+  UNLOCKED ................ PHOSPHOR:RGB
+
+  <span class="dim">[ Esc ] back to work</span></pre>
+  </header>
+
+  <!-- ── HERO ───────────────────────────────────────────────── -->
+  <section class="hero">
+<pre class="logo" aria-label="JuL">     ██╗         ██╗
+     ██║         ██║
+     ██║██╗   ██╗██║
+██   ██║██║   ██║██║
+╚█████╔╝╚██████╔╝███████╗
+ ╚════╝  ╚═════╝ ╚══════╝</pre>
+    <p class="eyebrow" style="margin-top:1.6em">Just use Less · v0.5 · Apache-2.0</p>
+    <h1>One JuL to<br>rule them all.</h1>
+    <p class="tag">
+      Typed decisions from <b>any model</b>. <b>Good out of the box</b>.
+      <b>Autotuned</b> on your labels when you want more.
+    </p>
+    <div class="cta">
+      <a class="primary" href="#install">[ INSTALL ]</a>
+      <a href="../docs/">[ DOCS ]</a>
+    </div>
+    <p class="note" style="margin-top:2em">Local by default: 0 tokens generated · 0 bytes sent · no key.</p>
+  </section>
+
+  <div class="rule" aria-hidden="true"></div>
+
+  <!-- ── THE THREE IDEAS ────────────────────────────────────── -->
+  <section id="why">
+    <div class="sh">
+<pre class="fig big" aria-hidden="true"> _       ____  ____  __
+| |     / / / / /\ \/ /
+| | /| / / /_/ /  \  /
+| |/ |/ / __  /   / /
+|__/|__/_/ /_/   /_/</pre>
+<pre class="fig small" aria-hidden="true">╦ ╦╦ ╦╦ ╦
+║║║╠═╣╚╦╝
+╚╩╝╩ ╩ ╩</pre>
+      <p class="eyebrow">The three ideas</p>
+    </div>
+    <div class="pillars">
+      <div class="pillar" id="anything">
+        <p class="num">1</p>
+        <div>
+          <h2 class="h">Plug in anything.</h2>
+          <p>Run a model, or route to a server. Same <code>Choice</code> / <code>Noul</code> / <code>Score</code>
+          calls, same response, whatever answers.</p>
+          <div class="chips">
+            <span>Hugging Face</span><span>Kev models</span><span>Laya</span><span>Encoders · ONNX</span>
+            <span>Ollama</span><span>OpenAI</span><span>Mistral</span><span>Jev</span><span>Clef</span><span>your fine-tune</span>
+          </div>
+        </div>
+      </div>
+      <div class="pillar" id="default">
+        <p class="num">2</p>
+        <div>
+          <h2 class="h">Great by default.</h2>
+          <p>No model to pick, no prompt to write, no layer to choose. <code>jul setup</code> downloads a model
+          picked and calibrated for typed questions: probabilities you can threshold on.</p>
+<pre>model="accurate"   <span class="dim"># the default</span>
+model="fast"       <span class="dim"># half the size</span></pre>
+        </div>
+      </div>
+      <div class="pillar" id="autotune">
+        <p class="num">3</p>
+        <div>
+          <h2 class="h">Autotune the rest.</h2>
+          <p>Give it labeled examples: a small head is trained in seconds, <b>kept only if it beats</b> the
+          default on examples it never saw. The model is untouched, calls stay as fast.</p>
+<pre>jul autotune tickets \
+  --questions questions.yaml \
+  --labeled labeled.jsonl</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="rule" aria-hidden="true"></div>
+
+  <!-- ── PIPELINE ─────────────────────────────────────────── -->
+  <section id="pipeline">
+    <div class="sh">
+<pre class="fig big" aria-hidden="true">    ____  ________  ________    _____   ________
+   / __ \/  _/ __ \/ ____/ /   /  _/ | / / ____/
+  / /_/ // // /_/ / __/ / /    / //  |/ / __/
+ / ____// // ____/ /___/ /____/ // /|  / /___
+/_/   /___/_/   /_____/_____/___/_/ |_/_____/</pre>
+<pre class="fig small" aria-hidden="true">╔═╗╦╔═╗╔═╗╦  ╦╔╗╔╔═╗
+╠═╝║╠═╝║╣ ║  ║║║║║╣
+╩  ╩╩  ╚═╝╩═╝╩╝╚╝╚═╝</pre>
+      <p class="eyebrow">From a text to a decision&nbsp;· pick one option per step, or keep the default</p>
+      <h2 class="h">Your model, your hardware, your way out.</h2>
+    </div>
+    <div class="pipe">
+      <div class="stage">
+        <p class="eyebrow">1&nbsp;· MODEL</p>
+        <h3>What reads it</h3>
+        <ul>
+          <li class="def">accurate<small>the default model</small></li>
+          <li>fast<small>half the size</small></li>
+          <li>any Hugging Face model<small>jul models add</small></li>
+          <li>a small encoder<small>e5, BERT, XLM-R</small></li>
+          <li>an embeddings API<small>Ollama&nbsp;· OpenAI&nbsp;· Mistral&nbsp;· Voyage</small></li>
+          <li>Laya<small>its own runtime</small></li>
+        </ul>
+      </div>
+      <div class="stage">
+        <p class="eyebrow">2&nbsp;· HARDWARE</p>
+        <h3>Where it runs</h3>
+        <ul>
+          <li class="def">auto<small>MLX on a Mac, PyTorch elsewhere</small></li>
+          <li>Apple Silicon<small>MLX</small></li>
+          <li>NVIDIA GPU<small>PyTorch&nbsp;· CUDA</small></li>
+          <li>CPU<small>PyTorch, or ONNX without torch</small></li>
+          <li>no weights at all<small>--backend api</small></li>
+        </ul>
+      </div>
+      <div class="stage">
+        <p class="eyebrow">3&nbsp;· YOUR DATA</p>
+        <h3>How it fits</h3>
+        <ul>
+          <li class="def">zero-shot<small>nothing to give</small></li>
+          <li>a Context<small>~50 unlabeled examples</small></li>
+          <li>autotune<small>labeled examples, kept if it wins</small></li>
+          <li>jul synth<small>too few labels? synthesize them</small></li>
+        </ul>
+      </div>
+      <div class="stage">
+        <p class="eyebrow">4&nbsp;· INTEGRATION</p>
+        <h3>How you call it</h3>
+        <ul>
+          <li class="def">Python<small>the Jev SDK calls</small></li>
+          <li>the CLI<small>jul ask&nbsp;· jul run</small></li>
+          <li>HTTP<small>jul serve, the Jev protocol</small></li>
+          <li>a Lambda<small>jul pack</small></li>
+        </ul>
+      </div>
+      <div class="stage">
+        <p class="eyebrow">5&nbsp;· WHEN UNSURE</p>
+        <h3>Who gets the rest</h3>
+        <ul>
+          <li class="def">nobody<small>everything stays local</small></li>
+          <li>Jev<small>TypeSafe, hosted</small></li>
+          <li>Clef&nbsp;· Nimble<small>cloudflare&nbsp;· ollama</small></li>
+          <li>any System One server<small>a Kev server, another jul serve</small></li>
+        </ul>
+      </div>
+    </div>
+    <p class="pipe-legend"><span class="k">highlighted</span> = what you get without choosing anything.
+      <a href="../docs/hub.html">Every model, backend and provider →</a></p>
+  </section>
+
+  <div class="rule" aria-hidden="true"></div>
+
+  <!-- ── CHOOSE ───────────────────────────────────────────── -->
+  <section id="vs">
+    <div class="sh">
+<pre class="fig big" aria-hidden="true">   ________  ______  ____  _____ ______
+  / ____/ / / / __ \/ __ \/ ___// ____/
+ / /   / /_/ / / / / / / /\__ \/ __/
+/ /___/ __  / /_/ / /_/ /___/ / /___
+\____/_/ /_/\____/\____//____/_____/</pre>
+<pre class="fig small" aria-hidden="true">╔═╗╦ ╦╔═╗╔═╗╔═╗╔═╗
+║  ╠═╣║ ║║ ║╚═╗║╣
+╚═╝╩ ╩╚═╝╚═╝╚═╝╚═╝</pre>
+      <p class="eyebrow">Choose your model · AG News, Banking77, Emotion · 300 examples</p>
+    </div>
+    <p class="note">MODEL</p>
+    <div class="chart-bar vs-models" role="group" aria-label="Model">
+      <button type="button" data-vs-model="wemm-4b-4bit" aria-pressed="true">[ WEMM-4B-4BIT ]</button>
+      <button type="button" data-vs-model="f2llm-1.7b" aria-pressed="false">[ F2LLM-1.7B ]</button>
+      <button type="button" data-vs-model="harrier-0.6b" aria-pressed="false">[ HARRIER-0.6B ]</button>
+      <button type="button" data-vs-model="jul-decision-e5-small" aria-pressed="false">[ JUL-DECISION-E5-SMALL ]</button>
+      <button type="button" data-vs-model="minicpm5-2b" aria-pressed="false">[ MINICPM5-2B ]</button>
+    </div>
+    <p class="note" style="margin-top:1.2em">SETTING</p>
+    <div class="chart-bar" role="group" aria-label="Setting">
+      <button type="button" data-vs-mode="zs" aria-pressed="true">[ ZERO-SHOT ]</button>
+      <button type="button" data-vs-mode="tuned" aria-pressed="false">[ +AUTOTUNE ]</button>
+    </div>
+    <div class="kpis" aria-live="polite">
+      <div class="kpi">
+        <p class="eyebrow">ACCURACY · <span id="kpi-mode">ZERO-SHOT</span></p>
+        <p class="big"><span id="kpi-acc">85.7</span><small>%</small></p>
+        <p class="delta" id="kpi-acc-d"></p>
+        <pre class="minibars" id="kpi-acc-b"></pre>
+      </div>
+      <div class="kpi">
+        <p class="eyebrow">LATENCY · P50</p>
+        <p class="big"><span id="kpi-ms">55</span><small>ms</small></p>
+        <p class="delta" id="kpi-ms-d"></p>
+        <pre class="minibars" id="kpi-ms-b"></pre>
+      </div>
+      <div class="kpi">
+        <p class="eyebrow" id="kpi-gb-t">MEMORY · 4-BIT</p>
+        <p class="big"><span id="kpi-gb">2.6</span><small>GB</small></p>
+        <p class="delta" id="kpi-gb-d"></p>
+        <pre class="minibars" id="kpi-gb-b"></pre>
+      </div>
+    </div>
+    <p class="vs-foot">0 tokens generated · 0 bytes sent · no key · $0 per call.</p>
+    <p class="note" id="kpi-note"></p>
+  </section>
+
+  <div class="rule" aria-hidden="true"></div>
+
+  <!-- ── DEMO ─────────────────────────────────────────────── -->
+  <section id="demo">
+    <div class="sh">
+<pre class="fig big" aria-hidden="true">    ____  ________  _______
+   / __ \/ ____/  |/  / __ \
+  / / / / __/ / /|_/ / / / /
+ / /_/ / /___/ /  / / /_/ /
+/_____/_____/_/  /_/\____/</pre>
+<pre class="fig small" aria-hidden="true">╔╦╗╔═╗╔╦╗╔═╗
+ ║║║╣ ║║║║ ║
+═╩╝╚═╝╩ ╩╚═╝</pre>
+      <p class="eyebrow">One decision, from the shell</p>
+    </div>
+    <div class="term" id="term" aria-live="off"></div>
+    <div class="term-bar">
+      <span>Illustrative output.</span>
+      <button type="button" id="replay">[ ↻ RUN AGAIN ]</button>
+    </div>
+  </section>
+
+  <div class="rule" aria-hidden="true"></div>
+
+  <!-- ── IN CODE ────────────────────────────────────────────── -->
+  <section id="dropin">
+    <div class="sh">
+<pre class="fig big" aria-hidden="true">    ____  ____  ____  ____        _____   __
+   / __ \/ __ \/ __ \/ __ \      /  _/ | / /
+  / / / / /_/ / / / / /_/ /_____ / //  |/ /
+ / /_/ / _, _/ /_/ / ____/_____// // /|  /
+/_____/_/ |_|\____/_/         /___/_/ |_/</pre>
+<pre class="fig small" aria-hidden="true">╔╦╗╦═╗╔═╗╔═╗   ╦╔╗╔
+ ║║╠╦╝║ ║╠═╝───║║║║
+═╩╝╩╚═╚═╝╩     ╩╝╚╝</pre>
+      <p class="eyebrow">Already on Jev? Change one import.</p>
+    </div>
+<pre class="scroll"><span class="dim">- from typesafe_sdk import TypeSafeClient, Choice</span>
++ from jul import TypeSafeClient, Choice
+
+client = TypeSafeClient()        <span class="dim"># the default model, local</span>
+team = Choice(instructions="Which team should handle this?",
+              criteria={"billing":   "payments, refunds",
+                        "technical": "bugs, errors"})
+
+r = client.system_one(state={"ticket": "I was charged twice"},
+                      questions={"team": team})
+r.choices["team"].probabilities  <span class="dim"># {"billing": 0.88, ...}</span>
+
+<span class="dim"># labels? one call, the next ones use the head</span>
+client.autotune("tickets", {"team": team}, labeled)</pre>
+  </section>
+
+  <div class="rule" aria-hidden="true"></div>
+
+  <!-- ── GO FURTHER ─────────────────────────────────────────── -->
+  <section id="more">
+    <div class="sh">
+<pre class="fig big" aria-hidden="true">    ________  ______  ________  ____________
+   / ____/ / / / __ \/_  __/ / / / ____/ __ \
+  / /_  / / / / /_/ / / / / /_/ / __/ / /_/ /
+ / __/ / /_/ / _, _/ / / / __  / /___/ _, _/
+/_/    \____/_/ |_| /_/ /_/ /_/_____/_/ |_|</pre>
+<pre class="fig small" aria-hidden="true">╔═╗╦ ╦╦═╗╔╦╗╦ ╦╔═╗╦═╗
+╠╣ ║ ║╠╦╝ ║ ╠═╣║╣ ╠╦╝
+╚  ╚═╝╩╚═ ╩ ╩ ╩╚═╝╩╚═</pre>
+      <p class="eyebrow">When you want to go further</p>
+    </div>
+    <div class="steps">
+      <div>
+        <p class="eyebrow">MEASURE</p>
+        <div>
+          <p>Pit models against each other on your own rows: local ones, Jev, Ollama, a Kev server. One verdict: the fastest that is as good as the best.</p>
+          <p class="note"><code>jul bench test.jsonl --models fast,accurate,typesafe</code></p>
+        </div>
+      </div>
+      <div>
+        <p class="eyebrow">ESCALATE</p>
+        <div>
+          <p>Answer locally, send only the unsure questions to a bigger decider. Each answer says which tier gave it.</p>
+          <p class="note"><code>jul serve --escalate-to typesafe</code><br><a href="../docs/serve.html#escalation-local-first-a-bigger-decider-when-unsure">how →</a></p>
+        </div>
+      </div>
+      <div>
+        <p class="eyebrow">SHIP</p>
+        <div>
+          <p>An HTTP server that speaks the Jev protocol, or a bundle of your questions and their models for a Lambda.</p>
+          <p class="note"><code>jul serve</code> · <code>jul pack</code> · <a href="../docs/deployment.html">deploy →</a></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="rule" aria-hidden="true"></div>
+
+  <!-- ── WHAT'S NEW ─────────────────────────────────────────── -->
+  <section id="new">
+    <div class="sh">
+<pre class="fig big" aria-hidden="true">    _   _________       __
+   / | / / ____/ |     / /
+  /  |/ / __/  | | /| / /
+ / /|  / /___  | |/ |/ /
+/_/ |_/_____/  |__/|__/</pre>
+<pre class="fig small" aria-hidden="true">╔╗╔╔═╗╦ ╦
+║║║║╣ ║║║
+╝╚╝╚═╝╚╩╝</pre>
+      <p class="eyebrow">New in 0.5</p>
+      <h2 class="h">Lately.</h2>
+    </div>
+    <ul class="bbs">
+      <li><b>Autotune on decision models.</b> <code>fast</code> and <code>accurate</code> learn your task too.</li>
+      <li><b>Bench against the cloud.</b> <code>jul bench</code> puts Jev, Ollama, Clef or any System One URL next to your local models.</li>
+      <li><b>Cascades, measured.</b> <code>--escalate-to</code>: accuracy of the pair and share of questions sent out.</li>
+      <li><b>A new <code>fast</code>.</b> A decision model trained on human-written decisions.</li>
+    </ul>
+    <p class="note"><a href="https://github.com/usejul/jul/blob/main/CHANGELOG.md">Full changelog →</a></p>
+  </section>
+
+  <div class="rule" aria-hidden="true"></div>
+
+  <!-- ── INSTALL ────────────────────────────────────────────── -->
+  <section id="install">
+    <div class="sh">
+<pre class="fig big" aria-hidden="true">    _____   ________________    __    __
+   /  _/ | / / ___/_  __/   |  / /   / /
+   / //  |/ /\__ \ / / / /| | / /   / /
+ _/ // /|  /___/ // / / ___ |/ /___/ /___
+/___/_/ |_//____//_/ /_/  |_/_____/_____/</pre>
+<pre class="fig small" aria-hidden="true">╦╔╗╔╔═╗╔╦╗╔═╗╦  ╦
+║║║║╚═╗ ║ ╠═╣║  ║
+╩╝╚╝╚═╝ ╩ ╩ ╩╩═╝╩═╝</pre>
+      <p class="eyebrow">Two lines · <a href="https://pypi.org/project/jul/">on PyPI</a></p>
+      <h2 class="h">Up in one coffee.</h2>
+    </div>
+<pre class="scroll">$ pip install jul
+$ jul setup</pre>
+    <p class="lead">Picks the backend (MLX on Apple Silicon, PyTorch elsewhere), downloads the model once, runs one real decision.</p>
+    <div class="term-bar">
+      <span>No terminal handy? Let an agent do it.</span>
+      <button type="button" id="copy-prompt">[ <u>C</u>OPY AGENT PROMPT ]</button>
+    </div>
+<pre class="prompt" hidden id="agent-prompt">Install jul (https://pypi.org/project/jul/), a local library that answers typed questions
+with a small local model, and check that it works on this machine.
+
+1. Create a virtualenv with Python &gt;= 3.10.
+2. In that venv: pip install jul   then   jul setup
+   jul setup picks the backend (MLX on Apple Silicon, else PyTorch), installs it, downloads
+   the default model once and runs one test decision.
+3. Then run:
+   jul ask choice "Which team should handle this ticket?" -o billing:"payments, invoices" -o technical:"bugs, errors" --state "I was charged twice"
+   and show me the JSON.
+
+Do not use sudo and do not install anything outside the venv. If a step fails, show me the error and
+what you suggest before trying something else. At the end, tell me in two lines: the backend, the
+latency per decision, and the answer to the ticket.</pre>
+  </section>
+
+  <div class="rule" aria-hidden="true"></div>
+
+  <!-- ── SHOWCASES ──────────────────────────────────────────── -->
+  <section id="showcases">
+    <div class="sh">
+<pre class="fig big" aria-hidden="true">   _____ __  ______ _       ___________   _____ ______
+  / ___// / / / __ \ |     / / ____/   | / ___// ____/
+  \__ \/ /_/ / / / / | /| / / /   / /| | \__ \/ __/
+ ___/ / __  / /_/ /| |/ |/ / /___/ ___ |___/ / /___
+/____/_/ /_/\____/ |__/|__/\____/_/  |_/____/_____/</pre>
+<pre class="fig small" aria-hidden="true">╔═╗╦ ╦╔═╗╦ ╦╔═╗╔═╗╔═╗╔═╗
+╚═╗╠═╣║ ║║║║║  ╠═╣╚═╗║╣
+╚═╝╩ ╩╚═╝╚╩╝╚═╝╩ ╩╚═╝╚═╝</pre>
+      <p class="eyebrow">By <a href="https://github.com/JeromeGuyon">Jérôme Guyon</a> · <a href="https://github.com/guyon-it-consulting/jul-showcases">jul-showcases</a></p>
+      <h2 class="h">Seen in the wild.</h2>
+    </div>
+    <div class="two">
+      <ul class="bbs">
+        <li><b>A form that branches itself.</b> No <code>if/then</code>.</li>
+        <li><b>Mute the noise.</b> The OTP stays, the flash sale goes.</li>
+        <li><b>Fast mode or full model?</b> Decided before the prompt is sent.</li>
+      </ul>
+      <ul class="bbs">
+        <li><b>50,000 support tickets</b> on a Mac, $0.</li>
+        <li><b>An on-device browser agent</b> that books a train.</li>
+        <li><b>Re-rank by intent.</b> Deep engineering up, clickbait down.</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="rule" aria-hidden="true"></div>
+
+  <!-- ── FOOTER ─────────────────────────────────────────────── -->
+  <section id="about">
+    <div class="sh">
+<pre class="fig big" aria-hidden="true">    ______  ________
+   / __ ) \/ / ____/
+  / __  |\  / __/
+ / /_/ / / / /___
+/_____/ /_/_____/</pre>
+<pre class="fig small" aria-hidden="true">╔╗ ╦ ╦╔═╗
+╠╩╗╚╦╝║╣
+╚═╝ ╩ ╚═╝</pre>
+    </div>
+    <div class="foot">
+      <div>
+        <p>JuL, <i>Just use Less</i>. A headless decision runtime. Apache-2.0.</p>
+<pre class="credits">CREDITS
+  <a href="https://github.com/bdauzats">bdauzats</a> ........ author
+  <a href="https://github.com/jlestel">jlestel</a> ......... contributor
+  <a href="https://github.com/JeromeGuyon">JeromeGuyon</a> ..... contributor</pre>
+        <p class="note">
+          <a href="https://github.com/usejul/jul">github.com/usejul/jul</a> ·
+          <a href="https://pypi.org/project/jul/">pip install jul</a> ·
+          <a href="https://huggingface.co/usejul">weights on Hugging Face</a> ·
+          Not affiliated with TypeSafe AI or Jev.
+        </p>
+      </div>
+      <div>
+        <pre class="life" id="life" aria-hidden="true"></pre>
+        <p class="note" style="margin-top:.6em">Game of Life. Also runs locally.</p>
+      </div>
+    </div>
+    <div class="rule2" aria-hidden="true" style="margin-top:3em"></div>
+    <p class="note" style="margin-top:1em">NO CARRIER</p>
+    <p class="note">$ exit<span class="blink">_</span></p>
+  </section>
+
+</div>
+
+<script>
+(() => {
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+    sget(k) { try { return sessionStorage.getItem(k); } catch { return null; } },
+    sset(k, v) { try { sessionStorage.setItem(k, v); } catch {} },
+  };
+
+  // ── code blocks: shrink the font until the block fits the screen ───────
+  const fitAll = () => document.querySelectorAll("pre.scroll").forEach(pre => {
+    pre.style.fontSize = "";
+    const base = parseFloat(getComputedStyle(pre).fontSize);
+    if (pre.scrollWidth > pre.clientWidth)
+      pre.style.fontSize = Math.max(9, Math.floor(base * pre.clientWidth / pre.scrollWidth * 10) / 10) + "px";
+  });
+  fitAll();
+  addEventListener("resize", fitAll);
+  document.fonts && document.fonts.ready.then(fitAll);
+
+  // ── phosphor ──────────────────────────────────────────────────────────
+  const phosphors = [["amber", "AMB"], ["green", "GRN"], ["white", "WHT"]];
+  const unlockRgb = () => { if (!phosphors.some(p => p[0] === "rgb")) phosphors.push(["rgb", "RGB"]); };
+  if (store.get("jul-konami")) unlockRgb();
+  let ph = Math.max(0, phosphors.findIndex(p => p[0] === store.get("jul-phosphor")));
+  const applyPh = () => {
+    document.documentElement.dataset.phosphor = phosphors[ph][0];
+    document.getElementById("ph-name").textContent = phosphors[ph][1];
+    document.querySelector('meta[name="theme-color"]').content = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim();
+  };
+  applyPh();
+  const nextPh = () => { ph = (ph + 1) % phosphors.length; store.set("jul-phosphor", phosphors[ph][0]); applyPh(); };
+  document.getElementById("phosphor").addEventListener("click", nextPh);
+
+  // ── clock ─────────────────────────────────────────────────────────────
+  const clock = document.getElementById("clock");
+  const tick = () => { clock.textContent = new Date().toTimeString().slice(0, 8); };
+  tick(); setInterval(tick, 1000);
+
+  // declared before the boot screen: a skipped boot calls startTerm(), which sets it, right away
+  let replayTerm = () => {};
+
+  // ── boot screen, short, once per session ──────────────────────────────
+  const boot = document.getElementById("boot");
+  const bootLines = [
+    "ATDT JUL",
+    "CONNECT 2400",
+    "",
+    "JuL BBS v0.5 · NODE 1",
+    "API KEY : not required .............. SKIP",
+    "",
+    "Loading WEMM-4B-4BIT.SYS  ",
+  ];
+  const bar = n => "[" + "█".repeat(n) + "░".repeat(20 - n) + "] " + String(n * 5).padStart(3) + "%";
+  const finishBoot = () => { boot.hidden = true; store.sset("jul-booted", "1"); startTerm(); };
+  if (!reduced && !store.sget("jul-booted")) {
+    boot.hidden = false;
+    const out = document.getElementById("boot-text");
+    let i = 0, n = 0, done = false;
+    const end = () => { if (done) return; done = true; removeEventListener("keydown", end); boot.removeEventListener("click", end); finishBoot(); };
+    addEventListener("keydown", end); boot.addEventListener("click", end);
+    const step = () => {
+      if (done) return;
+      if (i < bootLines.length) { out.textContent += bootLines[i++] + (i < bootLines.length ? "\n" : ""); return setTimeout(step, 90); }
+      if (n <= 20) { out.textContent = bootLines.join("\n") + bar(n++); return setTimeout(step, 25); }
+      out.textContent += "\n\nTokens to generate: 0\n\n$ jul ";
+      setTimeout(end, 500);
+    };
+    step();
+  } else {
+    startTerm();
+  }
+
+  // ── copy the agent prompt ─────────────────────────────────────────────
+  const copyBtn = document.getElementById("copy-prompt");
+  const copyPrompt = async () => {
+    const text = document.getElementById("agent-prompt").textContent;
+    let ok = false;
+    try { await navigator.clipboard.writeText(text); ok = true; } catch {
+      const p = document.getElementById("agent-prompt"); p.hidden = false;
+      const r = document.createRange(); r.selectNodeContents(p);
+      const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+      try { ok = document.execCommand("copy"); } catch {}
+    }
+    copyBtn.textContent = ok ? "[ COPIED ✓ ]" : "[ SELECTED: ⌘C ]";
+    setTimeout(() => { copyBtn.innerHTML = "[ <u>C</u>OPY AGENT PROMPT ]"; }, 1800);
+  };
+  copyBtn.addEventListener("click", copyPrompt);
+
+  // ── terminal demo ─────────────────────────────────────────────────────
+  function startTerm() {
+    const term = document.getElementById("term");
+    const script = [
+      ["cmd", 'jul ask choice "Which team should handle this ticket?" \\\n      -o billing:"payments, invoices" -o technical:"bugs, errors" \\\n      -o sales:"pricing, plans" --state "I was charged twice"'],
+      ["out", `{
+  "model": "jul-decision-wemm-4b",
+  "usage": {"input_tokens": 24, "output_tokens": 0, "total_tokens": 24},
+  "answers": {
+    "choice": {
+      "choice": "billing",
+      "probabilities": {"billing": 0.88, "technical": 0.11, "sales": 0.01},
+      "confidence": 0.88
+    }
+  },
+  "latency_ms": 55.3
+}`],
+      ["ok", "\n# 0 tokens generated · 0 bytes sent · 0 ¢\n"],
+      ["cmd", ""],
+    ];
+    let timer = null;
+    const run = () => {
+      clearTimeout(timer);
+      term.textContent = "";
+      if (reduced) {
+        script.forEach(([k, t]) => { const el = document.createElement("div"); el.className = k; el.textContent = t; term.appendChild(el); });
+        return;
+      }
+      let li = 0;
+      const next = () => {
+        if (li >= script.length) return;
+        const [kind, text] = script[li++];
+        const el = document.createElement("div"); el.className = kind; term.appendChild(el);
+        if (kind !== "cmd") { el.textContent = text; timer = setTimeout(next, 250); return; }
+        const cur = document.createElement("span"); cur.className = "blink"; cur.textContent = "█";
+        el.appendChild(cur);
+        let c = 0;
+        const type = () => {
+          if (c < text.length) { cur.before(text[c++]); timer = setTimeout(type, 12 + Math.random() * 28); }
+          else if (li < script.length) { timer = setTimeout(() => { cur.remove(); next(); }, 420); }
+        };
+        type();
+      };
+      next();
+    };
+    document.getElementById("replay").onclick = run;
+    replayTerm = run;
+    const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { io.disconnect(); run(); } }, { threshold: .3 });
+    io.observe(term);
+  }
+
+  // ── help + cheat: inline blocks under the menu ────────────────────────
+  const help = document.getElementById("help"), cheat = document.getElementById("cheat"), keys = document.getElementById("keys");
+  const toggleHelp = force => {
+    help.hidden = force === undefined ? !help.hidden : !force;
+    keys.setAttribute("aria-expanded", String(!help.hidden));
+    if (!help.hidden) help.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "nearest" });
+  };
+  keys.addEventListener("click", () => toggleHelp());
+  const closeAll = () => { toggleHelp(false); cheat.hidden = true; };
+
+  // ↑ ↑ ↓ ↓ ← → ← → B A
+  const KONAMI = ["arrowup", "arrowup", "arrowdown", "arrowdown", "arrowleft", "arrowright", "arrowleft", "arrowright", "b", "a"];
+  let recent = [];
+  const konami = () => {
+    store.set("jul-konami", "1");
+    unlockRgb();
+    ph = phosphors.findIndex(p => p[0] === "rgb"); store.set("jul-phosphor", "rgb"); applyPh();
+    help.hidden = true; cheat.hidden = false;
+    cheat.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "center" });
+  };
+
+  // ── keyboard: the menu keys ───────────────────────────────────────────
+  const jump = id => { const el = document.getElementById(id); el.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" }); };
+  addEventListener("keydown", e => {
+    if (!boot.hidden || e.ctrlKey || e.metaKey || e.altKey) return;
+    const k = e.key.toLowerCase();
+    recent = [...recent, k].slice(-KONAMI.length);
+    if (recent.join() === KONAMI.join()) { recent = []; e.preventDefault(); konami(); return; }
+    if (k === "escape") { closeAll(); return; }
+    if (e.target.matches && e.target.matches("input, textarea, select, [contenteditable]")) return;
+    const actions = {
+      "1": () => jump("install"), "2": () => jump("autotune"), "3": () => jump("new"),
+      i: () => jump("install"), a: () => jump("autotune"), n: () => jump("new"),
+      g: () => { location.href = "https://github.com/usejul/jul"; },
+      d: () => { location.href = "../docs/"; },
+      p: nextPh,
+      r: () => { jump("demo"); replayTerm(); },
+      c: () => { jump("install"); copyPrompt(); },
+      "?": () => toggleHelp(),
+    };
+    if (actions[k]) { e.preventDefault(); actions[k](); }
+  });
+
+  // ── one model, three KPIs ─────────────────────────────────────────
+  // acc, ms, gb, where the latency was measured; tuned: acc, ms, where
+  const VS = {
+    "wemm-4b-4bit": { zs: [.857, 55, 2.6, "M5 Max"], tuned: [.897, 59, 2.6, "M5 Max"], label: "WeMM-Embedding-4B",
+                      slow: "about 145 ms on an M4 Pro" },
+    "f2llm-1.7b":   { zs: [.817, 24, 1.0, "M5 Max"], tuned: [.833, 24, 1.0, "M5 Max"], label: "F2LLM-v2-1.7B" },
+    "harrier-0.6b": { zs: [.667, 13, .31, "M5 Max"], tuned: [.814, 13, .31, "M5 Max"], label: "Harrier-OSS-0.6B" },
+    "jul-decision-e5-small": { zs: [.557, 4, .09, "M4 Pro"], tuned: [.780, 4, .09, "M4 Pro"],
+                      label: "jul-decision-e5-small (multilingual-e5-small, trained on jul decisions)", bits: 8,
+                      always: " Runs in an AWS Lambda: 17 ms, $0.59 per million.",
+                      extra: " Hybrid head (vectors + TF-IDF); vectors alone: 0.723." },
+    "minicpm5-2b":  { zs: [.617, 64, 2.7, "M4 Pro"], tuned: [.757, 38, 2.7, "M5 Max"], label: "MiniCPM5-2B" },
+  };
+  const vs = { model: "wemm-4b-4bit", mode: "zs" };
+  const KB = 20;
+  const kbar = (v, max) => { const n = Math.max(1, Math.round(Math.min(v, max) / max * KB)); return "█".repeat(n) + "░".repeat(KB - n); };
+  const setBars = (id, julTxt) => {
+    const el = document.getElementById(id);
+    el.innerHTML = "";
+    const a = document.createElement("div"); a.textContent = julTxt;
+    el.append(a);
+  };
+  const setDelta = (id, text, kind) => { const el = document.getElementById(id); el.textContent = text; el.className = "delta " + kind; };
+  const tween = (id, to, digits) => {
+    const el = document.getElementById(id);
+    const from = parseFloat(el.textContent) || 0;
+    if (reduced || from === to) { el.textContent = to.toFixed(digits); return; }
+    const t0 = performance.now(), dur = 350;
+    const step = t => {
+      const k = Math.min(1, (t - t0) / dur);
+      el.textContent = (from + (to - from) * (1 - Math.pow(1 - k, 3))).toFixed(digits);
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  };
+  const renderVs = () => {
+    const m = VS[vs.model];
+    const [acc, ms, gb, hw] = m[vs.mode];
+    tween("kpi-acc", acc * 100, 1);
+    tween("kpi-ms", ms, 0);
+    tween("kpi-gb", gb, gb < 1 ? 2 : 1);
+    setDelta("kpi-acc-d", vs.mode === "tuned" ? "with 1,000 labels per task" : "no example of the task", "even");
+    setBars("kpi-acc-b", kbar(acc, 1) + " " + (acc * 100).toFixed(1) + "%");
+    setDelta("kpi-ms-d", "0 tokens generated", "even");
+    setBars("kpi-ms-b", kbar(ms, 280) + " " + ms + " ms");
+    setDelta("kpi-gb-d", "on your machine", "even");
+    document.getElementById("kpi-gb-t").textContent = `MEMORY · ${m.bits || 4}-BIT`;
+    setBars("kpi-gb-b", kbar(gb, 10) + " " + (gb < 1 ? gb.toFixed(2) : gb.toFixed(1)) + " GB");
+    document.getElementById("kpi-note").textContent =
+      `${m.label}${vs.mode === "tuned" ? " + autotune (1,000 labeled examples per task)" : ", zero-shot"}. ` +
+      `Latency on an ${hw}` + (m.slow ? `; ${m.slow}.` : ".") +
+      (vs.mode === "tuned" && m.extra ? m.extra : "") + (m.always || "");
+    document.querySelectorAll("[data-vs-model]").forEach(b => b.setAttribute("aria-pressed", b.dataset.vsModel === vs.model));
+    document.querySelectorAll("[data-vs-mode]").forEach(b => b.setAttribute("aria-pressed", b.dataset.vsMode === vs.mode));
+    document.getElementById("kpi-mode").textContent = vs.mode === "tuned" ? "+AUTOTUNE" : "ZERO-SHOT";
+  };
+  document.querySelectorAll("[data-vs-model]").forEach(b => b.addEventListener("click", () => { vs.model = b.dataset.vsModel; renderVs(); }));
+  let setMode = mode => { vs.mode = mode; renderVs(); };   // the bench chart below joins in once defined
+  document.querySelectorAll("[data-vs-mode]").forEach(b => b.addEventListener("click", () => setMode(b.dataset.vsMode)));
+  renderVs();
+
+  // ── glider ────────────────────────────────────────────────────────────
+  const W = 22, Hh = 9, life = document.getElementById("life");
+  let g = Array.from({ length: Hh }, () => Array(W).fill(0));
+  [[0, 1], [1, 2], [2, 0], [2, 1], [2, 2]].forEach(([y, x]) => g[y][x] = 1);
+  const draw = () => { life.textContent = g.map(r => r.map(v => v ? "█" : "·").join("")).join("\n"); };
+  const stepLife = () => {
+    g = g.map((r, y) => r.map((v, x) => {
+      let n = 0;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++)
+        if (dy || dx) n += g[(y + dy + Hh) % Hh][(x + dx + W) % W];
+      return n === 3 || (v && n === 2) ? 1 : 0;
+    }));
+    draw();
+  };
+  draw();
+  if (!reduced) setInterval(stepLife, 220);
+})();
+</script>
+</body>
+</html>

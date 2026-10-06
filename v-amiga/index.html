@@ -1,0 +1,742 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JuL — Just use Less</title>
+<meta name="description" content="One JuL to rule them all: typed decisions from any model, good out of the box, autotuned on your labels.">
+<meta property="og:title" content="JuL — Just use Less">
+<meta property="og:description" content="Any model, tested as a decider. Local by default, escalate only the hard ones. Same calls as Jev's SDK.">
+<meta name="theme-color" content="#0055AA">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230055AA'/%3E%3Crect x='2' y='2' width='12' height='12' fill='%23fff'/%3E%3Crect x='5' y='2' width='6' height='5' fill='%230055AA'/%3E%3Crect x='4' y='9' width='8' height='4' fill='%23FF8800'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&family=Pixelify+Sans:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+<style>
+/* ── Workbench 1.3: four colours, one blue screen ───────────────────── */
+:root {
+  --blue: #0055AA;
+  --white: #FFFFFF;
+  --black: #000000;
+  --orange: #FF8800;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --pix: "Pixelify Sans", var(--mono);
+  --topaz: "VT323", var(--mono);   /* digits stay unambiguous here */
+  --fs: 15px;
+}
+* { box-sizing: border-box; }
+html { background: var(--blue); }
+body {
+  margin: 0;
+  background: var(--blue);
+  color: var(--white);
+  font: 400 var(--fs)/1.6 var(--mono);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  font-variant-ligatures: none;
+}
+::selection { background: var(--orange); color: var(--black); }
+a { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+a:hover, a:focus-visible { color: var(--orange); outline: none; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+h1, h2, h3, p { margin: 0; }
+pre { margin: 0; font: inherit; line-height: 1.5; }
+code { font: inherit; font-weight: 700; }
+.win:not(.blue) code { color: var(--blue); }
+.blink { animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+/* ── screen title bar ──────────────────────────────────────────────── */
+.screenbar {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 0 .4em;
+  min-height: 2.2em; padding: 0 .4em 0 .9em;
+  background: var(--white); color: var(--blue);
+  border-bottom: 2px solid var(--black);
+  font-family: var(--pix); font-size: 1.15rem; line-height: 1.3;
+}
+.screenbar .brand { font-family: var(--topaz); font-size: 1.55rem; line-height: 1; margin-right: .9em; white-space: nowrap; padding: .25em 0; }
+.screenbar a { color: var(--blue); text-decoration: none; padding: .25em .55em; }
+.screenbar a:hover, .screenbar a:focus-visible { background: var(--blue); color: var(--white); }
+.screenbar .spacer { flex: 1; }
+.screenbar .mem { font-family: var(--topaz); font-size: 1.45rem; white-space: nowrap; padding-right: .6em; }
+.screenbar .sgad { display: inline-flex; border-left: 2px solid var(--blue); align-self: stretch; align-items: center; padding-left: .5em; gap: 4px; }
+.screenbar .sgad svg { width: 26px; height: 18px; display: block; }
+@media (max-width: 560px) {
+  .screenbar { font-size: 1.05rem; padding-left: .6em; }
+  .screenbar .brand { margin-right: .4em; }
+  .screenbar .mem, .screenbar .sgad { display: none; }
+}
+
+/* ── desktop grid ──────────────────────────────────────────────────── */
+main {
+  max-width: 1100px; margin: 0 auto; padding: 4em 20px 5em;
+  display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 5em 2.5em;
+}
+main > * { min-width: 0; }
+.c12 { grid-column: span 12; } .c7 { grid-column: span 7; } .c5 { grid-column: span 5; }
+@media (max-width: 1020px) { main > * { grid-column: span 12 !important; } }
+@media (max-width: 560px) {
+  :root { --fs: 14px; }
+  main { padding: 2.5em 16px 4em; gap: 3.8em 1em; }
+}
+
+/* ── windows ───────────────────────────────────────────────────────── */
+.win {
+  position: relative;
+  background: var(--white); color: var(--black);
+  border: 2px solid var(--white);
+  box-shadow: 0 0 0 1px var(--black);
+}
+.win.blue { background: var(--blue); color: var(--white); }
+.win.front { box-shadow: 0 0 0 1px var(--black), 10px 10px 0 var(--black); }
+.w-bar {
+  display: flex; align-items: stretch;
+  background: var(--blue); color: var(--white);
+  border-bottom: 2px solid var(--white);
+  min-height: 32px; user-select: none;
+  font-family: var(--topaz); font-size: 1.45rem;
+}
+.w-title { flex: 1; min-width: 0; padding: .2em .7em 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; display: flex; align-items: center; }
+.gad { display: flex; align-items: center; justify-content: center; width: 36px; background: var(--blue); border-right: 2px solid var(--white); }
+.gad.depth { border-right: 0; border-left: 2px solid var(--white); }
+.gad svg { width: 22px; height: 16px; display: block; }
+.gad:hover, .gad:focus-visible { background: var(--orange); outline: none; }
+.win:hover .w-title, .win:focus-within .w-title, .win.front .w-title { color: var(--orange); }
+.w-body { padding: 2.2em 2.6em 2.4em; }
+.w-size { position: absolute; right: -2px; bottom: -2px; width: 26px; height: 20px; background: var(--blue); border: 2px solid var(--white); display: flex; align-items: center; justify-content: center; pointer-events: none; }
+.w-size svg { width: 14px; height: 10px; display: block; }
+.win.folded .w-body, .win.folded .w-size { display: none; }
+.win.folded { align-self: start; }
+.win { scroll-margin-top: 3.2em; }
+@media (max-width: 560px) { .w-body { padding: 1.6em 1.2em 1.8em; } }
+
+/* ── type ──────────────────────────────────────────────────────────── */
+.eyebrow { font-family: var(--topaz); font-size: 1.35rem; line-height: 1.2; letter-spacing: .02em; text-transform: uppercase; color: var(--orange); }
+.win:not(.blue) .eyebrow { color: var(--blue); }
+h2.h { font-family: var(--pix); font-weight: 700; font-size: 2.1rem; line-height: 1.05; margin: .15em 0 .6em; }
+p + p, p + pre, pre + p, p + .code, .code + p { margin-top: 1em; }
+.lead { max-width: 60ch; }
+.note { max-width: 70ch; }
+
+/* a blue pane for code, like text in Ed or the Shell */
+.code {
+  background: var(--blue); color: var(--white);
+  border: 2px solid var(--white); box-shadow: 0 0 0 1px var(--black);
+  padding: 1em 1.3em; overflow-x: auto; line-height: 1.55;
+}
+.code .c { color: var(--orange); }
+.code code { color: inherit; }
+
+/* ── hero ──────────────────────────────────────────────────────────── */
+.hero { display: grid; grid-template-columns: auto 1fr; gap: 1.5em 3.5em; align-items: center; padding: .5em 0; }
+.disk { display: flex; flex-direction: column; align-items: center; gap: .5em; width: 130px; color: var(--white); font-family: var(--pix); font-size: 1.15rem; }
+.disk svg { width: 100px; height: 100px; display: block; }
+.disk:hover .face, .disk:focus-visible .face { fill: var(--orange); }
+.disk:focus-visible { outline: 2px dotted var(--white); outline-offset: 6px; }
+.hero h1 { font-family: var(--pix); font-weight: 700; font-size: clamp(2.6rem, 6vw, 4.6rem); line-height: .98; }
+.hero .tag { margin-top: .9em; max-width: 58ch; font-size: 1.12em; line-height: 1.65; }
+.hero .tag b { font-weight: 400; background: var(--orange); color: var(--black); padding: 0 .35ch; }
+.cta { display: flex; gap: 1em; flex-wrap: wrap; margin-top: 1.6em; }
+.btn {
+  display: inline-block; font-family: var(--pix); font-size: 1.2rem; line-height: 1.3;
+  padding: .35em 1.2em; border: 2px solid var(--black); background: var(--white); color: var(--black);
+  text-decoration: none; box-shadow: 3px 3px 0 var(--black);
+}
+.btn.primary { background: var(--orange); }
+.btn:hover, .btn:focus-visible { background: var(--black); color: var(--white); box-shadow: none; transform: translate(3px, 3px); outline: none; }
+@media (max-width: 760px) { .hero { grid-template-columns: 1fr; } }
+
+/* ── three ideas, straight on the screen ───────────────────────────── */
+.pillars { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3em; }
+.pillar .num { font-family: var(--topaz); font-size: 4.6rem; line-height: .8; color: var(--orange); }
+.pillar h2.h { font-size: 1.8rem; margin-top: .25em; }
+.pillar .code { margin-top: 1.3em; }
+@media (max-width: 1020px) { .pillars { grid-template-columns: 1fr; gap: 3em; } }
+.chips { display: flex; flex-wrap: wrap; gap: .6em .7em; margin-top: 1.2em; }
+.chips span { border: 1px solid var(--white); padding: .05em .7ch; white-space: nowrap; }
+
+/* ── pipeline ──────────────────────────────────────────────────────── */
+.pipe { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); column-gap: 2.4em; margin-top: 1.8em; }
+.stage { position: relative; min-width: 0; }
+.stage:not(:last-child)::after {
+  content: ""; position: absolute; right: -1.85em; top: 7.2em;
+  border: 8px solid transparent; border-left: 12px solid var(--blue); border-right: 0;
+}
+.stage .eyebrow { margin-bottom: .1em; }
+.stage h3 { font-family: var(--pix); font-weight: 700; font-size: 1.3rem; line-height: 1.1; margin: .1em 0 .8em; min-height: 2.2em; }
+.stage ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .5em; }
+.stage li { border: 1px solid var(--blue); padding: .35em .8em; line-height: 1.4; }
+.stage li.def { background: var(--orange); border: 2px solid var(--black); font-weight: 700; min-height: 4.6em; box-shadow: 3px 3px 0 var(--black); }
+.stage li small { display: block; font-size: .85em; font-weight: 400; color: var(--blue); }
+.stage li.def small { color: var(--black); }
+.pipe-legend { margin-top: 1.8em; }
+.pipe-legend .k { background: var(--orange); padding: 0 .6ch; font-weight: 700; border: 1px solid var(--black); }
+@media (max-width: 1020px) {
+  .pipe { grid-template-columns: minmax(0, 1fr); gap: 2.6em; }
+  .stage h3 { min-height: 0; }
+  .stage:not(:last-child)::after {
+    right: auto; left: 50%; top: auto; bottom: -1.9em; transform: translateX(-50%);
+    border: 8px solid transparent; border-top: 12px solid var(--blue); border-bottom: 0;
+  }
+}
+
+/* ── choose your model ─────────────────────────────────────────────── */
+.vs-head { display: grid; gap: .9em; }
+.chart-bar { display: flex; flex-wrap: wrap; gap: .55em; }
+.gadbtn {
+  font-family: var(--topaz); font-size: 1.3rem; line-height: 1.2; padding: .25em .9em;
+  border: 2px solid var(--black); background: var(--white); color: var(--black); box-shadow: 2px 2px 0 var(--black);
+}
+.gadbtn[aria-pressed="true"] { background: var(--orange); box-shadow: none; transform: translate(2px, 2px); }
+.gadbtn:hover, .gadbtn:focus-visible { background: var(--blue); color: var(--white); outline: none; }
+.gadbtn[aria-pressed="true"]:hover { background: var(--orange); color: var(--black); }
+.kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.8em 3em; margin-top: 2.2em; }
+@media (max-width: 760px) { .kpis { grid-template-columns: 1fr; } }
+.kpi .big { font-family: var(--topaz); font-size: clamp(3.6rem, 7vw, 5.6rem); line-height: .85; margin-top: .15em; }
+.kpi .big small { font-size: .42em; margin-left: .3ch; color: var(--blue); }
+.kpi .delta { margin-top: .4em; min-height: 1.5em; color: var(--blue); }
+.bar { display: flex; align-items: center; gap: .8em; margin-top: .6em; }
+.bar .track { flex: 1; height: 14px; border: 1px solid var(--black); background: var(--white); position: relative; overflow: hidden; }
+.bar .fill { position: absolute; top: 0; bottom: 0; left: 0; background: var(--orange); transition: width .35s ease-out; }
+.bar .lbl { white-space: nowrap; font-size: .9em; min-width: 7ch; }
+.vs-foot { margin-top: 1.8em; padding-top: 1em; border-top: 2px solid var(--blue); }
+
+/* ── shell ─────────────────────────────────────────────────────────── */
+.term { white-space: pre-wrap; word-break: break-word; line-height: 1.5; min-height: 19em; }
+.term .cmd::before { content: "1.JuL:> "; color: var(--orange); }
+.term .ok { color: var(--orange); }
+.term .out { margin: .5em 0; }
+.cur { display: inline-block; width: .62em; height: 1.05em; background: var(--orange); vertical-align: -.15em; animation: blink 1s steps(1) infinite; }
+.term-bar { display: flex; justify-content: space-between; gap: 1em; flex-wrap: wrap; align-items: center; margin-top: 1.2em; }
+
+/* ── go further: three drawers ─────────────────────────────────────── */
+.steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3em; margin-top: 1.8em; }
+.steps > div { min-width: 0; }
+.steps .drawer { width: 60px; height: 40px; display: block; margin-bottom: .9em; }
+.steps .eyebrow { margin-bottom: .4em; }
+@media (max-width: 1020px) { .steps { grid-template-columns: 1fr; gap: 2.4em; } }
+
+/* ── lists ─────────────────────────────────────────────────────────── */
+ul.wb { list-style: none; margin: 1em 0 0; padding: 0; display: grid; gap: .65em; }
+ul.wb li { padding-left: 1.7em; position: relative; }
+ul.wb li::before { content: ""; position: absolute; left: 0; top: .5em; width: .7em; height: .7em; background: var(--orange); border: 1px solid var(--black); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 0 3em; }
+@media (max-width: 700px) { .two { grid-template-columns: 1fr; } }
+
+/* ── install / prompt ──────────────────────────────────────────────── */
+.prompt[hidden] { display: none; }
+.prompt { margin-top: 1em; padding: .8em 1.2em; border: 1px dashed var(--blue); white-space: pre-wrap; word-break: break-word; font-size: .9em; max-height: 22em; overflow-y: auto; }
+#copy-prompt { white-space: nowrap; }
+
+/* ── footer ────────────────────────────────────────────────────────── */
+footer { padding-top: 2.5em; border-top: 2px solid var(--white); }
+.credits { margin-top: 1.2em; overflow-x: auto; }
+.credits a { font-weight: 700; }
+
+/* ── one Guru, on request ──────────────────────────────────────────── */
+.guru {
+  position: fixed; left: 0; right: 0; top: 0; z-index: 99; width: 100%;
+  background: var(--black); color: #FF2020; border: 5px solid #FF2020;
+  padding: .9em 1em; font-family: var(--topaz); font-size: 1.6rem; line-height: 1.4;
+  text-align: center; white-space: pre-wrap; animation: guru 1.4s steps(1) infinite;
+}
+.guru[hidden] { display: none; }
+@keyframes guru { 50% { border-color: var(--black); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .blink, .cur, .guru { animation: none; }
+  .bar .fill { transition: none; }
+}
+</style>
+</head>
+<body>
+
+<button class="guru" id="guru" type="button" hidden>Software Failure.   Press left mouse button to continue.
+Guru Meditation #00000000.00000000</button>
+
+<nav class="screenbar" aria-label="Main">
+  <span class="brand">JuL Workbench release 0.5</span>
+  <a href="#install">Install</a>
+  <a href="#autotune">Autotune</a>
+  <a href="#new">New</a>
+  <a href="../docs/">Docs</a>
+  <a href="https://github.com/usejul/jul">GitHub</a>
+  <span class="spacer"></span>
+  <span class="mem" aria-hidden="true">0 tokens generated · 0 bytes sent</span>
+  <span class="sgad" aria-hidden="true">
+    <svg viewBox="0 0 26 18"><rect x="1.5" y="1.5" width="14" height="10" fill="#fff" stroke="#0055AA"/><rect x="10.5" y="6.5" width="14" height="10" fill="#0055AA" stroke="#0055AA"/></svg>
+    <svg viewBox="0 0 26 18"><rect x="1.5" y="1.5" width="14" height="10" fill="#0055AA" stroke="#0055AA"/><rect x="10.5" y="6.5" width="14" height="10" fill="#fff" stroke="#0055AA"/></svg>
+  </span>
+</nav>
+
+<main>
+
+  <!-- ── HERO: icons on the screen, no window ─────────────────────── -->
+  <section class="c12 hero" id="top">
+    <button class="disk" id="disk" type="button" title="JuL:" aria-label="JuL disk">
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <rect x="6" y="6" width="88" height="88" fill="#fff" stroke="#000" stroke-width="3"/>
+        <rect x="26" y="6" width="48" height="30" fill="#0055AA"/>
+        <rect x="58" y="12" width="9" height="18" fill="#fff"/>
+        <rect class="face" x="18" y="52" width="64" height="34" fill="#0055AA"/>
+        <rect x="24" y="58" width="52" height="4" fill="#fff"/>
+        <rect x="24" y="66" width="38" height="4" fill="#fff"/>
+        <rect x="24" y="74" width="46" height="4" fill="#fff"/>
+        <rect x="6" y="90" width="88" height="4" fill="#FF8800"/>
+      </svg>
+      <span>JuL</span>
+    </button>
+    <div>
+      <p class="eyebrow">Just use Less · v0.5 · Apache-2.0</p>
+      <h1>One JuL to<br>rule them all.</h1>
+      <p class="tag">
+        Typed decisions from <b>any model</b>. <b>Good out of the box</b>.
+        <b>Autotuned</b> on your labels when you want more.
+      </p>
+      <div class="cta">
+        <a class="btn primary" href="#install">Install</a>
+        <a class="btn" href="../docs/">Docs</a>
+      </div>
+      <p class="note" style="margin-top:1.6em">Local by default: 0 tokens generated · 0 bytes sent · no key.</p>
+    </div>
+  </section>
+
+  <!-- ── THE THREE IDEAS ───────────────────────────────────────────── -->
+  <section class="c12" id="why" aria-label="The three ideas">
+    <div class="pillars">
+      <div class="pillar" id="anything">
+        <p class="num">1</p>
+        <h2 class="h">Plug in anything.</h2>
+        <p>Run a model, or route to a server. Same <code>Choice</code> / <code>Noul</code> / <code>Score</code>
+        calls, same response, whatever answers.</p>
+        <div class="chips">
+          <span>Hugging Face</span><span>Kev models</span><span>Laya</span><span>Encoders · ONNX</span>
+          <span>Ollama</span><span>OpenAI</span><span>Mistral</span><span>Jev</span><span>Clef</span><span>your fine-tune</span>
+        </div>
+      </div>
+      <div class="pillar" id="default">
+        <p class="num">2</p>
+        <h2 class="h">Great by default.</h2>
+        <p>No model to pick, no prompt to write, no layer to choose. <code>jul setup</code> downloads a model
+        picked and calibrated for typed questions: probabilities you can threshold on.</p>
+<pre class="code">model="accurate"   <span class="c"># the default</span>
+model="fast"       <span class="c"># half the size</span></pre>
+      </div>
+      <div class="pillar" id="autotune">
+        <p class="num">3</p>
+        <h2 class="h">Autotune the rest.</h2>
+        <p>Give it labeled examples: a small head is trained in seconds, <b>kept only if it beats</b> the
+        default on examples it never saw. The model is untouched, calls stay as fast.</p>
+<pre class="code">jul autotune tickets \
+  --questions questions.yaml \
+  --labeled labeled.jsonl</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── PIPELINE ──────────────────────────────────────────────────── -->
+  <section class="win c12" data-title="JuL:Pipeline" id="pipeline">
+    <p class="eyebrow">From a text to a decision&nbsp;· pick one option per step, or keep the default</p>
+    <h2 class="h">Your model, your hardware, your way out.</h2>
+    <div class="pipe">
+      <div class="stage">
+        <p class="eyebrow">1&nbsp;· Model</p>
+        <h3>What reads it</h3>
+        <ul>
+          <li class="def">accurate<small>the default model</small></li>
+          <li>fast<small>half the size</small></li>
+          <li>any Hugging Face model<small>jul models add</small></li>
+          <li>a small encoder<small>e5, BERT, XLM-R</small></li>
+          <li>an embeddings API<small>Ollama&nbsp;· OpenAI&nbsp;· Mistral&nbsp;· Voyage</small></li>
+          <li>Laya<small>its own runtime</small></li>
+        </ul>
+      </div>
+      <div class="stage">
+        <p class="eyebrow">2&nbsp;· Hardware</p>
+        <h3>Where it runs</h3>
+        <ul>
+          <li class="def">auto<small>MLX on a Mac, PyTorch elsewhere</small></li>
+          <li>Apple Silicon<small>MLX</small></li>
+          <li>NVIDIA GPU<small>PyTorch&nbsp;· CUDA</small></li>
+          <li>CPU<small>PyTorch, or ONNX without torch</small></li>
+          <li>no weights at all<small>--backend api</small></li>
+        </ul>
+      </div>
+      <div class="stage">
+        <p class="eyebrow">3&nbsp;· Your data</p>
+        <h3>How it fits</h3>
+        <ul>
+          <li class="def">zero-shot<small>nothing to give</small></li>
+          <li>a Context<small>~50 unlabeled examples</small></li>
+          <li>autotune<small>labeled examples, kept if it wins</small></li>
+          <li>jul synth<small>too few labels? synthesize them</small></li>
+        </ul>
+      </div>
+      <div class="stage">
+        <p class="eyebrow">4&nbsp;· Integration</p>
+        <h3>How you call it</h3>
+        <ul>
+          <li class="def">Python<small>the Jev SDK calls</small></li>
+          <li>the CLI<small>jul ask&nbsp;· jul run</small></li>
+          <li>HTTP<small>jul serve, the Jev protocol</small></li>
+          <li>a Lambda<small>jul pack</small></li>
+        </ul>
+      </div>
+      <div class="stage">
+        <p class="eyebrow">5&nbsp;· When unsure</p>
+        <h3>Who gets the rest</h3>
+        <ul>
+          <li class="def">nobody<small>everything stays local</small></li>
+          <li>Jev<small>TypeSafe, hosted</small></li>
+          <li>Clef&nbsp;· Nimble<small>cloudflare&nbsp;· ollama</small></li>
+          <li>any System One server<small>a Kev server, another jul serve</small></li>
+        </ul>
+      </div>
+    </div>
+    <p class="pipe-legend"><span class="k">highlighted</span> = what you get without choosing anything.
+      <a href="../docs/hub.html">Every model, backend and provider →</a></p>
+  </section>
+
+  <!-- ── CHOOSE YOUR MODEL ─────────────────────────────────────────── -->
+  <section class="win c12" data-title="JuL:Choose" id="vs">
+    <div class="vs-head">
+      <p class="eyebrow">Choose your model · AG News, Banking77, Emotion · 300 examples</p>
+      <div class="chart-bar vs-models" role="group" aria-label="Model">
+        <button class="gadbtn" type="button" data-vs-model="wemm-4b-4bit" aria-pressed="true">WEMM-4B-4BIT</button>
+        <button class="gadbtn" type="button" data-vs-model="f2llm-1.7b" aria-pressed="false">F2LLM-1.7B</button>
+        <button class="gadbtn" type="button" data-vs-model="harrier-0.6b" aria-pressed="false">HARRIER-0.6B</button>
+        <button class="gadbtn" type="button" data-vs-model="jul-decision-e5-small" aria-pressed="false">JUL-DECISION-E5-SMALL</button>
+        <button class="gadbtn" type="button" data-vs-model="minicpm5-2b" aria-pressed="false">MINICPM5-2B</button>
+      </div>
+      <div class="chart-bar" role="group" aria-label="Setting">
+        <button class="gadbtn" type="button" data-vs-mode="zs" aria-pressed="true">ZERO-SHOT</button>
+        <button class="gadbtn" type="button" data-vs-mode="tuned" aria-pressed="false">+AUTOTUNE</button>
+      </div>
+    </div>
+    <div class="kpis" aria-live="polite">
+      <div class="kpi">
+        <p class="eyebrow">Accuracy · <span id="kpi-mode">ZERO-SHOT</span></p>
+        <p class="big"><span id="kpi-acc">85.7</span><small>%</small></p>
+        <p class="delta" id="kpi-acc-d"></p>
+        <div class="bar" id="kpi-acc-b"></div>
+      </div>
+      <div class="kpi">
+        <p class="eyebrow">Latency · P50</p>
+        <p class="big"><span id="kpi-ms">55</span><small>ms</small></p>
+        <p class="delta" id="kpi-ms-d"></p>
+        <div class="bar" id="kpi-ms-b"></div>
+      </div>
+      <div class="kpi">
+        <p class="eyebrow" id="kpi-gb-t">Memory · 4-bit</p>
+        <p class="big"><span id="kpi-gb">2.6</span><small>GB</small></p>
+        <p class="delta" id="kpi-gb-d"></p>
+        <div class="bar" id="kpi-gb-b"></div>
+      </div>
+    </div>
+    <p class="vs-foot">0 tokens generated · 0 bytes sent · no key · $0 per call.</p>
+    <p class="note" id="kpi-note"></p>
+  </section>
+
+  <!-- ── SHELL ─────────────────────────────────────────────────────── -->
+  <section class="win blue c12" data-title="JuL Shell">
+    <div class="term" id="term" aria-live="off"></div>
+    <div class="term-bar">
+      <span>Illustrative output.</span>
+      <button class="gadbtn" type="button" id="replay">Run again</button>
+    </div>
+  </section>
+
+  <!-- ── IN CODE ───────────────────────────────────────────────────── -->
+  <section class="win c12" data-title="Ed: dropin.py">
+    <p class="eyebrow">Already on Jev? Change one import.</p>
+<pre class="code" style="margin-top:1em"><span class="c">- from typesafe_sdk import TypeSafeClient, Choice</span>
++ from jul import TypeSafeClient, Choice
+
+client = TypeSafeClient()        <span class="c"># the default model, local</span>
+team = Choice(instructions="Which team should handle this?",
+              criteria={"billing":   "payments, refunds",
+                        "technical": "bugs, errors"})
+
+r = client.system_one(state={"ticket": "I was charged twice"},
+                      questions={"team": team})
+r.choices["team"].probabilities  <span class="c"># {"billing": 0.88, ...}</span>
+
+<span class="c"># labels? one call, the next ones use the head</span>
+client.autotune("tickets", {"team": team}, labeled)</pre>
+  </section>
+
+  <!-- ── GO FURTHER: three drawers on the screen ───────────────────── -->
+  <section class="c12" id="more" aria-label="When you want to go further">
+    <p class="eyebrow">When you want to go further</p>
+    <div class="steps">
+      <div>
+        <svg class="drawer" viewBox="0 0 60 40" aria-hidden="true"><path d="M3 12h36v25H3z" fill="#fff" stroke="#000" stroke-width="2"/><path d="M39 12l16-9v25l-16 9" fill="#0055AA" stroke="#fff" stroke-width="2"/><path d="M3 12l16-9h36" fill="#0055AA" stroke="#fff" stroke-width="2"/><rect x="15" y="21" width="12" height="5" fill="#FF8800"/></svg>
+        <p class="eyebrow">Measure</p>
+        <p>Pit models against each other on your own rows: local ones, Jev, Ollama, a Kev server. One verdict: the fastest that is as good as the best.</p>
+        <p class="note"><code>jul bench test.jsonl --models fast,accurate,typesafe</code></p>
+      </div>
+      <div>
+        <svg class="drawer" viewBox="0 0 60 40" aria-hidden="true"><path d="M3 12h36v25H3z" fill="#fff" stroke="#000" stroke-width="2"/><path d="M39 12l16-9v25l-16 9" fill="#0055AA" stroke="#fff" stroke-width="2"/><path d="M3 12l16-9h36" fill="#0055AA" stroke="#fff" stroke-width="2"/><rect x="15" y="21" width="12" height="5" fill="#FF8800"/></svg>
+        <p class="eyebrow">Escalate</p>
+        <p>Answer locally, send only the unsure questions to a bigger decider. Each answer says which tier gave it.</p>
+        <p class="note"><code>jul serve --escalate-to typesafe</code><br><a href="../docs/serve.html#escalation-local-first-a-bigger-decider-when-unsure">how →</a></p>
+      </div>
+      <div>
+        <svg class="drawer" viewBox="0 0 60 40" aria-hidden="true"><path d="M3 12h36v25H3z" fill="#fff" stroke="#000" stroke-width="2"/><path d="M39 12l16-9v25l-16 9" fill="#0055AA" stroke="#fff" stroke-width="2"/><path d="M3 12l16-9h36" fill="#0055AA" stroke="#fff" stroke-width="2"/><rect x="15" y="21" width="12" height="5" fill="#FF8800"/></svg>
+        <p class="eyebrow">Ship</p>
+        <p>An HTTP server that speaks the Jev protocol, or a bundle of your questions and their models for a Lambda.</p>
+        <p class="note"><code>jul serve</code> · <code>jul pack</code> · <a href="../docs/deployment.html">deploy →</a></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── WHAT'S NEW ────────────────────────────────────────────────── -->
+  <section class="win c7" data-title="ReadMe.0.5" id="new">
+    <p class="eyebrow">New in 0.5</p>
+    <h2 class="h">Lately.</h2>
+    <ul class="wb new">
+      <li><b>Autotune on decision models.</b> <code>fast</code> and <code>accurate</code> learn your task too.</li>
+      <li><b>Bench against the cloud.</b> <code>jul bench</code> puts Jev, Ollama, Clef or any System One URL next to your local models.</li>
+      <li><b>Cascades, measured.</b> <code>--escalate-to</code>: accuracy of the pair and share of questions sent out.</li>
+      <li><b>A new <code>fast</code>.</b> A decision model trained on human-written decisions.</li>
+    </ul>
+    <p class="note" style="margin-top:1.2em"><a href="https://github.com/usejul/jul/blob/main/CHANGELOG.md">Full changelog →</a></p>
+  </section>
+
+  <!-- ── INSTALL ───────────────────────────────────────────────────── -->
+  <section class="win c5" data-title="JuL:Install" id="install">
+    <p class="eyebrow">Two lines · <a href="https://pypi.org/project/jul/">on PyPI</a></p>
+    <h2 class="h">Up in one coffee.</h2>
+<pre class="code"><span class="c">1&gt; </span>pip install jul
+<span class="c">1&gt; </span>jul setup</pre>
+    <p>Picks the backend (MLX on Apple Silicon, PyTorch elsewhere), downloads the model once, runs one real decision.</p>
+    <div class="term-bar">
+      <span>No terminal handy? Let an agent do it.</span>
+      <button class="gadbtn" type="button" id="copy-prompt">Copy agent prompt</button>
+    </div>
+<pre class="prompt" hidden id="agent-prompt">Install jul (https://pypi.org/project/jul/), a local library that answers typed questions
+with a small local model, and check that it works on this machine.
+
+1. Create a virtualenv with Python &gt;= 3.10.
+2. In that venv: pip install jul   then   jul setup
+   jul setup picks the backend (MLX on Apple Silicon, else PyTorch), installs it, downloads
+   the default model once and runs one test decision.
+3. Then run:
+   jul ask choice "Which team should handle this ticket?" -o billing:"payments, invoices" -o technical:"bugs, errors" --state "I was charged twice"
+   and show me the JSON.
+
+Do not use sudo and do not install anything outside the venv. If a step fails, show me the error and
+what you suggest before trying something else. At the end, tell me in two lines: the backend, the
+latency per decision, and the answer to the ticket.</pre>
+  </section>
+
+  <!-- ── SHOWCASES ─────────────────────────────────────────────────── -->
+  <section class="c12" id="showcases" aria-label="Showcases">
+    <p class="eyebrow">By <a href="https://github.com/JeromeGuyon">Jérôme Guyon</a> · <a href="https://github.com/guyon-it-consulting/jul-showcases">jul-showcases</a></p>
+    <h2 class="h">Seen in the wild.</h2>
+    <div class="two">
+      <ul class="wb">
+        <li><b>A form that branches itself.</b> No <code>if/then</code>.</li>
+        <li><b>Mute the noise.</b> The OTP stays, the flash sale goes.</li>
+        <li><b>Fast mode or full model?</b> Decided before the prompt is sent.</li>
+      </ul>
+      <ul class="wb">
+        <li><b>50,000 support tickets</b> on a Mac, $0.</li>
+        <li><b>An on-device browser agent</b> that books a train.</li>
+        <li><b>Re-rank by intent.</b> Deep engineering up, clickbait down.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ────────────────────────────────────────────────────── -->
+  <footer class="c12">
+    <p>JuL, <i>Just use Less</i>. A headless decision runtime. Apache-2.0.</p>
+<pre class="credits"><span class="eyebrow">Credits</span>
+  <a href="https://github.com/bdauzats">bdauzats</a> ........ author
+  <a href="https://github.com/jlestel">jlestel</a> ......... contributor
+  <a href="https://github.com/JeromeGuyon">JeromeGuyon</a> ..... contributor</pre>
+    <p class="note" style="margin-top:1.2em">
+      <a href="https://github.com/usejul/jul">github.com/usejul/jul</a> ·
+      <a href="https://pypi.org/project/jul/">pip install jul</a> ·
+      <a href="https://huggingface.co/usejul">weights on Hugging Face</a> ·
+      Not affiliated with TypeSafe AI or Jev.
+    </p>
+    <p class="note" style="margin-top:1em"><span style="color:var(--orange)">1.JuL:&gt; </span>endcli<span class="cur" aria-hidden="true"></span></p>
+  </footer>
+
+</main>
+
+<script>
+(() => {
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // ── windows: Workbench 1.3 chrome, built around each .win ────────────
+  const CLOSE = '<svg viewBox="0 0 22 16" aria-hidden="true"><rect x="1" y="1" width="20" height="14" fill="#fff" stroke="#000" stroke-width="1"/><rect x="8" y="5" width="6" height="6" fill="#0055AA"/></svg>';
+  const BACK  = '<svg viewBox="0 0 22 16" aria-hidden="true"><rect x="1.5" y="1.5" width="12" height="8" fill="#fff" stroke="#000"/><rect x="8.5" y="6.5" width="12" height="8" fill="#0055AA" stroke="#fff"/></svg>';
+  const FRONT = '<svg viewBox="0 0 22 16" aria-hidden="true"><rect x="1.5" y="1.5" width="12" height="8" fill="#0055AA" stroke="#fff"/><rect x="8.5" y="6.5" width="12" height="8" fill="#fff" stroke="#000"/></svg>';
+  const SIZE  = '<svg viewBox="0 0 14 10" aria-hidden="true"><path d="M1 9h12V1" fill="none" stroke="#fff" stroke-width="2"/><path d="M5 9h8V3z" fill="#fff"/></svg>';
+  document.querySelectorAll(".win").forEach(win => {
+    const body = document.createElement("div");
+    body.className = "w-body";
+    while (win.firstChild) body.appendChild(win.firstChild);
+    const title = win.dataset.title || "";
+    const bar = document.createElement("div");
+    bar.className = "w-bar";
+    bar.innerHTML =
+      `<button class="gad close" type="button" title="Fold / unfold" aria-expanded="true">${CLOSE}</button>` +
+      `<span class="w-title"></span>` +
+      `<button class="gad depth" type="button" data-depth="back" title="Send to back">${BACK}</button>` +
+      `<button class="gad depth" type="button" data-depth="front" title="Bring to front">${FRONT}</button>`;
+    bar.querySelector(".w-title").textContent = title;
+    const size = document.createElement("span");
+    size.className = "w-size"; size.innerHTML = SIZE; size.setAttribute("aria-hidden", "true");
+    win.append(bar, body, size);
+    const closeBtn = bar.querySelector(".close");
+    closeBtn.addEventListener("click", () => {
+      const folded = win.classList.toggle("folded");
+      closeBtn.setAttribute("aria-expanded", String(!folded));
+    });
+    bar.querySelectorAll(".depth").forEach(b => b.addEventListener("click", () => {
+      document.querySelectorAll(".win.front").forEach(w => w.classList.remove("front"));
+      if (b.dataset.depth === "front") win.classList.add("front");
+    }));
+    win.setAttribute("role", "region");
+    win.setAttribute("aria-label", title);
+  });
+
+  // ── the Guru, only if you click the disk ─────────────────────────────
+  const guru = document.getElementById("guru");
+  document.getElementById("disk").addEventListener("click", () => { guru.hidden = false; });
+  guru.addEventListener("click", () => { guru.hidden = true; });
+
+  // ── copy the agent prompt ────────────────────────────────────────────
+  const copyBtn = document.getElementById("copy-prompt");
+  const copyPrompt = async () => {
+    const text = document.getElementById("agent-prompt").textContent;
+    let ok = false;
+    try { await navigator.clipboard.writeText(text); ok = true; } catch {
+      const r = document.createRange(); r.selectNodeContents(document.getElementById("agent-prompt"));
+      const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+      try { ok = document.execCommand("copy"); } catch {}
+    }
+    copyBtn.textContent = ok ? "Copied ✓" : "Selected: ⌘C";
+    setTimeout(() => { copyBtn.textContent = "Copy agent prompt"; }, 1800);
+  };
+  copyBtn.addEventListener("click", copyPrompt);
+
+  // ── shell demo ───────────────────────────────────────────────────────
+  (function startTerm() {
+    const term = document.getElementById("term");
+    const script = [
+      ["cmd", 'jul ask choice "Which team should handle this ticket?" \\\n      -o billing:"payments, invoices" -o technical:"bugs, errors" \\\n      -o sales:"pricing, plans" --state "I was charged twice"'],
+      ["out", `{
+  "model": "jul-decision-wemm-4b",
+  "usage": {"input_tokens": 24, "output_tokens": 0, "total_tokens": 24},
+  "answers": {
+    "choice": {
+      "choice": "billing",
+      "probabilities": {"billing": 0.88, "technical": 0.11, "sales": 0.01},
+      "confidence": 0.88
+    }
+  },
+  "latency_ms": 55.3
+}`],
+      ["ok", "\n# 0 tokens generated · 0 bytes sent · 0 ¢\n"],
+      ["cmd", ""],
+    ];
+    let timer = null;
+    const run = () => {
+      clearTimeout(timer);
+      term.textContent = "";
+      if (reduced) {
+        script.forEach(([k, t]) => { const el = document.createElement("div"); el.className = k; el.textContent = t; term.appendChild(el); });
+        return;
+      }
+      let li = 0;
+      const next = () => {
+        if (li >= script.length) return;
+        const [kind, text] = script[li++];
+        const el = document.createElement("div"); el.className = kind; term.appendChild(el);
+        if (kind !== "cmd") { el.textContent = text; timer = setTimeout(next, 250); return; }
+        const cur = document.createElement("span"); cur.className = "cur";
+        el.appendChild(cur);
+        let c = 0;
+        const type = () => {
+          if (c < text.length) { cur.before(text[c++]); timer = setTimeout(type, 12 + Math.random() * 28); }
+          else if (li < script.length) { timer = setTimeout(() => { cur.remove(); next(); }, 420); }
+        };
+        type();
+      };
+      next();
+    };
+    document.getElementById("replay").onclick = run;
+    const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { io.disconnect(); run(); } }, { threshold: .3 });
+    io.observe(term);
+  })();
+
+  // ── one model, three KPIs ────────────────────────────────────────────
+  // acc, ms, gb, where the latency was measured; tuned: acc, ms, where
+  const VS = {
+    "wemm-4b-4bit": { zs: [.857, 55, 2.6, "M5 Max"], tuned: [.897, 59, 2.6, "M5 Max"], label: "WeMM-Embedding-4B",
+                      slow: "about 145 ms on an M4 Pro" },
+    "f2llm-1.7b":   { zs: [.817, 24, 1.0, "M5 Max"], tuned: [.833, 24, 1.0, "M5 Max"], label: "F2LLM-v2-1.7B" },
+    "harrier-0.6b": { zs: [.667, 13, .31, "M5 Max"], tuned: [.814, 13, .31, "M5 Max"], label: "Harrier-OSS-0.6B" },
+    "jul-decision-e5-small": { zs: [.557, 4, .09, "M4 Pro"], tuned: [.780, 4, .09, "M4 Pro"],
+                      label: "jul-decision-e5-small (multilingual-e5-small, trained on jul decisions)", bits: 8,
+                      always: " Runs in an AWS Lambda: 17 ms, $0.59 per million.",
+                      extra: " Hybrid head (vectors + TF-IDF); vectors alone: 0.723." },
+    "minicpm5-2b":  { zs: [.617, 64, 2.7, "M4 Pro"], tuned: [.757, 38, 2.7, "M5 Max"], label: "MiniCPM5-2B" },
+  };
+  const vs = { model: "wemm-4b-4bit", mode: "zs" };
+  const setBars = (id, v, max, label) => {
+    const el = document.getElementById(id);
+    let fill = el.querySelector(".fill"), lbl = el.querySelector(".lbl");
+    if (!fill) {
+      el.innerHTML = '<span class="track"><span class="fill"></span></span><span class="lbl"></span>';
+      fill = el.querySelector(".fill"); lbl = el.querySelector(".lbl");
+    }
+    fill.style.width = Math.max(1, Math.round(Math.min(v, max) / max * 100)) + "%";
+    lbl.textContent = label;
+  };
+  const setDelta = (id, text) => { document.getElementById(id).textContent = text; };
+  const tween = (id, to, digits) => {
+    const el = document.getElementById(id);
+    const from = parseFloat(el.textContent) || 0;
+    if (reduced || from === to) { el.textContent = to.toFixed(digits); return; }
+    const t0 = performance.now(), dur = 350;
+    const step = t => {
+      const k = Math.min(1, (t - t0) / dur);
+      el.textContent = (from + (to - from) * (1 - Math.pow(1 - k, 3))).toFixed(digits);
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  };
+  const renderVs = () => {
+    const m = VS[vs.model];
+    const [acc, ms, gb, hw] = m[vs.mode];
+    tween("kpi-acc", acc * 100, 1);
+    tween("kpi-ms", ms, 0);
+    tween("kpi-gb", gb, gb < 1 ? 2 : 1);
+    setDelta("kpi-acc-d", vs.mode === "tuned" ? "with 1,000 labels per task" : "no example of the task");
+    setBars("kpi-acc-b", acc, 1, (acc * 100).toFixed(1) + "%");
+    setDelta("kpi-ms-d", "0 tokens generated");
+    setBars("kpi-ms-b", ms, 280, ms + " ms");
+    setDelta("kpi-gb-d", "on your machine");
+    document.getElementById("kpi-gb-t").textContent = `Memory · ${m.bits || 4}-bit`;
+    setBars("kpi-gb-b", gb, 10, (gb < 1 ? gb.toFixed(2) : gb.toFixed(1)) + " GB");
+    document.getElementById("kpi-note").textContent =
+      `${m.label}${vs.mode === "tuned" ? " + autotune (1,000 labeled examples per task)" : ", zero-shot"}. ` +
+      `Latency on an ${hw}` + (m.slow ? `; ${m.slow}.` : ".") +
+      (vs.mode === "tuned" && m.extra ? m.extra : "") + (m.always || "");
+    document.querySelectorAll("[data-vs-model]").forEach(b => b.setAttribute("aria-pressed", b.dataset.vsModel === vs.model));
+    document.querySelectorAll("[data-vs-mode]").forEach(b => b.setAttribute("aria-pressed", b.dataset.vsMode === vs.mode));
+    document.getElementById("kpi-mode").textContent = vs.mode === "tuned" ? "+AUTOTUNE" : "ZERO-SHOT";
+  };
+  document.querySelectorAll("[data-vs-model]").forEach(b => b.addEventListener("click", () => { vs.model = b.dataset.vsModel; renderVs(); }));
+  document.querySelectorAll("[data-vs-mode]").forEach(b => b.addEventListener("click", () => { vs.mode = b.dataset.vsMode; renderVs(); }));
+  renderVs();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1039 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JuL — Just use Less</title>
+<meta name="description" content="One JuL to rule them all: typed decisions from any model, good out of the box, autotuned on your labels.">
+<meta property="og:title" content="JuL — Just use Less">
+<meta property="og:description" content="Any model, tested as a decider. Local by default, escalate only the hard ones. Same calls as Jev's SDK.">
+<meta name="theme-color" content="#0a0600">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230a0600'/%3E%3Ctext x='2' y='12' font-family='monospace' font-size='11' fill='%23ffb000'%3E%3E_%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ph: #ffb000;          /* phosphor: amber by default */
+  --ph-rgb: 255, 176, 0;
+  --bg: #0a0600;
+  --ink: #0a0600;         /* text on inverted phosphor */
+  --dim: rgba(var(--ph-rgb), .75);
+  --faint: rgba(var(--ph-rgb), .16);
+  --grid: rgba(var(--ph-rgb), .07);
+  --glow: rgba(var(--ph-rgb), .55);
+  --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  --crt: "VT323", var(--mono);
+  --fs: 15px;
+}
+:root[data-phosphor="green"] { --ph: #33ff66; --ph-rgb: 51, 255, 102; --bg: #050805; --ink: #050805; }
+:root[data-phosphor="white"] { --ph: #e8f0ff; --ph-rgb: 232, 240, 255; --bg: #07080b; --ink: #07080b; }
+
+* { box-sizing: border-box; }
+html { background: var(--bg); }
+body {
+  margin: 0;
+  background-color: var(--bg);
+  background-image: radial-gradient(var(--grid) 1px, transparent 1.2px);
+  background-size: 6px 6px;
+  color: var(--ph);
+  font: 400 var(--fs)/1.5 var(--mono);
+  text-shadow: 0 0 3px var(--glow);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  font-variant-ligatures: none;
+}
+::selection { background: var(--ph); color: var(--ink); text-shadow: none; }
+
+/* CRT: scanlines + vignette, above everything, never clickable */
+body::before, body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 100; }
+body::before {
+  background: repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0 2px, rgba(0,0,0,.12) 2px 3px);
+}
+body::after {
+  background: radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,.6) 100%);
+  animation: flicker 6s infinite steps(1);
+}
+@keyframes flicker { 0%, 97%, 100% { opacity: 1; } 98% { opacity: .85; } }
+
+a { color: inherit; text-decoration: underline dashed 1px; text-underline-offset: 3px; }
+a:hover, a:focus-visible, button:hover, button:focus-visible { background: var(--ph); color: var(--ink); text-shadow: none; outline: none; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+h1, h2, h3, p { margin: 0; }
+pre { margin: 0; font: inherit; line-height: 1.3; }
+.dim { color: var(--dim); }
+.inv { background: var(--ph); color: var(--ink); text-shadow: none; padding: 0 .5ch; }
+.blink { animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+/* ── menu bar ─────────────────────────────────────────────────────────── */
+.menubar {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: center; gap: 2ch; flex-wrap: wrap;
+  padding: 0 2ch; min-height: 2em;
+  background: var(--ph); color: var(--ink); text-shadow: none;
+  font-family: var(--crt); font-size: 1.35rem; line-height: 1.5;
+}
+.menubar a, .menubar button { color: var(--ink); text-decoration: none; padding: 0 .5ch; }
+.menubar a:hover, .menubar button:hover, .menubar a:focus-visible, .menubar button:focus-visible { background: var(--ink); color: var(--ph); }
+.menubar .brand { font-weight: 400; letter-spacing: .05em; }
+.menubar .spacer { flex: 1; }
+.menubar u { text-decoration: underline; text-underline-offset: 2px; }
+
+/* ── desktop grid ─────────────────────────────────────────────────────── */
+main {
+  max-width: 1180px; margin: 0 auto; padding: 2.5em 16px 4em;
+  display: grid; grid-template-columns: repeat(12, 1fr); gap: 2.2em 2.5ch;
+}
+.c12 { grid-column: span 12; } .c7 { grid-column: span 7; } .c6 { grid-column: span 6; }
+.c5 { grid-column: span 5; } .c4 { grid-column: span 4; } .c3 { grid-column: span 3; } .c8 { grid-column: span 8; }
+@media (max-width: 1020px) {
+  main > * { grid-column: span 12 !important; }
+  main > .stat { grid-column: span 6 !important; }
+}
+@media (max-width: 560px) {
+  :root { --fs: 13px; }
+  .menubar { gap: .5ch; padding: 0 1ch; font-size: 1.15rem; }
+  .menubar .hide-sm { display: none; }
+  main > .stat { grid-column: span 12 !important; }
+}
+
+/* ── windows, framed in box-drawing characters ────────────────────────── */
+/* Without JS a window keeps a plain CSS frame; frame() swaps it for characters. */
+.win {
+  position: relative; min-width: 0;
+  background: var(--bg);
+  border: 3px double var(--ph);
+  box-shadow: 1.2ch .9em 0 var(--faint);
+}
+.win.ascii { border: 0; display: flex; flex-direction: column; }
+/* A grid row stretches its windows to the tallest one: the frame follows, so the shadow does too. */
+.win.ascii > .w-mid { flex: 1; }
+.win.collapsed { align-self: start; }
+.w-top, .w-bot { display: flex; white-space: pre; line-height: 1; overflow: hidden; }
+.w-fill { flex: 1; min-width: 0; overflow: hidden; }
+.w-title { background: var(--ph); color: var(--ink); text-shadow: none; padding: 0 1ch; white-space: pre; }
+.w-mid { display: grid; grid-template-columns: 1ch minmax(0, 1fr) 1ch; }
+.w-side { position: relative; }
+.w-side > span { position: absolute; inset: 0; overflow: hidden; white-space: pre; line-height: .8; }
+.w-body { padding: 1em 2ch 1.1em; min-width: 0; }
+.win:not(.ascii) .w-body { padding: 1em 2ch; }
+.win.collapsed .w-mid { display: none; }
+.w-btn:hover { background: var(--ph); color: var(--ink); }
+/* [▲] lifts the window over the page; Esc or Restore puts it back. */
+.win.max {
+  position: fixed; inset: 16px; z-index: 60;
+  box-shadow: 1.2ch .9em 0 var(--faint), 0 0 0 100vmax rgba(0,0,0,.72);
+}
+.win.max > .w-mid { min-height: 0; grid-template-rows: minmax(0, 1fr); }
+.win.max .w-body { overflow: auto; }
+body:has(.win.max) { overflow: hidden; }
+/* [■] opens the control menu, as on Windows 3.x */
+.w-menu {
+  position: absolute; top: 1.2em; left: 2ch; z-index: 5; display: grid; min-width: 16ch;
+  background: var(--bg); border: 3px double var(--ph); box-shadow: 1.2ch .9em 0 var(--faint);
+}
+.w-menu[hidden] { display: none; }
+.w-menu button { text-align: left; padding: 0 1ch; white-space: pre; }
+.w-menu button:disabled { color: var(--dim); cursor: default; }
+.w-menu button:disabled:hover { background: none; color: var(--dim); }
+
+.eyebrow { font-family: var(--crt); font-size: 1.3rem; color: var(--dim); letter-spacing: .04em; }
+h2.h { font-family: var(--crt); font-weight: 400; font-size: 2rem; line-height: 1.05; margin: .15em 0 .5em; }
+.scroll { overflow-x: auto; scrollbar-color: var(--ph) var(--bg); }
+
+/* ── hero ─────────────────────────────────────────────────────────────── */
+.hero { display: grid; grid-template-columns: auto 1fr; gap: 1.5em 4ch; align-items: center; }
+.logo { font-size: clamp(11px, 3.2vw, 22px); line-height: 1.05; font-weight: 700; }
+.hero h1 { font-family: var(--crt); font-weight: 400; font-size: clamp(2.3rem, 5.4vw, 4.2rem); line-height: .95; }
+.hero .tag { margin-top: .8em; max-width: 58ch; }
+.hero .tag b { font-weight: 400; background: var(--ph); color: var(--ink); text-shadow: none; padding: 0 .4ch; }
+.cta { display: flex; gap: 2ch; flex-wrap: wrap; margin-top: 1.4em; font-family: var(--crt); font-size: 1.5rem; }
+.cta a { text-decoration: none; border: 1px solid var(--ph); padding: 0 1.2ch; }
+.cta a.primary { background: var(--ph); color: var(--ink); text-shadow: none; }
+.cta a.primary:hover { background: var(--bg); color: var(--ph); }
+.hero-foot { grid-column: 1 / -1; color: var(--dim); }
+@media (max-width: 760px) { .hero { grid-template-columns: 1fr; } }
+
+/* ── airy layout ─────────────────────────────────────────────────────── */
+main { max-width: 1080px; gap: 5.5em 4ch; padding-top: 4em; padding-bottom: 7em; }
+/* ── free sections: text straight on the background, no frame ─────────── */
+.sec { min-width: 0; outline: none; }
+.sec > .eyebrow, .sec .steps .eyebrow, .sec .stage .eyebrow, .sec .pillar .eyebrow { font-size: 1.1rem; }
+.sec > h2.h { font-size: 2.6rem; margin: .1em 0 .55em; }
+.sec > p, .sec > pre, .sec > ul, .sec > .two, .sec > .steps, .sec > .pillars { max-width: 100%; }
+.sec .pillar h2.h { font-size: 2.1rem; }
+/* ─ ─ ─ between sections */
+hr.rule { grid-column: span 12; border: 0; margin: 0; height: 1em; overflow: hidden; color: var(--dim); white-space: pre; line-height: 1; opacity: .7; }
+hr.rule::before { content: "─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─"; }
+@media (max-width: 1020px) { main { gap: 4em 3ch; } hr.rule { height: .9em; } }
+@media (max-width: 560px) { main { gap: 3.4em 2ch; } .sec > h2.h { font-size: 2.2rem; } }
+.w-body, .win:not(.ascii) .w-body { padding: 1.8em 3.5ch 2em; }
+p + p, p + pre, pre + p { margin-top: 1em; }
+.lead { font-size: 1.12em; max-width: 60ch; }
+.hero { padding: 1.5em 0; }
+.hero .tag { font-size: 1.12em; line-height: 1.6; }
+.pillars { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3ch; }
+.pillar .num { font-family: var(--crt); font-size: 3.4rem; line-height: .9; color: var(--dim); }
+.pillar h2.h { font-size: 1.9rem; }
+.pillar pre { margin-top: 1.2em; color: var(--dim); }
+@media (max-width: 1020px) { .pillars { grid-template-columns: 1fr; gap: 3em; } }
+.chips { display: flex; flex-wrap: wrap; gap: .6em 1.2ch; margin-top: 1.2em; }
+.chips span { border: 1px solid var(--dim); padding: 0 1ch; white-space: nowrap; }
+.steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3ch; margin-top: 1.4em; }
+.steps > div { min-width: 0; }
+.steps .eyebrow { margin-bottom: .4em; }
+@media (max-width: 1020px) { .steps { grid-template-columns: 1fr; gap: 2em; } }
+.new li { margin-bottom: .2em; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 1em 4ch; }
+@media (max-width: 700px) { .two { grid-template-columns: 1fr; } }
+.credits { margin-top: 1em; }
+
+/* ── terminal ─────────────────────────────────────────────────────────── */
+.term { min-height: 0; white-space: pre-wrap; word-break: break-word; line-height: 1.35; }
+.term .cmd::before { content: "C:\\JUL> "; color: var(--dim); }
+.term .ok { color: var(--dim); }
+.w-body:has(> .term) { display: flex; flex-direction: column; }
+.w-body > .term { flex: 1; }
+.term-bar { display: flex; justify-content: space-between; gap: 2ch; flex-wrap: wrap; margin-top: .8em; color: var(--dim); }
+
+/* ── pipeline: stages left to right, alternatives stacked ── */
+.pipe { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); column-gap: 4ch; margin-top: 1.6em; }
+.stage { position: relative; min-width: 0; }
+.stage:not(:last-child)::after { content: "─►"; position: absolute; right: -3.2ch; top: 3.1em; color: var(--ph); white-space: pre; }
+.stage .eyebrow { margin-bottom: .2em; }
+.stage h3 { font-family: var(--crt); font-weight: 400; font-size: 1.45rem; line-height: 1.1; margin-bottom: .7em; white-space: nowrap; }
+.stage ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .45em; }
+.stage li { border: 1px solid var(--faint); padding: .1em 1ch; }
+.stage li.def { min-height: 4.4em; font-weight: 700; background: var(--ph); color: var(--ink); text-shadow: none; border-color: var(--ph); }
+.stage li small { display: block; font-size: .85em; opacity: .8; }
+.stage li.def small { opacity: 1; color: var(--ink); font-weight: 400; font-size: .92em; }
+.stage code, .stage .nw { white-space: nowrap; }
+.pipe-legend { margin-top: 1.4em; color: var(--dim); }
+.pipe-legend .k { background: var(--ph); color: var(--ink); text-shadow: none; padding: 0 .6ch; }
+@media (max-width: 1020px) {
+  .pipe { grid-template-columns: minmax(0, 1fr); gap: 2.2em; }
+  .stage:not(:last-child)::after { content: "│\A▼"; white-space: pre; right: auto; left: 50%; top: auto; bottom: -2.4em; line-height: 1; }
+}
+
+/* ── choose your model ── */
+.vs-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: .4em 3ch; }
+.vs-head .eyebrow { flex: 1 1 100%; }
+.kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.4em 4ch; margin-top: 1.2em; }
+@media (max-width: 760px) { .kpis { grid-template-columns: 1fr; } }
+.kpi .big { font-family: var(--crt); font-size: clamp(3rem, 6vw, 4.6rem); line-height: .9; margin-top: .15em; }
+.kpi .big small { font-size: .45em; margin-left: .3ch; }
+.kpi .delta { margin-top: .4em; min-height: 1.5em; }
+.kpi .delta.win { display: inline-block; background: var(--ph); color: var(--ink); text-shadow: none; padding: 0 .5ch; }
+.kpi .delta.lose, .kpi .delta.even { color: var(--dim); }
+.minibars { margin-top: .6em; line-height: 1.35; overflow: hidden; }
+.minibars .jev { color: var(--dim); }
+.vs-foot { margin-top: 1.4em; padding-top: .8em; border-top: 1px dashed var(--dim); }
+.chart-bar { display: flex; flex-wrap: wrap; gap: .3em 1ch; margin-bottom: .4em; }
+.chart-bar button { color: var(--dim); }
+.chart-bar button[aria-pressed="true"] { background: var(--ph); color: var(--ink); text-shadow: none; }
+.chart-bar button:hover, .chart-bar button:focus-visible { background: none; color: var(--ph); text-shadow: 0 0 3px var(--glow); outline: 1px dashed var(--ph); }
+.chart-bar button[aria-pressed="true"]:hover, .chart-bar button[aria-pressed="true"]:focus-visible { background: var(--ph); color: var(--ink); text-shadow: none; }
+.term { font-size: 1.05em; line-height: 1.45; }
+.win { scroll-margin-top: 3em; }
+.term .out { margin: .4em 0; }
+
+/* ── agent prompt ─────────────────────────────────────────────────────── */
+.prompt[hidden] { display: none; }
+.prompt { margin-top: 1em; padding: .8em 1.5ch; border: 1px dashed var(--dim); white-space: pre-wrap; word-break: break-word; font-size: .9em; max-height: 22em; overflow-y: auto; }
+#copy-prompt { color: var(--ph); white-space: nowrap; }
+
+/* ── glider ───────────────────────────────────────────────────────────── */
+.life { line-height: 1; letter-spacing: .1ch; }
+
+/* ── boot screen ──────────────────────────────────────────────────────── */
+#boot {
+  position: fixed; inset: 0; z-index: 90; background: var(--bg);
+  padding: 2em 3ch; font-family: var(--crt); font-size: clamp(1.1rem, 2.4vw, 1.6rem); line-height: 1.25;
+  white-space: pre-wrap; cursor: pointer;
+}
+#boot .skip { position: absolute; right: 3ch; bottom: 1.5em; color: var(--dim); }
+
+/* ── keyboard: the active window gets a double frame (see setActive) ──── */
+.win { outline: none; }
+.win.active .w-title::after { content: "▌"; animation: blink 1s steps(1) infinite; margin-left: .5ch; }
+
+/* ── modals ───────────────────────────────────────────────────────────── */
+.modal { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 16px; background: rgba(0,0,0,.72); }
+.modal[hidden] { display: none; }
+.modal > .win { position: relative; z-index: 1; max-width: 100%; box-shadow: 1.2ch .9em 0 var(--faint); }
+.modal pre { overflow-x: auto; }
+.rain { position: absolute; inset: 0; overflow: hidden; color: var(--dim); line-height: 1.1; pointer-events: none; }
+
+/* ── unlocked phosphor ────────────────────────────────────────────────── */
+:root[data-phosphor="rgb"] main, :root[data-phosphor="rgb"] .menubar, :root[data-phosphor="rgb"] .modal { animation: hue 5s linear infinite; }
+@keyframes hue { to { filter: hue-rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  body::after, .blink, .win.active .w-title::after { animation: none; }
+  :root[data-phosphor="rgb"] main, :root[data-phosphor="rgb"] .menubar, :root[data-phosphor="rgb"] .modal { animation: none; filter: hue-rotate(160deg); }
+}
+</style>
+</head>
+<body>
+
+<div id="boot" hidden aria-hidden="true"><span id="boot-text"></span><span class="blink">█</span><span class="skip">press any key</span></div>
+
+<div class="modal" id="help" hidden role="dialog" aria-modal="true" aria-label="Keyboard shortcuts">
+  <section class="win" data-title="HELP.HLP">
+<pre>  J / K ........ next / previous window
+  Tab .......... walk windows and links
+  Enter ........ fold / unfold the window
+  M ............ maximize / restore the window
+  I A N ........ Install · Autotune · New
+  D ............ the documentation
+  G ............ GitHub
+  P ............ change phosphor
+  R ............ run the demo again
+  C ............ copy the install prompt
+  ? ............ this help
+  Esc .......... close
+
+  <span class="dim">psst. try the old code.</span></pre>
+  </section>
+</div>
+
+<div class="modal" id="cheat" hidden role="dialog" aria-modal="true" aria-label="Cheat code accepted">
+  <pre class="rain" id="rain" aria-hidden="true"></pre>
+  <section class="win" data-title="CHEAT.EXE">
+<pre>  ↑ ↑ ↓ ↓ ← → ← → B A
+
+  CHEAT CODE ACCEPTED
+  ───────────────────────────────
+  +30 LIVES ............... OK
+  output_tokens ........... still 0
+  latency ................. still 55 ms
+                            (we checked)
+  UNLOCKED ................ PHOSPHOR:RGB
+
+  <span class="dim">[ Esc ] back to work</span></pre>
+  </section>
+</div>
+
+<nav class="menubar" aria-label="Main">
+  <span class="brand">▓ JuL-DOS 0.5</span>
+  <a href="#install"><u>I</u>nstall</a>
+  <a href="#autotune"><u>A</u>utotune</a>
+  <a href="#new"><u>N</u>ew</a>
+  <a href="../docs/"><u>D</u>ocs</a>
+  <a href="https://github.com/usejul/jul"><u>G</u>itHub</a>
+  <span class="spacer"></span>
+  <button id="keys" type="button" title="Keyboard shortcuts" aria-haspopup="dialog">[?] Keys</button>
+  <button id="phosphor" type="button" title="Change phosphor">PHOSPHOR:<span id="ph-name">AMB</span></button>
+  <span class="hide-sm" id="clock" aria-hidden="true">00:00:00</span>
+</nav>
+
+<main>
+
+  <!-- ── HERO ───────────────────────────────────────────────── -->
+  <section class="win c12" data-title="C:\JUL\README.TXT" id="top">
+    <div class="hero">
+<pre class="logo" aria-label="JuL">     ██╗         ██╗
+     ██║         ██║
+     ██║██╗   ██╗██║
+██   ██║██║   ██║██║
+╚█████╔╝╚██████╔╝███████╗
+ ╚════╝  ╚═════╝ ╚══════╝</pre>
+      <div>
+        <p class="eyebrow">JUST USE LESS · v0.5 · APACHE-2.0</p>
+        <h1>One JuL to<br>rule them all.</h1>
+        <p class="tag">
+          Typed decisions from <b>any model</b>. <b>Good out of the box</b>.
+          <b>Autotuned</b> on your labels when you want more.
+        </p>
+        <div class="cta">
+          <a class="primary" href="#install">[ INSTALL ]</a>
+          <a href="../docs/">[ DOCS ]</a>
+        </div>
+        <p class="note" style="margin-top:1.4em">Local by default: 0 tokens generated · 0 bytes sent · no key.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── THE THREE IDEAS ────────────────────────────────────── -->
+  <hr class="rule" aria-hidden="true">
+
+  <section class="sec c12" id="why" tabindex="-1" aria-label="JUL.SYS">
+    <p class="eyebrow">JUL.SYS · THREE IDEAS</p>
+    <div class="pillars">
+      <div class="pillar" id="anything">
+        <p class="num">1</p>
+        <h2 class="h">Plug in anything.</h2>
+        <p>Run a model, or route to a server. Same <code>Choice</code> / <code>Noul</code> / <code>Score</code>
+        calls, same response, whatever answers.</p>
+        <div class="chips">
+          <span>Hugging Face</span><span>Kev models</span><span>Laya</span><span>Encoders · ONNX</span>
+          <span>Ollama</span><span>OpenAI</span><span>Mistral</span><span>Jev</span><span>Clef</span><span>your fine-tune</span>
+        </div>
+      </div>
+      <div class="pillar" id="default">
+        <p class="num">2</p>
+        <h2 class="h">Great by default.</h2>
+        <p>No model to pick, no prompt to write, no layer to choose. <code>jul setup</code> downloads a model
+        picked and calibrated for typed questions: probabilities you can threshold on.</p>
+<pre>model="accurate"   <span class="dim"># the default</span>
+model="fast"       <span class="dim"># half the size</span></pre>
+      </div>
+      <div class="pillar" id="autotune">
+        <p class="num">3</p>
+        <h2 class="h">Autotune the rest.</h2>
+        <p>Give it labeled examples: a small head is trained in seconds, <b>kept only if it beats</b> the
+        default on examples it never saw. The model is untouched, calls stay as fast.</p>
+<pre>jul autotune tickets \
+  --questions questions.yaml \
+  --labeled labeled.jsonl</pre>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ── PIPELINE ─────────────────────────────────────────── -->
+  <hr class="rule" aria-hidden="true">
+
+  <section class="sec c12" id="pipeline" tabindex="-1" aria-label="PIPELINE.EXE">
+    <p class="eyebrow">PIPELINE.EXE · FROM A TEXT TO A DECISION&nbsp;· PICK ONE OPTION PER STEP, OR KEEP THE DEFAULT</p>
+    <h2 class="h">Your model, your hardware, your way out.</h2>
+    <div class="pipe">
+      <div class="stage">
+        <p class="eyebrow">1&nbsp;· MODEL</p>
+        <h3>What reads it</h3>
+        <ul>
+          <li class="def">accurate<small>the default model</small></li>
+          <li>fast<small>half the size</small></li>
+          <li>any Hugging Face model<small>jul models add</small></li>
+          <li>a small encoder<small>e5, BERT, XLM-R</small></li>
+          <li>an embeddings API<small>Ollama&nbsp;· OpenAI&nbsp;· Mistral&nbsp;· Voyage</small></li>
+          <li>Laya<small>its own runtime</small></li>
+        </ul>
+      </div>
+      <div class="stage">
+        <p class="eyebrow">2&nbsp;· HARDWARE</p>
+        <h3>Where it runs</h3>
+        <ul>
+          <li class="def">auto<small>MLX on a Mac, PyTorch elsewhere</small></li>
+          <li>Apple Silicon<small>MLX</small></li>
+          <li>NVIDIA GPU<small>PyTorch&nbsp;· CUDA</small></li>
+          <li>CPU<small>PyTorch, or ONNX without torch</small></li>
+          <li>no weights at all<small>--backend api</small></li>
+        </ul>
+      </div>
+      <div class="stage">
+        <p class="eyebrow">3&nbsp;· YOUR DATA</p>
+        <h3>How it fits</h3>
+        <ul>
+          <li class="def">zero-shot<small>nothing to give</small></li>
+          <li>a Context<small>~50 unlabeled examples</small></li>
+          <li>autotune<small>labeled examples, kept if it wins</small></li>
+          <li>jul synth<small>too few labels? synthesize them</small></li>
+        </ul>
+      </div>
+      <div class="stage">
+        <p class="eyebrow">4&nbsp;· INTEGRATION</p>
+        <h3>How you call it</h3>
+        <ul>
+          <li class="def">Python<small>the Jev SDK calls</small></li>
+          <li>the CLI<small>jul ask&nbsp;· jul run</small></li>
+          <li>HTTP<small>jul serve, the Jev protocol</small></li>
+          <li>a Lambda<small>jul pack</small></li>
+        </ul>
+      </div>
+      <div class="stage">
+        <p class="eyebrow">5&nbsp;· WHEN UNSURE</p>
+        <h3>Who gets the rest</h3>
+        <ul>
+          <li class="def">nobody<small>everything stays local</small></li>
+          <li>Jev<small>TypeSafe, hosted</small></li>
+          <li>Clef&nbsp;· Nimble<small>cloudflare&nbsp;· ollama</small></li>
+          <li>any System One server<small>a Kev server, another jul serve</small></li>
+        </ul>
+      </div>
+    </div>
+    <p class="pipe-legend"><span class="k">highlighted</span> = what you get without choosing anything.
+      <a href="../docs/hub.html">Every model, backend and provider →</a></p>
+  </section>
+
+  <hr class="rule" aria-hidden="true">
+
+  <section class="win c12" data-title="CHOOSE.EXE" id="vs">
+    <div class="vs-head">
+      <p class="eyebrow">CHOOSE YOUR MODEL · AG NEWS, BANKING77, EMOTION · 300 EXAMPLES</p>
+      <div class="chart-bar vs-models" role="group" aria-label="Model">
+        <button type="button" data-vs-model="wemm-4b-4bit" aria-pressed="true">[ WEMM-4B-4BIT ]</button>
+        <button type="button" data-vs-model="f2llm-1.7b" aria-pressed="false">[ F2LLM-1.7B ]</button>
+        <button type="button" data-vs-model="harrier-0.6b" aria-pressed="false">[ HARRIER-0.6B ]</button>
+        <button type="button" data-vs-model="jul-decision-e5-small" aria-pressed="false">[ JUL-DECISION-E5-SMALL ]</button>
+        <button type="button" data-vs-model="minicpm5-2b" aria-pressed="false">[ MINICPM5-2B ]</button>
+      </div>
+      <div class="chart-bar" role="group" aria-label="Setting">
+        <button type="button" data-vs-mode="zs" aria-pressed="true">[ ZERO-SHOT ]</button>
+        <button type="button" data-vs-mode="tuned" aria-pressed="false">[ +AUTOTUNE ]</button>
+      </div>
+    </div>
+    <div class="kpis" aria-live="polite">
+      <div class="kpi">
+        <p class="eyebrow">ACCURACY · <span id="kpi-mode">ZERO-SHOT</span></p>
+        <p class="big"><span id="kpi-acc">85.7</span><small>%</small></p>
+        <p class="delta" id="kpi-acc-d"></p>
+        <pre class="minibars" id="kpi-acc-b"></pre>
+      </div>
+      <div class="kpi">
+        <p class="eyebrow">LATENCY · P50</p>
+        <p class="big"><span id="kpi-ms">55</span><small>ms</small></p>
+        <p class="delta" id="kpi-ms-d"></p>
+        <pre class="minibars" id="kpi-ms-b"></pre>
+      </div>
+      <div class="kpi">
+        <p class="eyebrow" id="kpi-gb-t">MEMORY · 4-BIT</p>
+        <p class="big"><span id="kpi-gb">2.6</span><small>GB</small></p>
+        <p class="delta" id="kpi-gb-d"></p>
+        <pre class="minibars" id="kpi-gb-b"></pre>
+      </div>
+    </div>
+    <p class="vs-foot">0 tokens generated · 0 bytes sent · no key · $0 per call.</p>
+    <p class="note" id="kpi-note"></p>
+  </section>
+
+  <section class="win c12" data-title="COMMAND.COM">
+    <div class="term" id="term" aria-live="off"></div>
+    <div class="term-bar">
+      <span>Illustrative output.</span>
+      <button type="button" id="replay">[ ↻ RUN AGAIN ]</button>
+    </div>
+  </section>
+
+  <!-- ── IN CODE ────────────────────────────────────────────── -->
+  <hr class="rule" aria-hidden="true">
+
+  <section class="sec c12" id="dropin" tabindex="-1" aria-label="DROPIN.PY">
+    <p class="eyebrow">DROPIN.PY · ALREADY ON JEV?</p>
+    <h2 class="h">Change one import.</h2>
+<pre class="scroll"><span class="dim">- from typesafe_sdk import TypeSafeClient, Choice</span>
++ from jul import TypeSafeClient, Choice
+
+client = TypeSafeClient()        <span class="dim"># the default model, local</span>
+team = Choice(instructions="Which team should handle this?",
+              criteria={"billing":   "payments, refunds",
+                        "technical": "bugs, errors"})
+
+r = client.system_one(state={"ticket": "I was charged twice"},
+                      questions={"team": team})
+r.choices["team"].probabilities  <span class="dim"># {"billing": 0.88, ...}</span>
+
+<span class="dim"># labels? one call, the next ones use the head</span>
+client.autotune("tickets", {"team": team}, labeled)</pre>
+  </section>
+
+  <!-- ── GO FURTHER ─────────────────────────────────────────── -->
+  <hr class="rule" aria-hidden="true">
+
+  <section class="sec c12" id="more" tabindex="-1" aria-label="MORE.EXE">
+    <p class="eyebrow">MORE.EXE · WHEN YOU WANT TO</p>
+    <h2 class="h">Go further.</h2>
+    <div class="steps">
+      <div>
+        <p class="eyebrow">MEASURE</p>
+        <p>Pit models against each other on your own rows: local ones, Jev, Ollama, a Kev server. One verdict: the fastest that is as good as the best.</p>
+        <p class="note"><code>jul bench test.jsonl --models fast,accurate,typesafe</code></p>
+      </div>
+      <div>
+        <p class="eyebrow">ESCALATE</p>
+        <p>Answer locally, send only the unsure questions to a bigger decider. Each answer says which tier gave it.</p>
+        <p class="note"><code>jul serve --escalate-to typesafe</code><br><a href="../docs/serve.html#escalation-local-first-a-bigger-decider-when-unsure">how →</a></p>
+      </div>
+      <div>
+        <p class="eyebrow">SHIP</p>
+        <p>An HTTP server that speaks the Jev protocol, or a bundle of your questions and their models for a Lambda.</p>
+        <p class="note"><code>jul serve</code> · <code>jul pack</code> · <a href="../docs/deployment.html">deploy →</a></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── WHAT'S NEW ─────────────────────────────────────────── -->
+  <hr class="rule" aria-hidden="true">
+
+  <section class="sec c7" id="new" tabindex="-1" aria-label="CHANGES.TXT">
+    <p class="eyebrow">CHANGES.TXT · NEW IN 0.5</p>
+    <h2 class="h">Lately.</h2>
+    <ul class="dos new">
+      <li><span><b>Autotune on decision models.</b> <code>fast</code> and <code>accurate</code> learn your task too.</span></li>
+      <li><span><b>Bench against the cloud.</b> <code>jul bench</code> puts Jev, Ollama, Clef or any System One URL next to your local models.</span></li>
+      <li><span><b>Cascades, measured.</b> <code>--escalate-to</code>: accuracy of the pair and share of questions sent out.</span></li>
+      <li><span><b>A new <code>fast</code>.</b> A decision model trained on human-written decisions.</span></li>
+    </ul>
+    <p class="note"><a href="https://github.com/usejul/jul/blob/main/CHANGELOG.md">Full changelog →</a></p>
+  </section>
+
+  <!-- ── INSTALL ────────────────────────────────────────────── -->
+  <section class="sec c5" id="install" tabindex="-1" aria-label="INSTALL.BAT">
+    <p class="eyebrow">INSTALL.BAT · TWO LINES · <a href="https://pypi.org/project/jul/">ON PYPI</a></p>
+    <h2 class="h">Up in one coffee.</h2>
+<pre class="scroll">C:\> pip install jul
+C:\> jul setup</pre>
+    <p>Picks the backend (MLX on Apple Silicon, PyTorch elsewhere), downloads the model once, runs one real decision.</p>
+    <div class="term-bar">
+      <span>No terminal handy? Let an agent do it.</span>
+      <button type="button" id="copy-prompt">[ <u>C</u>OPY AGENT PROMPT ]</button>
+    </div>
+<pre class="prompt" hidden id="agent-prompt">Install jul (https://pypi.org/project/jul/), a local library that answers typed questions
+with a small local model, and check that it works on this machine.
+
+1. Create a virtualenv with Python &gt;= 3.10.
+2. In that venv: pip install jul   then   jul setup
+   jul setup picks the backend (MLX on Apple Silicon, else PyTorch), installs it, downloads
+   the default model once and runs one test decision.
+3. Then run:
+   jul ask choice "Which team should handle this ticket?" -o billing:"payments, invoices" -o technical:"bugs, errors" --state "I was charged twice"
+   and show me the JSON.
+
+Do not use sudo and do not install anything outside the venv. If a step fails, show me the error and
+what you suggest before trying something else. At the end, tell me in two lines: the backend, the
+latency per decision, and the answer to the ticket.</pre>
+  </section>
+
+  <!-- ── SHOWCASES ──────────────────────────────────────────── -->
+  <hr class="rule" aria-hidden="true">
+
+  <section class="sec c12" id="showcases" tabindex="-1" aria-label="SHOWCASE.EXE">
+    <p class="eyebrow">SHOWCASE.EXE · BY <a href="https://github.com/JeromeGuyon">JÉRÔME GUYON</a> · <a href="https://github.com/guyon-it-consulting/jul-showcases">JUL-SHOWCASES</a></p>
+    <h2 class="h">Seen in the wild.</h2>
+    <div class="two">
+      <ul class="dos">
+        <li><span><b>A form that branches itself.</b> No <code>if/then</code>.</span></li>
+        <li><span><b>Mute the noise.</b> The OTP stays, the flash sale goes.</span></li>
+        <li><span><b>Fast mode or full model?</b> Decided before the prompt is sent.</span></li>
+      </ul>
+      <ul class="dos">
+        <li><span><b>50,000 support tickets</b> on a Mac, $0.</span></li>
+        <li><span><b>An on-device browser agent</b> that books a train.</span></li>
+        <li><span><b>Re-rank by intent.</b> Deep engineering up, clickbait down.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ── -->
+  <hr class="rule" aria-hidden="true">
+
+  <section class="sec c8" id="about" tabindex="-1" aria-label="ABOUT.TXT">
+    <p class="eyebrow">ABOUT.TXT</p>
+    <h2 class="h">Just use Less.</h2>
+    <p>JuL, <i>Just use Less</i>. A headless decision runtime. Apache-2.0.</p>
+<pre class="credits">CREDITS
+  <a href="https://github.com/bdauzats">bdauzats</a> ........ author
+  <a href="https://github.com/jlestel">jlestel</a> ......... contributor
+  <a href="https://github.com/JeromeGuyon">JeromeGuyon</a> ..... contributor</pre>
+    <p class="note">
+      <a href="https://github.com/usejul/jul">github.com/usejul/jul</a> ·
+      <a href="https://pypi.org/project/jul/">pip install jul</a> ·
+      <a href="https://huggingface.co/usejul">weights on Hugging Face</a> ·
+      Not affiliated with TypeSafe AI or Jev.
+    </p>
+    <p class="note">C:\JUL&gt; exit<span class="blink">_</span></p>
+  </section>
+  <section class="sec c4" id="glider" aria-label="GLIDER.EXE">
+    <p class="eyebrow">GLIDER.EXE</p>
+    <pre class="life" id="life" aria-hidden="true"></pre>
+    <p class="note" style="margin-top:.6em">Game of Life. Also runs locally.</p>
+  </section>
+
+</main>
+
+<script>
+(() => {
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+    sget(k) { try { return sessionStorage.getItem(k); } catch { return null; } },
+    sset(k, v) { try { sessionStorage.setItem(k, v); } catch {} },
+  };
+
+  // ── windows: redraw each frame in box-drawing characters ──────────────
+  const H = "─".repeat(600), V = "│\n".repeat(400);
+  // Minimize folds the window to its title bar; Maximize fills the screen; Restore undoes either.
+  const winAct = (win, act) => {
+    closeMenus();
+    if (act === "min") { win.classList.remove("max"); win.classList.toggle("collapsed"); }
+    if (act === "max") {
+      win.classList.remove("collapsed");
+      if (win.classList.toggle("max")) win.focus({ preventScroll: true });
+      else win.scrollIntoView({ block: "nearest" });
+    }
+    if (act === "restore") { win.classList.remove("collapsed", "max"); win.scrollIntoView({ block: "nearest" }); }
+  };
+  const closeMenus = () => document.querySelectorAll(".w-menu:not([hidden])").forEach(m => { m.hidden = true; });
+  const toggleMenu = win => {
+    let menu = win.querySelector(":scope > .w-menu");
+    if (!menu) {
+      menu = document.createElement("div");
+      menu.className = "w-menu"; menu.hidden = true; menu.setAttribute("role", "menu");
+      [["restore", "Restore"], ["min", "Minimize   ▼"], ["max", "Maximize   ▲"]].forEach(([act, label]) => {
+        const b = document.createElement("button");
+        b.type = "button"; b.dataset.act = act; b.textContent = label; b.setAttribute("role", "menuitem");
+        b.addEventListener("click", () => winAct(win, act));
+        menu.appendChild(b);
+      });
+      menu.addEventListener("keydown", e => {
+        if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+        e.preventDefault(); e.stopPropagation();
+        const items = [...menu.querySelectorAll("button:not(:disabled)")];
+        const i = items.indexOf(document.activeElement);
+        items[(i + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length].focus();
+      });
+      win.appendChild(menu);
+    }
+    const open = menu.hidden;
+    closeMenus();
+    if (!open) return;
+    const c = win.classList;
+    menu.querySelector('[data-act="restore"]').disabled = !c.contains("collapsed") && !c.contains("max");
+    menu.querySelector('[data-act="min"]').disabled = c.contains("collapsed");
+    menu.querySelector('[data-act="max"]').disabled = c.contains("max");
+    menu.hidden = false;
+    menu.querySelector("button:not(:disabled)").focus();
+  };
+  document.addEventListener("click", e => { if (!e.target.closest(".w-menu")) closeMenus(); });
+  document.querySelectorAll(".win").forEach(win => {
+    const body = document.createElement("div");
+    body.className = "w-body";
+    while (win.firstChild) body.appendChild(win.firstChild);
+    const title = win.dataset.title || "";
+    win.innerHTML =
+      `<div class="w-top" aria-hidden="true"><span>┌─</span><button class="w-btn" type="button" tabindex="-1">[■]</button>` +
+      `<span>─</span><span class="w-title"></span><span class="w-fill">${H}</span><span>─</span>` +
+      `<button class="w-btn" type="button" tabindex="-1" data-act="min" title="Minimize">[▼]</button>` +
+      `<button class="w-btn" type="button" tabindex="-1" data-act="max" title="Maximize">[▲]</button><span>─┐</span></div>` +
+      `<div class="w-mid"><span class="w-side" aria-hidden="true"><span>${V}</span></span>` +
+      `<span class="w-side" aria-hidden="true"><span>${V}</span></span></div>` +
+      `<div class="w-bot" aria-hidden="true"><span>└</span><span class="w-fill">${H}</span><span>┘</span></div>`;
+    win.querySelector(".w-title").textContent = title;
+    const mid = win.querySelector(".w-mid");
+    mid.insertBefore(body, mid.lastElementChild);
+    win.querySelector(".w-btn").title = "Control menu";
+    win.querySelector(".w-btn").addEventListener("click", e => { e.stopPropagation(); toggleMenu(win); });
+    win.querySelector('[data-act="min"]').addEventListener("click", () => winAct(win, "min"));
+    win.querySelector('[data-act="max"]').addEventListener("click", () => winAct(win, "max"));
+    win.classList.add("ascii");
+    win.tabIndex = 0;
+    win.setAttribute("role", "region");
+    win.setAttribute("aria-label", title);
+  });
+
+  // ── ASCII blocks: shrink the font until the drawing fits its window ────
+  const fitAll = () => document.querySelectorAll("pre.scroll").forEach(pre => {
+    pre.style.fontSize = "";
+    const base = parseFloat(getComputedStyle(pre).fontSize);
+    if (pre.scrollWidth > pre.clientWidth)
+      pre.style.fontSize = Math.max(9, Math.floor(base * pre.clientWidth / pre.scrollWidth * 10) / 10) + "px";
+  });
+  fitAll();
+  addEventListener("resize", fitAll);
+  document.fonts && document.fonts.ready.then(fitAll);
+
+  // ── phosphor ──────────────────────────────────────────────────────────
+  const phosphors = [["amber", "AMB"], ["green", "GRN"], ["white", "WHT"]];
+  const unlockRgb = () => { if (!phosphors.some(p => p[0] === "rgb")) phosphors.push(["rgb", "RGB"]); };
+  if (store.get("jul-konami")) unlockRgb();
+  let ph = Math.max(0, phosphors.findIndex(p => p[0] === store.get("jul-phosphor")));
+  const applyPh = () => {
+    document.documentElement.dataset.phosphor = phosphors[ph][0];
+    document.getElementById("ph-name").textContent = phosphors[ph][1];
+    document.querySelector('meta[name="theme-color"]').content = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim();
+  };
+  applyPh();
+  const nextPh = () => { ph = (ph + 1) % phosphors.length; store.set("jul-phosphor", phosphors[ph][0]); applyPh(); };
+  document.getElementById("phosphor").addEventListener("click", nextPh);
+
+  // ── clock ─────────────────────────────────────────────────────────────
+  const clock = document.getElementById("clock");
+  const tick = () => { clock.textContent = new Date().toTimeString().slice(0, 8); };
+  tick(); setInterval(tick, 1000);
+
+  // declared before the boot screen: a skipped boot calls startTerm(), which sets it, right away
+  let replayTerm = () => {};
+
+  // ── boot screen, once per session ─────────────────────────────────────
+  const boot = document.getElementById("boot");
+  const bootLines = [
+    "JuL BIOS v0.5",
+    "",
+    "CPU  : whatever you have ............ OK",
+    "RAM  : 2.6 GB needed ................ OK",
+    "GPU  : Metal / CUDA / CPU ........... OK",
+    "NET  : not required ................. SKIP",
+    "API KEY : not required .............. SKIP",
+    "",
+    "Loading WEMM-4B-4BIT.SYS  ",
+  ];
+  const bar = n => "[" + "█".repeat(n) + "░".repeat(20 - n) + "] " + String(n * 5).padStart(3) + "%";
+  const finishBoot = () => { boot.hidden = true; store.sset("jul-booted", "1"); startTerm(); };
+  if (!reduced && !store.sget("jul-booted")) {
+    boot.hidden = false;
+    const out = document.getElementById("boot-text");
+    let i = 0, n = 0, done = false;
+    const end = () => { if (done) return; done = true; removeEventListener("keydown", end); boot.removeEventListener("click", end); finishBoot(); };
+    addEventListener("keydown", end); boot.addEventListener("click", end);
+    const step = () => {
+      if (done) return;
+      if (i < bootLines.length) { out.textContent += bootLines[i++] + (i < bootLines.length ? "\n" : ""); return setTimeout(step, 110); }
+      if (n <= 20) { out.textContent = bootLines.join("\n") + bar(n++); return setTimeout(step, 35); }
+      out.textContent += "\n\nTokens to generate: 0\n\nC:\\> jul ";
+      setTimeout(end, 700);
+    };
+    step();
+  } else {
+    startTerm();
+  }
+
+
+  // ── copy the agent prompt ─────────────────────────────────────────────
+  const copyBtn = document.getElementById("copy-prompt");
+  const copyPrompt = async () => {
+    const text = document.getElementById("agent-prompt").textContent;
+    let ok = false;
+    try { await navigator.clipboard.writeText(text); ok = true; } catch {
+      const r = document.createRange(); r.selectNodeContents(document.getElementById("agent-prompt"));
+      const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+      try { ok = document.execCommand("copy"); } catch {}
+    }
+    copyBtn.textContent = ok ? "[ COPIED ✓ ]" : "[ SELECTED: ⌘C ]";
+    setTimeout(() => { copyBtn.innerHTML = "[ <u>C</u>OPY AGENT PROMPT ]"; }, 1800);
+  };
+  copyBtn.addEventListener("click", copyPrompt);
+
+  // ── terminal demo ─────────────────────────────────────────────────────
+  function startTerm() {
+    const term = document.getElementById("term");
+    const script = [
+      ["cmd", 'jul ask choice "Which team should handle this ticket?" \\\n      -o billing:"payments, invoices" -o technical:"bugs, errors" \\\n      -o sales:"pricing, plans" --state "I was charged twice"'],
+      ["out", `{
+  "model": "jul-decision-wemm-4b",
+  "usage": {"input_tokens": 24, "output_tokens": 0, "total_tokens": 24},
+  "answers": {
+    "choice": {
+      "choice": "billing",
+      "probabilities": {"billing": 0.88, "technical": 0.11, "sales": 0.01},
+      "confidence": 0.88
+    }
+  },
+  "latency_ms": 55.3
+}`],
+      ["ok", "\n# 0 tokens generated · 0 bytes sent · 0 ¢\n"],
+      ["cmd", ""],
+    ];
+    let timer = null;
+    const run = () => {
+      clearTimeout(timer);
+      term.textContent = "";
+      if (reduced) {
+        script.forEach(([k, t]) => { const el = document.createElement("div"); el.className = k; el.textContent = t; term.appendChild(el); });
+        return;
+      }
+      let li = 0;
+      const next = () => {
+        if (li >= script.length) return;
+        const [kind, text] = script[li++];
+        const el = document.createElement("div"); el.className = kind; term.appendChild(el);
+        if (kind !== "cmd") { el.textContent = text; timer = setTimeout(next, 250); return; }
+        const cur = document.createElement("span"); cur.className = "blink"; cur.textContent = "█";
+        el.appendChild(cur);
+        let c = 0;
+        const type = () => {
+          if (c < text.length) { cur.before(text[c++]); timer = setTimeout(type, 12 + Math.random() * 28); }
+          else if (li < script.length) { timer = setTimeout(() => { cur.remove(); next(); }, 420); }
+        };
+        type();
+      };
+      next();
+    };
+    document.getElementById("replay").onclick = run;
+    replayTerm = run;
+    const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { io.disconnect(); run(); } }, { threshold: .3 });
+    io.observe(term);
+  }
+
+  // ── keyboard: active window, shortcuts, modals ──────────────────────
+  const wins = [...document.querySelectorAll("main > .win")];
+  const SINGLE = "┌┐└┘─│", DOUBLE = "╔╗╚╝═║";
+  const restyle = (win, from, to) => win.querySelectorAll(".w-top > span:not(.w-title), .w-bot > span, .w-side > span")
+    .forEach(el => { el.textContent = el.textContent.replace(/[┌┐└┘─│╔╗╚╝═║]/g, c => to[from.indexOf(c)] ?? c); });
+  let active = null;
+  const setActive = win => {
+    if (win === active) return;
+    if (active) { active.classList.remove("active"); restyle(active, DOUBLE, SINGLE); }
+    active = win;
+    if (win) { win.classList.add("active"); restyle(win, SINGLE, DOUBLE); }
+  };
+  wins.forEach(w => w.addEventListener("focusin", () => setActive(w)));
+  document.addEventListener("focusin", e => { if (!e.target.closest || !e.target.closest("main > .win")) setActive(null); });
+  // free sections are not windows: J/K walk only the 3 that kept a frame
+  const go = d => {
+    const i = active ? wins.indexOf(active) : (d > 0 ? -1 : wins.length);
+    const w = wins[(i + d + wins.length) % wins.length];
+    w.focus({ preventScroll: true });
+    w.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+  };
+
+  let lastFocus = null;
+  const openModal = m => { lastFocus = document.activeElement; m.hidden = false; m.querySelector(".win").focus(); };
+  const closeModals = () => {
+    let was = false;
+    document.querySelectorAll(".modal").forEach(m => { if (!m.hidden) { m.hidden = true; was = true; } });
+    if (was && lastFocus && lastFocus.focus) lastFocus.focus();
+    stopRain();
+  };
+  const help = document.getElementById("help"), cheat = document.getElementById("cheat");
+  document.getElementById("keys").addEventListener("click", () => openModal(help));
+  document.querySelectorAll(".modal").forEach(m => m.addEventListener("click", e => { if (e.target === m) closeModals(); }));
+
+  // ↑ ↑ ↓ ↓ ← → ← → B A
+  const KONAMI = ["arrowup", "arrowup", "arrowdown", "arrowdown", "arrowleft", "arrowright", "arrowleft", "arrowright", "b", "a"];
+  let recent = [], rainTimer = null;
+  const stopRain = () => { clearInterval(rainTimer); rainTimer = null; };
+  const startRain = () => {
+    const rain = document.getElementById("rain");
+    const cols = Math.ceil(innerWidth / 8), rows = Math.ceil(innerHeight / 16);
+    const glyphs = "01░▒▓█│─┼JuL";
+    const drops = Array.from({ length: cols }, () => Math.floor(Math.random() * -rows));
+    const frame = () => {
+      const grid = Array.from({ length: rows }, () => Array(cols).fill(" "));
+      drops.forEach((y, x) => {
+        for (let t = 0; t < 8; t++) if (y - t >= 0 && y - t < rows) grid[y - t][x] = glyphs[(x + y + t) % glyphs.length];
+        drops[x] = y > rows + 8 ? Math.floor(Math.random() * -rows / 2) : y + 1;
+      });
+      rain.textContent = grid.map(r => r.join("")).join("\n");
+    };
+    frame();
+    if (!reduced) rainTimer = setInterval(frame, 70);
+  };
+  const konami = () => {
+    store.set("jul-konami", "1");
+    unlockRgb();
+    ph = phosphors.findIndex(p => p[0] === "rgb"); store.set("jul-phosphor", "rgb"); applyPh();
+    openModal(cheat);
+    startRain();
+  };
+
+  addEventListener("keydown", e => {
+    if (!boot.hidden || e.ctrlKey || e.metaKey || e.altKey) return;
+    const k = e.key.toLowerCase();
+
+    // the last ten keys against the code, so extra keys before it do no harm;
+    // checked before anything else, so its B does not jump to Bench
+    recent = [...recent, k].slice(-KONAMI.length);
+    if (recent.join() === KONAMI.join()) { recent = []; e.preventDefault(); closeModals(); konami(); return; }
+    if (k === "b" && recent.slice(-9, -1).join() === KONAMI.slice(0, 8).join()) return;
+
+    if (k === "escape") {
+      const menu = document.querySelector(".w-menu:not([hidden])"), max = document.querySelector(".win.max");
+      if (menu) { closeMenus(); menu.parentElement.focus(); }
+      else if (max) winAct(max, "max");
+      else closeModals();
+      return;
+    }
+    const modalOpen = [...document.querySelectorAll(".modal")].some(m => !m.hidden);
+    if (modalOpen) return;
+    if (e.target.matches && e.target.matches("input, textarea, select, [contenteditable]")) return;
+
+    if (k === "enter" && active && e.target === active) { e.preventDefault(); winAct(active, "min"); return; }
+    if (k === "m" && active) { e.preventDefault(); winAct(active, "max"); return; }
+    if (document.querySelector(".win.max")) return;
+    const jump = id => { const w = document.getElementById(id); if (!w) return; w.focus({ preventScroll: true }); w.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" }); };
+    const actions = {
+      j: () => go(1), k: () => go(-1),
+      i: () => jump("install"), a: () => jump("why"), n: () => jump("new"),
+      g: () => { location.href = "https://github.com/usejul/jul"; },
+      d: () => { location.href = "../docs/"; },
+      p: nextPh,
+      r: () => { const t = document.getElementById("term").closest(".win"); t.focus({ preventScroll: true }); t.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "center" }); replayTerm(); },
+      c: () => { jump("install"); copyPrompt(); },
+      "?": () => openModal(help),
+    };
+    if (actions[k]) { e.preventDefault(); actions[k](); }
+  });
+
+  // ── one model, three KPIs ─────────────────────────────────────────
+  // acc, ms, gb, where the latency was measured; tuned: acc, ms, where
+  const VS = {
+    "wemm-4b-4bit": { zs: [.857, 55, 2.6, "M5 Max"], tuned: [.897, 59, 2.6, "M5 Max"], label: "WeMM-Embedding-4B",
+                      slow: "about 145 ms on an M4 Pro" },
+    "f2llm-1.7b":   { zs: [.817, 24, 1.0, "M5 Max"], tuned: [.833, 24, 1.0, "M5 Max"], label: "F2LLM-v2-1.7B" },
+    "harrier-0.6b": { zs: [.667, 13, .31, "M5 Max"], tuned: [.814, 13, .31, "M5 Max"], label: "Harrier-OSS-0.6B" },
+    "jul-decision-e5-small": { zs: [.557, 4, .09, "M4 Pro"], tuned: [.780, 4, .09, "M4 Pro"],
+                      label: "jul-decision-e5-small (multilingual-e5-small, trained on jul decisions)", bits: 8,
+                      always: " Runs in an AWS Lambda: 17 ms, $0.59 per million.",
+                      extra: " Hybrid head (vectors + TF-IDF); vectors alone: 0.723." },
+    "minicpm5-2b":  { zs: [.617, 64, 2.7, "M4 Pro"], tuned: [.757, 38, 2.7, "M5 Max"], label: "MiniCPM5-2B" },
+  };
+  const vs = { model: "wemm-4b-4bit", mode: "zs" };
+  const KB = 20;
+  const kbar = (v, max) => { const n = Math.max(1, Math.round(Math.min(v, max) / max * KB)); return "█".repeat(n) + "░".repeat(KB - n); };
+  const setBars = (id, julTxt) => {
+    const el = document.getElementById(id);
+    el.innerHTML = "";
+    const a = document.createElement("div"); a.textContent = julTxt;
+    el.append(a);
+  };
+  const setDelta = (id, text, kind) => { const el = document.getElementById(id); el.textContent = text; el.className = "delta " + kind; };
+  const tween = (id, to, digits) => {
+    const el = document.getElementById(id);
+    const from = parseFloat(el.textContent) || 0;
+    if (reduced || from === to) { el.textContent = to.toFixed(digits); return; }
+    const t0 = performance.now(), dur = 350;
+    const step = t => {
+      const k = Math.min(1, (t - t0) / dur);
+      el.textContent = (from + (to - from) * (1 - Math.pow(1 - k, 3))).toFixed(digits);
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  };
+  const renderVs = () => {
+    const m = VS[vs.model];
+    const [acc, ms, gb, hw] = m[vs.mode];
+    tween("kpi-acc", acc * 100, 1);
+    tween("kpi-ms", ms, 0);
+    tween("kpi-gb", gb, gb < 1 ? 2 : 1);
+    setDelta("kpi-acc-d", vs.mode === "tuned" ? "with 1,000 labels per task" : "no example of the task", "even");
+    setBars("kpi-acc-b", kbar(acc, 1) + " " + (acc * 100).toFixed(1) + "%");
+    setDelta("kpi-ms-d", "0 tokens generated", "even");
+    setBars("kpi-ms-b", kbar(ms, 280) + " " + ms + " ms");
+    setDelta("kpi-gb-d", "on your machine", "even");
+    document.getElementById("kpi-gb-t").textContent = `MEMORY · ${m.bits || 4}-BIT`;
+    setBars("kpi-gb-b", kbar(gb, 10) + " " + (gb < 1 ? gb.toFixed(2) : gb.toFixed(1)) + " GB");
+    document.getElementById("kpi-note").textContent =
+      `${m.label}${vs.mode === "tuned" ? " + autotune (1,000 labeled examples per task)" : ", zero-shot"}. ` +
+      `Latency on an ${hw}` + (m.slow ? `; ${m.slow}.` : ".") +
+      (vs.mode === "tuned" && m.extra ? m.extra : "") + (m.always || "");
+    document.querySelectorAll("[data-vs-model]").forEach(b => b.setAttribute("aria-pressed", b.dataset.vsModel === vs.model));
+    document.querySelectorAll("[data-vs-mode]").forEach(b => b.setAttribute("aria-pressed", b.dataset.vsMode === vs.mode));
+    document.getElementById("kpi-mode").textContent = vs.mode === "tuned" ? "+AUTOTUNE" : "ZERO-SHOT";
+  };
+  document.querySelectorAll("[data-vs-model]").forEach(b => b.addEventListener("click", () => { vs.model = b.dataset.vsModel; renderVs(); }));
+  let setMode = mode => { vs.mode = mode; renderVs(); };   // the bench chart below joins in once defined
+  document.querySelectorAll("[data-vs-mode]").forEach(b => b.addEventListener("click", () => setMode(b.dataset.vsMode)));
+  renderVs();
+
+  // ── glider ────────────────────────────────────────────────────────────
+  const W = 22, Hh = 9, life = document.getElementById("life");
+  let g = Array.from({ length: Hh }, () => Array(W).fill(0));
+  [[0, 1], [1, 2], [2, 0], [2, 1], [2, 2]].forEach(([y, x]) => g[y][x] = 1);
+  const draw = () => { life.textContent = g.map(r => r.map(v => v ? "█" : "·").join("")).join("\n"); };
+  const stepLife = () => {
+    g = g.map((r, y) => r.map((v, x) => {
+      let n = 0;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++)
+        if (dy || dx) n += g[(y + dy + Hh) % Hh][(x + dx + W) % W];
+      return n === 3 || (v && n === 2) ? 1 : 0;
+    }));
+    draw();
+  };
+  draw();
+  if (!reduced) setInterval(stepLife, 220);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,869 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JuL — Just use Less</title>
+<meta name="description" content="One JuL to rule them all: typed decisions from any model, good out of the box, autotuned on your labels.">
+<meta property="og:title" content="JuL — Just use Less">
+<meta property="og:description" content="Any model, tested as a decider. Local by default, escalate only the hard ones. Same calls as Jev's SDK.">
+<meta name="theme-color" content="#ffffff">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Crect width='16' height='16' fill='%23fff'/%3E%3Crect x='1' y='1' width='14' height='14' fill='none' stroke='%23000'/%3E%3Crect x='1' y='1' width='14' height='4' fill='%23000'/%3E%3Ctext x='3' y='13' font-family='monospace' font-size='8' fill='%23000'%3EJuL%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,700;1,400&family=Pixelify+Sans:wght@400;700&family=Silkscreen&display=swap" rel="stylesheet">
+<style>
+/* ── Macintosh System 1: two colors, one pixel ───────────────────────── */
+:root {
+  --ink: #000;
+  --paper: #fff;
+  --pix: "Pixelify Sans", "Chicago", "Silkscreen", monospace;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --silk: "Silkscreen", var(--pix);
+  --fs: 15px;
+  /* MacPaint patterns */
+  --p-dither: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='2' height='2' shape-rendering='crispEdges'%3E%3Crect width='2' height='2' fill='%23fff'/%3E%3Crect width='1' height='1' fill='%23000'/%3E%3Crect x='1' y='1' width='1' height='1' fill='%23000'/%3E%3C/svg%3E");
+  --p-hatch: repeating-linear-gradient(135deg, #000 0 1px, #fff 1px 4px);
+  --p-lines: repeating-linear-gradient(to right, #000 0 1px, #fff 1px 3px);
+  --p-dots: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' shape-rendering='crispEdges'%3E%3Crect width='4' height='4' fill='%23fff'/%3E%3Crect width='1' height='1' fill='%23000'/%3E%3Crect x='2' y='2' width='1' height='1' fill='%23000'/%3E%3C/svg%3E");
+  --p-stripes: repeating-linear-gradient(to bottom, #000 0 1px, #fff 1px 2px);
+}
+* { box-sizing: border-box; }
+html { background: #fff; }
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--p-dither) 0 0 / 2px 2px #fff;
+  font: 400 var(--fs)/1.6 var(--mono);
+  font-variant-ligatures: none;
+  overflow-x: hidden;
+}
+::selection { background: #000; color: #fff; }
+a { color: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+a:hover, a:focus-visible { background: #000; color: #fff; outline: none; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+h1, h2, h3, p, ul { margin: 0; }
+pre { margin: 0; font: inherit; line-height: 1.45; }
+code { font-family: var(--mono); }
+.dim { font-style: italic; }
+.inv, b.inv { background: #000; color: #fff; padding: 0 .35em; font-weight: 400; }
+.pix { font-family: var(--pix); font-weight: 700; letter-spacing: .01em; }
+.eyebrow { font-family: var(--silk); font-weight: 400; font-size: .8rem; letter-spacing: .02em; text-transform: uppercase; }
+h2.h { font-family: var(--pix); font-weight: 700; font-size: 2.1rem; line-height: 1.1; margin: .2em 0 .55em; }
+.scroll { overflow-x: auto; }
+.note { margin-top: 1em; }
+p + p, p + pre, pre + p { margin-top: 1em; }
+.blink { animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.icon { display: inline-block; vertical-align: middle; line-height: 0; }
+.icon svg { display: block; shape-rendering: crispEdges; }
+
+/* ── menu bar ─────────────────────────────────────────────────────────── */
+.menubar {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: stretch;
+  height: 32px; padding: 0 6px;
+  background: #fff; border-bottom: 1px solid #000;
+  font-family: var(--pix); font-weight: 400; font-size: 1.25rem;
+}
+.menubar a, .menubar button {
+  display: flex; align-items: center; padding: 0 12px;
+  color: #000; text-decoration: none; white-space: nowrap;
+}
+.menubar a:hover, .menubar a:focus-visible, .menubar button:hover, .menubar button:focus-visible,
+.menubar button[aria-expanded="true"] { background: #000; color: #fff; outline: none; }
+.menubar .spacer { flex: 1; }
+.menubar .apple { position: relative; }
+.menubar .apple button { padding: 0 10px; }
+.menubar .apple button svg { display: block; shape-rendering: crispEdges; }
+.menubar .apple button:hover svg rect, .menubar .apple button[aria-expanded="true"] svg rect { fill: #fff; }
+.menu {
+  position: absolute; left: 0; top: 100%; margin-top: 1px;
+  min-width: 190px; background: #fff; border: 1px solid #000; border-top: 0;
+  box-shadow: 1px 1px 0 #000;
+}
+.menu[hidden] { display: none; }
+.menu button { width: 100%; height: 30px; text-align: left; justify-content: flex-start; padding: 0 16px; }
+.menu hr { border: 0; border-top: 1px dotted #000; margin: 0 2px; }
+.menu .off { pointer-events: none; }
+.menu .off span { background: var(--p-dither); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+/* ── desktop ──────────────────────────────────────────────────────────── */
+main {
+  max-width: 1040px; margin: 0 auto; padding: 56px 16px 72px;
+  display: grid; grid-template-columns: repeat(12, 1fr); gap: 56px 24px;
+}
+main > * { min-width: 0; }
+.c12 { grid-column: span 12; } .c7 { grid-column: span 7; } .c5 { grid-column: span 5; } .c8 { grid-column: span 8; } .c4 { grid-column: span 4; }
+@media (max-width: 900px) { main > * { grid-column: span 12 !important; } }
+@media (max-width: 560px) {
+  :root { --fs: 14px; }
+  main { padding: 32px 10px 56px; gap: 36px 16px; }
+  .menubar { font-size: 1rem; padding: 0 2px; overflow-x: auto; scrollbar-width: none; }
+  .menubar a, .menubar button { padding: 0 8px; }
+  .menubar .apple button { padding: 0 8px; }
+  .hero h1 { font-size: 2.3rem; }
+  h2.h { font-size: 1.7rem; }
+}
+
+/* ── windows ──────────────────────────────────────────────────────────── */
+.win { position: relative; background: #fff; border: 1px solid #000; box-shadow: 1px 1px 0 #000, 2px 2px 0 #000; scroll-margin-top: 48px; }
+.tbar {
+  position: relative; height: 24px; border-bottom: 1px solid #000;
+  background: var(--p-stripes) center / 100% 17px no-repeat #fff;
+}
+.tbar .ttl {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  max-width: calc(100% - 80px); overflow: hidden; text-overflow: ellipsis;
+  padding: 0 8px; background: #fff; white-space: nowrap;
+  font: 400 1.15rem/1 var(--pix); letter-spacing: .02em; margin: 0;
+}
+.tbar .cbox {
+  position: absolute; left: 9px; top: 50%; width: 13px; height: 13px; margin-top: -7px;
+  border: 1px solid #000; background: #fff; box-shadow: 0 0 0 2px #fff; cursor: pointer;
+}
+.tbar .cbox:hover { background: var(--p-hatch); }
+.wbody { padding: 30px 34px 34px; }
+@media (max-width: 560px) { .wbody { padding: 22px 16px 24px; } }
+.win.shaded .wbody, .win.shaded .tbar { border-bottom: 0; }
+.win.shaded .wbody { display: none; }
+
+/* ── dialog (double border, as a modal alert) ─────────────────────────── */
+.dialog { background: #fff; border: 1px solid #000; box-shadow: 0 0 0 2px #fff, 0 0 0 5px #000; margin: 5px; }
+.dialog .wbody { padding: 40px 44px; }
+@media (max-width: 560px) { .dialog .wbody { padding: 26px 18px; } }
+
+/* ── Mac buttons ──────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 112px; padding: 4px 22px; margin: 4px;
+  border: 1px solid #000; border-radius: 7px; background: #fff; color: #000;
+  font: 400 1.2rem/1.25 var(--pix); text-decoration: none; white-space: nowrap;
+}
+.btn.primary { outline: 3px solid #000; outline-offset: 2px; }
+.btn:hover, .btn:focus-visible, .btn:active { background: #000; color: #fff; }
+.btn.small { min-width: 0; padding: 2px 14px; font-size: 1.05rem; }
+
+/* ── hero ─────────────────────────────────────────────────────────────── */
+.hero { display: grid; grid-template-columns: auto 1fr; gap: 24px 48px; align-items: center; }
+.hero .mac { line-height: 0; }
+.hero h1 { font-family: var(--pix); font-weight: 700; font-size: clamp(2.6rem, 6vw, 4.8rem); line-height: .98; margin-top: .1em; }
+.hero .tag { margin-top: 1.1em; max-width: 54ch; font-size: 1.12em; line-height: 1.65; }
+.hero .tag b { background: #000; color: #fff; font-weight: 400; padding: 0 .35em; }
+.cta { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 1.6em -4px 0; }
+.hero .note { margin-top: 1.6em; }
+@media (max-width: 760px) { .hero { grid-template-columns: 1fr; } .hero .mac svg { width: 64px; height: auto; } }
+
+/* ── pillars ──────────────────────────────────────────────────────────── */
+.pillars { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px; }
+.pillar .num { font-family: var(--silk); font-weight: 400; font-size: 2.6rem; line-height: 1; width: 1.25em; height: 1.25em; display: grid; place-items: center; border: 1px solid #000; margin-bottom: .5em; }
+.pillar h2.h { font-size: 1.75rem; }
+.pillar pre { margin-top: 1.2em; padding: .7em 1em; border: 1px solid #000; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 1.2em; }
+.chips span { border: 1px solid #000; padding: 0 .7em; white-space: nowrap; line-height: 1.7; }
+@media (max-width: 900px) { .pillars { grid-template-columns: 1fr; gap: 44px; } }
+
+/* ── pipeline ─────────────────────────────────────────────────────────── */
+.pipe { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); column-gap: 36px; margin-top: 1.8em; }
+.stage { position: relative; min-width: 0; }
+.stage:not(:last-child)::after {
+  content: ""; position: absolute; right: -25px; top: 2.6em; width: 14px; height: 14px;
+  background: var(--arrow-r) center / contain no-repeat;
+}
+.stage .eyebrow { margin-bottom: .1em; }
+.stage h3 { font-family: var(--pix); font-weight: 700; font-size: 1.2rem; line-height: 1.15; margin-bottom: .8em; min-height: 2.3em; }
+.stage ul { list-style: none; padding: 0; display: grid; gap: 7px; }
+.stage li { border: 1px solid #000; padding: .35em .75em; line-height: 1.4; }
+.stage li.def { background: #000; color: #fff; font-weight: 700; min-height: 4.6em; }
+.stage li small { display: block; font-size: .86em; font-weight: 400; }
+.stage code, .stage .nw { white-space: nowrap; }
+.pipe-legend { margin-top: 1.8em; }
+.pipe-legend .k { background: #000; color: #fff; padding: 0 .5em; }
+@media (max-width: 900px) {
+  .pipe { grid-template-columns: minmax(0, 1fr); row-gap: 44px; }
+  .stage:not(:last-child)::after { right: auto; left: 50%; top: auto; bottom: -30px; margin-left: -7px; background-image: var(--arrow-d); }
+}
+
+/* ── choose a model ───────────────────────────────────────────────────── */
+.vs-head { display: grid; gap: 12px; }
+.radios { display: flex; flex-wrap: wrap; gap: 6px 26px; }
+.radios button { display: inline-flex; align-items: center; gap: 8px; padding: 2px 0; white-space: nowrap; }
+.radios button::before { content: ""; width: 13px; height: 13px; border: 1px solid #000; border-radius: 50%; background: #fff; flex: none; }
+.radios button[aria-pressed="true"]::before { background: radial-gradient(circle, #000 3.5px, #fff 4px); }
+.radios button:hover, .radios button:focus-visible { background: none; text-decoration: underline; text-underline-offset: 3px; outline: none; }
+.radios .lbl { font-family: var(--silk); font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; width: 100%; margin-bottom: -4px; }
+.kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px 40px; margin-top: 2em; }
+@media (max-width: 760px) { .kpis { grid-template-columns: 1fr; } }
+.kpi .big { font-family: var(--silk); font-weight: 400; font-size: clamp(2.6rem, 5vw, 3.8rem); line-height: 1; margin-top: .25em; }
+.kpi .big small { font-family: var(--mono); font-size: .4em; margin-left: .2em; font-weight: 400; }
+.kpi .delta { margin-top: .3em; min-height: 1.5em; }
+.bar { height: 14px; border: 1px solid #000; background: #fff; margin-top: .6em; }
+.bar i { display: block; height: 100%; border-right: 1px solid #000; background: var(--p-hatch); transition: width .35s ease-out; }
+.bar.lines i { background: var(--p-lines); }
+.bar.dots i { background: var(--p-dots); }
+.bar-l { margin-top: .3em; font-size: .9em; }
+.vs-foot { margin-top: 1.8em; padding-top: 1em; border-top: 1px dotted #000; }
+
+/* ── terminal ─────────────────────────────────────────────────────────── */
+.term { white-space: pre-wrap; word-break: break-word; line-height: 1.5; min-height: 20em; }
+.term .cmd::before { content: "$ "; font-weight: 700; }
+.term .ok { font-style: italic; }
+.term .out { margin: .5em 0; }
+.term .blink { display: inline-block; width: .6em; height: 1.1em; background: #000; vertical-align: -0.15em; }
+.term-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 1.2em; }
+
+/* ── further ──────────────────────────────────────────────────────────── */
+.steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.steps .card { background: #fff; border: 1px solid #000; box-shadow: 1px 1px 0 #000, 2px 2px 0 #000; padding: 26px 28px 28px; }
+.steps .card .eyebrow { display: flex; align-items: center; gap: 10px; margin-bottom: .6em; }
+@media (max-width: 900px) { .steps { grid-template-columns: 1fr; } }
+
+/* ── lists ────────────────────────────────────────────────────────────── */
+ul.mac { list-style: none; padding: 0; display: grid; gap: .55em; }
+ul.mac li { padding-left: 1.6em; position: relative; }
+ul.mac li::before { content: ""; position: absolute; left: 0; top: .55em; width: 9px; height: 9px; background: #000; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 1em 40px; }
+@media (max-width: 700px) { .two { grid-template-columns: 1fr; } }
+.credits { margin-top: 1.2em; }
+.credits a { text-decoration: none; border-bottom: 1px dotted #000; }
+.credits a:hover { border-bottom-color: #fff; }
+.code { padding: .9em 1.1em; border: 1px solid #000; }
+
+/* ── agent prompt ─────────────────────────────────────────────────────── */
+.prompt[hidden] { display: none; }
+.prompt { margin-top: 1em; padding: .9em 1.1em; border: 1px dotted #000; white-space: pre-wrap; word-break: break-word; font-size: .9em; max-height: 22em; overflow-y: auto; }
+
+/* ── about dialog (the one easter egg) ────────────────────────────────── */
+.modal { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 20px; background: var(--p-dither) 0 0 / 2px 2px; }
+.modal[hidden] { display: none; }
+.modal .dialog { max-width: 460px; width: 100%; }
+.modal .about { display: grid; grid-template-columns: auto 1fr; gap: 24px; align-items: start; }
+.modal .about .pix { font-family: var(--silk); font-weight: 400; font-size: 1.4rem; line-height: 1.1; }
+.modal .ok { display: flex; justify-content: flex-end; margin-top: 1.6em; }
+@media (max-width: 460px) { .modal .about { grid-template-columns: 1fr; } }
+
+@media (prefers-reduced-motion: reduce) { .blink { animation: none; } .bar i { transition: none; } }
+</style>
+</head>
+<body>
+
+<nav class="menubar" aria-label="Main">
+  <div class="apple">
+    <button type="button" id="apple" aria-haspopup="menu" aria-expanded="false" title="Apple menu"><span class="icon" data-icon="apple" data-scale="2"></span></button>
+    <div class="menu" id="apple-menu" role="menu" hidden>
+      <button type="button" role="menuitem" id="about-btn">About JuL…</button>
+      <hr>
+      <button type="button" role="menuitem" class="off" tabindex="-1" aria-disabled="true"><span>Alarm Clock</span></button>
+      <button type="button" role="menuitem" class="off" tabindex="-1" aria-disabled="true"><span>Calculator</span></button>
+      <button type="button" role="menuitem" class="off" tabindex="-1" aria-disabled="true"><span>Puzzle</span></button>
+    </div>
+  </div>
+  <a href="#install">Install</a>
+  <a href="#autotune">Autotune</a>
+  <a href="#new">New</a>
+  <a href="../docs/">Docs</a>
+  <a href="https://github.com/usejul/jul">GitHub</a>
+  <span class="spacer"></span>
+</nav>
+
+<div class="modal" id="about" hidden role="dialog" aria-modal="true" aria-label="About JuL">
+  <div class="dialog">
+    <div class="wbody">
+      <div class="about">
+        <span class="icon" data-icon="mac" data-scale="4" aria-hidden="true"></span>
+        <div>
+          <p class="pix">JuL 0.5</p>
+          <p class="eyebrow" style="margin-top:.4em">Just use Less</p>
+          <p class="note">A headless decision runtime. Apache-2.0.</p>
+          <p class="note">Local by default: 0 tokens generated · 0 bytes sent · no key.</p>
+          <p class="note">Not affiliated with TypeSafe AI or Jev.</p>
+        </div>
+      </div>
+      <div class="ok"><button type="button" class="btn primary" id="about-ok">OK</button></div>
+    </div>
+  </div>
+</div>
+
+<main>
+
+  <!-- ── HERO ───────────────────────────────────────────────── -->
+  <section class="dialog c12" id="top" aria-label="Welcome">
+    <div class="wbody">
+      <div class="hero">
+        <div class="mac"><span class="icon" data-icon="mac" data-scale="6" aria-label="JuL"></span></div>
+        <div>
+          <p class="eyebrow">Just use Less · v0.5 · Apache-2.0</p>
+          <h1>One JuL to<br>rule them all.</h1>
+          <p class="tag">
+            Typed decisions from <b>any model</b>. <b>Good out of the box</b>.
+            <b>Autotuned</b> on your labels when you want more.
+          </p>
+          <div class="cta">
+            <a class="btn primary" href="#install">Install</a>
+            <a class="btn" href="../docs/">Docs</a>
+          </div>
+          <p class="note">Local by default: 0 tokens generated · 0 bytes sent · no key.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── THE THREE IDEAS ────────────────────────────────────── -->
+  <section class="win c12" id="why" aria-label="JuL">
+    <div class="tbar"><span class="cbox" role="button" aria-label="Shade window" tabindex="0"></span><h2 class="ttl">JuL</h2></div>
+    <div class="wbody">
+      <div class="pillars">
+        <div class="pillar" id="anything">
+          <p class="num">1</p>
+          <h2 class="h">Plug in anything.</h2>
+          <p>Run a model, or route to a server. Same <code>Choice</code> / <code>Noul</code> / <code>Score</code>
+          calls, same response, whatever answers.</p>
+          <div class="chips">
+            <span>Hugging Face</span><span>Kev models</span><span>Laya</span><span>Encoders · ONNX</span>
+            <span>Ollama</span><span>OpenAI</span><span>Mistral</span><span>Jev</span><span>Clef</span><span>your fine-tune</span>
+          </div>
+        </div>
+        <div class="pillar" id="default">
+          <p class="num">2</p>
+          <h2 class="h">Great by default.</h2>
+          <p>No model to pick, no prompt to write, no layer to choose. <code>jul setup</code> downloads a model
+          picked and calibrated for typed questions: probabilities you can threshold on.</p>
+<pre class="scroll">model="accurate"   <span class="dim"># the default</span>
+model="fast"       <span class="dim"># half the size</span></pre>
+        </div>
+        <div class="pillar" id="autotune">
+          <p class="num">3</p>
+          <h2 class="h">Autotune the rest.</h2>
+          <p>Give it labeled examples: a small head is trained in seconds, <b>kept only if it beats</b> the
+          default on examples it never saw. The model is untouched, calls stay as fast.</p>
+<pre class="scroll">jul autotune tickets \
+  --questions questions.yaml \
+  --labeled labeled.jsonl</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── PIPELINE ─────────────────────────────────────────── -->
+  <section class="win c12" id="pipeline" aria-label="Pipeline">
+    <div class="tbar"><span class="cbox" role="button" aria-label="Shade window" tabindex="0"></span><h2 class="ttl">Pipeline</h2></div>
+    <div class="wbody">
+      <p class="eyebrow">From a text to a decision&nbsp;· pick one option per step, or keep the default</p>
+      <h2 class="h">Your model, your hardware, your way out.</h2>
+      <div class="pipe">
+        <div class="stage">
+          <p class="eyebrow">1&nbsp;· Model</p>
+          <h3>What reads it</h3>
+          <ul>
+            <li class="def">accurate<small>the default model</small></li>
+            <li>fast<small>half the size</small></li>
+            <li>any Hugging Face model<small>jul models add</small></li>
+            <li>a small encoder<small>e5, BERT, XLM-R</small></li>
+            <li>an embeddings API<small>Ollama&nbsp;· OpenAI&nbsp;· Mistral&nbsp;· Voyage</small></li>
+            <li>Laya<small>its own runtime</small></li>
+          </ul>
+        </div>
+        <div class="stage">
+          <p class="eyebrow">2&nbsp;· Hardware</p>
+          <h3>Where it runs</h3>
+          <ul>
+            <li class="def">auto<small>MLX on a Mac, PyTorch elsewhere</small></li>
+            <li>Apple Silicon<small>MLX</small></li>
+            <li>NVIDIA GPU<small>PyTorch&nbsp;· CUDA</small></li>
+            <li>CPU<small>PyTorch, or ONNX without torch</small></li>
+            <li>no weights at all<small>--backend api</small></li>
+          </ul>
+        </div>
+        <div class="stage">
+          <p class="eyebrow">3&nbsp;· Your data</p>
+          <h3>How it fits</h3>
+          <ul>
+            <li class="def">zero-shot<small>nothing to give</small></li>
+            <li>a Context<small>~50 unlabeled examples</small></li>
+            <li>autotune<small>labeled examples, kept if it wins</small></li>
+            <li>jul synth<small>too few labels? synthesize them</small></li>
+          </ul>
+        </div>
+        <div class="stage">
+          <p class="eyebrow">4&nbsp;· Integration</p>
+          <h3>How you call it</h3>
+          <ul>
+            <li class="def">Python<small>the Jev SDK calls</small></li>
+            <li>the CLI<small>jul ask&nbsp;· jul run</small></li>
+            <li>HTTP<small>jul serve, the Jev protocol</small></li>
+            <li>a Lambda<small>jul pack</small></li>
+          </ul>
+        </div>
+        <div class="stage">
+          <p class="eyebrow">5&nbsp;· When unsure</p>
+          <h3>Who gets the rest</h3>
+          <ul>
+            <li class="def">nobody<small>everything stays local</small></li>
+            <li>Jev<small>TypeSafe, hosted</small></li>
+            <li>Clef&nbsp;· Nimble<small>cloudflare&nbsp;· ollama</small></li>
+            <li>any System One server<small>a Kev server, another jul serve</small></li>
+          </ul>
+        </div>
+      </div>
+      <p class="pipe-legend"><span class="k">highlighted</span> = what you get without choosing anything.
+        <a href="../docs/hub.html">Every model, backend and provider →</a></p>
+    </div>
+  </section>
+
+  <!-- ── CHOOSE A MODEL ───────────────────────────────────── -->
+  <section class="win c12" id="vs" aria-label="Choose a model">
+    <div class="tbar"><span class="cbox" role="button" aria-label="Shade window" tabindex="0"></span><h2 class="ttl">Choose a model</h2></div>
+    <div class="wbody">
+      <div class="vs-head">
+        <p class="eyebrow">Choose your model · AG News, Banking77, Emotion · 300 examples</p>
+        <div class="radios vs-models" role="group" aria-label="Model">
+          <button type="button" data-vs-model="wemm-4b-4bit" aria-pressed="true">WeMM-4B-4bit</button>
+          <button type="button" data-vs-model="f2llm-1.7b" aria-pressed="false">F2LLM-1.7B</button>
+          <button type="button" data-vs-model="harrier-0.6b" aria-pressed="false">Harrier-0.6B</button>
+          <button type="button" data-vs-model="jul-decision-e5-small" aria-pressed="false">jul-decision-e5-small</button>
+          <button type="button" data-vs-model="minicpm5-2b" aria-pressed="false">MiniCPM5-2B</button>
+        </div>
+        <div class="radios" role="group" aria-label="Setting">
+          <button type="button" data-vs-mode="zs" aria-pressed="true">Zero-shot</button>
+          <button type="button" data-vs-mode="tuned" aria-pressed="false">+ Autotune</button>
+        </div>
+      </div>
+      <div class="kpis" aria-live="polite">
+        <div class="kpi">
+          <p class="eyebrow">Accuracy · <span id="kpi-mode">ZERO-SHOT</span></p>
+          <p class="big"><span id="kpi-acc">85.7</span><small>%</small></p>
+          <p class="delta" id="kpi-acc-d"></p>
+          <div class="bar" id="kpi-acc-b" aria-hidden="true"><i></i></div>
+          <p class="bar-l" id="kpi-acc-l"></p>
+        </div>
+        <div class="kpi">
+          <p class="eyebrow">Latency · P50</p>
+          <p class="big"><span id="kpi-ms">55</span><small>ms</small></p>
+          <p class="delta" id="kpi-ms-d"></p>
+          <div class="bar lines" id="kpi-ms-b" aria-hidden="true"><i></i></div>
+          <p class="bar-l" id="kpi-ms-l"></p>
+        </div>
+        <div class="kpi">
+          <p class="eyebrow" id="kpi-gb-t">Memory · 4-bit</p>
+          <p class="big"><span id="kpi-gb">2.6</span><small>GB</small></p>
+          <p class="delta" id="kpi-gb-d"></p>
+          <div class="bar dots" id="kpi-gb-b" aria-hidden="true"><i></i></div>
+          <p class="bar-l" id="kpi-gb-l"></p>
+        </div>
+      </div>
+      <p class="vs-foot">0 tokens generated · 0 bytes sent · no key · $0 per call.</p>
+      <p class="note" id="kpi-note"></p>
+    </div>
+  </section>
+
+  <!-- ── TERMINAL ─────────────────────────────────────────── -->
+  <section class="win c12" aria-label="Terminal">
+    <div class="tbar"><span class="cbox" role="button" aria-label="Shade window" tabindex="0"></span><h2 class="ttl">Terminal</h2></div>
+    <div class="wbody">
+      <div class="term" id="term" aria-live="off"></div>
+      <div class="term-bar">
+        <span class="dim">Illustrative output.</span>
+        <button type="button" class="btn small" id="replay">Run again</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── IN CODE ────────────────────────────────────────────── -->
+  <section class="win c12" aria-label="dropin.py">
+    <div class="tbar"><span class="cbox" role="button" aria-label="Shade window" tabindex="0"></span><h2 class="ttl">dropin.py</h2></div>
+    <div class="wbody">
+      <p class="eyebrow">Already on Jev? Change one import.</p>
+<pre class="scroll note"><span class="dim">- from typesafe_sdk import TypeSafeClient, Choice</span>
++ from jul import TypeSafeClient, Choice
+
+client = TypeSafeClient()        <span class="dim"># the default model, local</span>
+team = Choice(instructions="Which team should handle this?",
+              criteria={"billing":   "payments, refunds",
+                        "technical": "bugs, errors"})
+
+r = client.system_one(state={"ticket": "I was charged twice"},
+                      questions={"team": team})
+r.choices["team"].probabilities  <span class="dim"># {"billing": 0.88, ...}</span>
+
+<span class="dim"># labels? one call, the next ones use the head</span>
+client.autotune("tickets", {"team": team}, labeled)</pre>
+    </div>
+  </section>
+
+  <!-- ── GO FURTHER ─────────────────────────────────────────── -->
+  <section class="c12" id="more" aria-label="Go further">
+    <div class="steps">
+      <div class="card">
+        <p class="eyebrow"><span class="icon" data-icon="chart" data-scale="2" aria-hidden="true"></span>Measure</p>
+        <p>Pit models against each other on your own rows: local ones, Jev, Ollama, a Kev server. One verdict: the fastest that is as good as the best.</p>
+        <p class="note"><code>jul bench test.jsonl --models fast,accurate,typesafe</code></p>
+      </div>
+      <div class="card">
+        <p class="eyebrow"><span class="icon" data-icon="arrow" data-scale="2" aria-hidden="true"></span>Escalate</p>
+        <p>Answer locally, send only the unsure questions to a bigger decider. Each answer says which tier gave it.</p>
+        <p class="note"><code>jul serve --escalate-to typesafe</code><br><a href="../docs/serve.html#escalation-local-first-a-bigger-decider-when-unsure">how →</a></p>
+      </div>
+      <div class="card">
+        <p class="eyebrow"><span class="icon" data-icon="disk" data-scale="2" aria-hidden="true"></span>Ship</p>
+        <p>An HTTP server that speaks the Jev protocol, or a bundle of your questions and their models for a Lambda.</p>
+        <p class="note"><code>jul serve</code> · <code>jul pack</code> · <a href="../docs/deployment.html">deploy →</a></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── WHAT'S NEW ─────────────────────────────────────────── -->
+  <section class="win c7" id="new" aria-label="New in 0.5">
+    <div class="tbar"><span class="cbox" role="button" aria-label="Shade window" tabindex="0"></span><h2 class="ttl">What’s new</h2></div>
+    <div class="wbody">
+      <p class="eyebrow">New in 0.5</p>
+      <h2 class="h">Lately.</h2>
+      <ul class="mac">
+        <li><b>Autotune on decision models.</b> <code>fast</code> and <code>accurate</code> learn your task too.</li>
+        <li><b>Bench against the cloud.</b> <code>jul bench</code> puts Jev, Ollama, Clef or any System One URL next to your local models.</li>
+        <li><b>Cascades, measured.</b> <code>--escalate-to</code>: accuracy of the pair and share of questions sent out.</li>
+        <li><b>A new <code>fast</code>.</b> A decision model trained on human-written decisions.</li>
+      </ul>
+      <p class="note"><a href="https://github.com/usejul/jul/blob/main/CHANGELOG.md">Full changelog →</a></p>
+    </div>
+  </section>
+
+  <!-- ── INSTALL ────────────────────────────────────────────── -->
+  <section class="win c5" id="install" aria-label="Install">
+    <div class="tbar"><span class="cbox" role="button" aria-label="Shade window" tabindex="0"></span><h2 class="ttl">Install</h2></div>
+    <div class="wbody">
+      <p class="eyebrow">Two lines · <a href="https://pypi.org/project/jul/">on PyPI</a></p>
+      <h2 class="h">Up in one coffee.</h2>
+<pre class="scroll code">$ pip install jul
+$ jul setup</pre>
+      <p>Picks the backend (MLX on Apple Silicon, PyTorch elsewhere), downloads the model once, runs one real decision.</p>
+      <div class="term-bar">
+        <span>No terminal handy? Let an agent do it.</span>
+        <button type="button" class="btn small" id="copy-prompt">Copy agent prompt</button>
+      </div>
+<pre class="prompt" hidden id="agent-prompt">Install jul (https://pypi.org/project/jul/), a local library that answers typed questions
+with a small local model, and check that it works on this machine.
+
+1. Create a virtualenv with Python &gt;= 3.10.
+2. In that venv: pip install jul   then   jul setup
+   jul setup picks the backend (MLX on Apple Silicon, else PyTorch), installs it, downloads
+   the default model once and runs one test decision.
+3. Then run:
+   jul ask choice "Which team should handle this ticket?" -o billing:"payments, invoices" -o technical:"bugs, errors" --state "I was charged twice"
+   and show me the JSON.
+
+Do not use sudo and do not install anything outside the venv. If a step fails, show me the error and
+what you suggest before trying something else. At the end, tell me in two lines: the backend, the
+latency per decision, and the answer to the ticket.</pre>
+    </div>
+  </section>
+
+  <!-- ── SHOWCASES ──────────────────────────────────────────── -->
+  <section class="win c12" id="showcases" aria-label="Showcases">
+    <div class="tbar"><span class="cbox" role="button" aria-label="Shade window" tabindex="0"></span><h2 class="ttl">Showcases</h2></div>
+    <div class="wbody">
+      <p class="eyebrow">By <a href="https://github.com/JeromeGuyon">Jérôme Guyon</a> · <a href="https://github.com/guyon-it-consulting/jul-showcases">jul-showcases</a></p>
+      <h2 class="h">Seen in the wild.</h2>
+      <div class="two">
+        <ul class="mac">
+          <li><b>A form that branches itself.</b> No <code>if/then</code>.</li>
+          <li><b>Mute the noise.</b> The OTP stays, the flash sale goes.</li>
+          <li><b>Fast mode or full model?</b> Decided before the prompt is sent.</li>
+        </ul>
+        <ul class="mac">
+          <li><b>50,000 support tickets</b> on a Mac, $0.</li>
+          <li><b>An on-device browser agent</b> that books a train.</li>
+          <li><b>Re-rank by intent.</b> Deep engineering up, clickbait down.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ── -->
+  <section class="dialog c12" aria-label="About">
+    <div class="wbody">
+      <div class="hero" style="align-items:start">
+        <div class="mac"><span class="icon" data-icon="doc" data-scale="4" aria-hidden="true"></span></div>
+        <div>
+          <p>JuL, <i>Just use Less</i>. A headless decision runtime. Apache-2.0.</p>
+<pre class="credits">Credits
+  <a href="https://github.com/bdauzats">bdauzats</a> ........ author
+  <a href="https://github.com/jlestel">jlestel</a> ......... contributor
+  <a href="https://github.com/JeromeGuyon">JeromeGuyon</a> ..... contributor</pre>
+          <p class="note">
+            <a href="https://github.com/usejul/jul">github.com/usejul/jul</a> ·
+            <a href="https://pypi.org/project/jul/">pip install jul</a> ·
+            <a href="https://huggingface.co/usejul">weights on Hugging Face</a> ·
+            Not affiliated with TypeSafe AI or Jev.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+(() => {
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // ── bitmap icons: 1 char = 1 pixel, drawn as crisp SVG rects ──────────
+  const BMP = {
+    apple: [
+      ".....##....",
+      "....##.....",
+      "..#######..",
+      ".#########.",
+      "#########..",
+      "########...",
+      "########...",
+      "#########..",
+      ".#########.",
+      "..#######..",
+      "...##.##...",
+    ],
+    mac: [
+      "..############..",
+      ".#............#.",
+      "#.############.#",
+      "#.#..........#.#",
+      "#.#..#....#..#.#",
+      "#.#..........#.#",
+      "#.#..#....#..#.#",
+      "#.#...####...#.#",
+      "#.#..........#.#",
+      "#.############.#",
+      "#..............#",
+      "#.........####.#",
+      "#..............#",
+      ".#............#.",
+      "..############..",
+      "....#......#....",
+      "....#......#....",
+      "...##########...",
+    ],
+    doc: [
+      "#########....",
+      "#.......##...",
+      "#.......#.#..",
+      "#.......####.",
+      "#..........#.",
+      "#.#######..#.",
+      "#..........#.",
+      "#.#####....#.",
+      "#..........#.",
+      "#.#######..#.",
+      "#..........#.",
+      "#.#####....#.",
+      "#..........#.",
+      "############.",
+    ],
+    disk: [
+      "############",
+      "#.#......#.#",
+      "#.#......#.#",
+      "#.#......#.#",
+      "#.########.#",
+      "#..........#",
+      "#..........#",
+      "#.########.#",
+      "#.#......#.#",
+      "#.#......#.#",
+      "#.#......#.#",
+      "############",
+    ],
+    chart: [
+      "#...........",
+      "#...........",
+      "#.......##..",
+      "#.......##..",
+      "#...##..##..",
+      "#...##..##..",
+      "#.#.##..##..",
+      "#.#.##.###..",
+      "#.####.###..",
+      "#.####.###..",
+      "#.########..",
+      "############",
+    ],
+    arrow: [
+      "......#.....",
+      "......##....",
+      "......###...",
+      "......####..",
+      "###########.",
+      "############",
+      "###########.",
+      "......####..",
+      "......###...",
+      "......##....",
+      "......#.....",
+      "............",
+    ],
+    arrowR: [
+      "....#...",
+      "....##..",
+      "....###.",
+      "########",
+      "########",
+      "....###.",
+      "....##..",
+      "....#...",
+    ],
+  };
+  const svg = (rows, scale = 1, fill = "#000") => {
+    const w = rows[0].length, h = rows.length;
+    let d = "";
+    rows.forEach((r, y) => { for (let x = 0; x < r.length; x++) if (r[x] === "#") d += `M${x} ${y}h1v1h-1z`; });
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w * scale}" height="${h * scale}" shape-rendering="crispEdges"><path fill="${fill}" d="${d}"/></svg>`;
+  };
+  document.querySelectorAll("[data-icon]").forEach(el => { el.innerHTML = svg(BMP[el.dataset.icon], +el.dataset.scale || 1); });
+  const uri = rows => `url("data:image/svg+xml,${encodeURIComponent(svg(rows))}")`;
+  document.documentElement.style.setProperty("--arrow-r", uri(BMP.arrowR));
+  document.documentElement.style.setProperty("--arrow-d", uri(BMP.arrowR[0].split("").map((_, x) => BMP.arrowR.map(r => r[x]).join(""))));
+
+  // ── windows: the close box shades a window to its title bar ───────────
+  document.querySelectorAll(".win .cbox").forEach(box => {
+    const toggle = () => box.closest(".win").classList.toggle("shaded");
+    box.addEventListener("click", toggle);
+    box.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } });
+  });
+
+  // ── apple menu → About JuL… ───────────────────────────────────────────
+  const apple = document.getElementById("apple"), appleMenu = document.getElementById("apple-menu");
+  const about = document.getElementById("about");
+  const setMenu = open => { appleMenu.hidden = !open; apple.setAttribute("aria-expanded", String(open)); };
+  apple.addEventListener("click", e => { e.stopPropagation(); setMenu(appleMenu.hidden); });
+  document.addEventListener("click", e => { if (!e.target.closest(".apple")) setMenu(false); });
+  let lastFocus = null;
+  const openAbout = () => { setMenu(false); lastFocus = document.activeElement; about.hidden = false; document.getElementById("about-ok").focus(); };
+  const closeAbout = () => { if (about.hidden) return; about.hidden = true; if (lastFocus && lastFocus.focus) lastFocus.focus(); };
+  document.getElementById("about-btn").addEventListener("click", openAbout);
+  document.getElementById("about-ok").addEventListener("click", closeAbout);
+  about.addEventListener("click", e => { if (e.target === about) closeAbout(); });
+  addEventListener("keydown", e => { if (e.key === "Escape") { closeAbout(); setMenu(false); } });
+
+  // ── copy the agent prompt ─────────────────────────────────────────────
+  const copyBtn = document.getElementById("copy-prompt");
+  const copyPrompt = async () => {
+    const text = document.getElementById("agent-prompt").textContent;
+    let ok = false;
+    try { await navigator.clipboard.writeText(text); ok = true; } catch {
+      const r = document.createRange(); r.selectNodeContents(document.getElementById("agent-prompt"));
+      const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+      try { ok = document.execCommand("copy"); } catch {}
+    }
+    copyBtn.textContent = ok ? "Copied ✓" : "Selected: ⌘C";
+    setTimeout(() => { copyBtn.textContent = "Copy agent prompt"; }, 1800);
+  };
+  copyBtn.addEventListener("click", copyPrompt);
+
+  // ── terminal demo ─────────────────────────────────────────────────────
+  (() => {
+    const term = document.getElementById("term");
+    const script = [
+      ["cmd", 'jul ask choice "Which team should handle this ticket?" \\\n      -o billing:"payments, invoices" -o technical:"bugs, errors" \\\n      -o sales:"pricing, plans" --state "I was charged twice"'],
+      ["out", `{
+  "model": "jul-decision-wemm-4b",
+  "usage": {"input_tokens": 24, "output_tokens": 0, "total_tokens": 24},
+  "answers": {
+    "choice": {
+      "choice": "billing",
+      "probabilities": {"billing": 0.88, "technical": 0.11, "sales": 0.01},
+      "confidence": 0.88
+    }
+  },
+  "latency_ms": 55.3
+}`],
+      ["ok", "\n# 0 tokens generated · 0 bytes sent · 0 ¢\n"],
+      ["cmd", ""],
+    ];
+    let timer = null;
+    const run = () => {
+      clearTimeout(timer);
+      term.textContent = "";
+      if (reduced) {
+        script.forEach(([k, t]) => { const el = document.createElement("div"); el.className = k; el.textContent = t; term.appendChild(el); });
+        return;
+      }
+      let li = 0;
+      const next = () => {
+        if (li >= script.length) return;
+        const [kind, text] = script[li++];
+        const el = document.createElement("div"); el.className = kind; term.appendChild(el);
+        if (kind !== "cmd") { el.textContent = text; timer = setTimeout(next, 250); return; }
+        const cur = document.createElement("span"); cur.className = "blink";
+        el.appendChild(cur);
+        let c = 0;
+        const type = () => {
+          if (c < text.length) { cur.before(text[c++]); timer = setTimeout(type, 12 + Math.random() * 28); }
+          else if (li < script.length) { timer = setTimeout(() => { cur.remove(); next(); }, 420); }
+        };
+        type();
+      };
+      next();
+    };
+    document.getElementById("replay").onclick = run;
+    const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { io.disconnect(); run(); } }, { threshold: .3 });
+    io.observe(term);
+  })();
+
+  // ── one model, three KPIs ─────────────────────────────────────────
+  // acc, ms, gb, where the latency was measured; tuned: acc, ms, where
+  const VS = {
+    "wemm-4b-4bit": { zs: [.857, 55, 2.6, "M5 Max"], tuned: [.897, 59, 2.6, "M5 Max"], label: "WeMM-Embedding-4B",
+                      slow: "about 145 ms on an M4 Pro" },
+    "f2llm-1.7b":   { zs: [.817, 24, 1.0, "M5 Max"], tuned: [.833, 24, 1.0, "M5 Max"], label: "F2LLM-v2-1.7B" },
+    "harrier-0.6b": { zs: [.667, 13, .31, "M5 Max"], tuned: [.814, 13, .31, "M5 Max"], label: "Harrier-OSS-0.6B" },
+    "jul-decision-e5-small": { zs: [.557, 4, .09, "M4 Pro"], tuned: [.780, 4, .09, "M4 Pro"],
+                      label: "jul-decision-e5-small (multilingual-e5-small, trained on jul decisions)", bits: 8,
+                      always: " Runs in an AWS Lambda: 17 ms, $0.59 per million.",
+                      extra: " Hybrid head (vectors + TF-IDF); vectors alone: 0.723." },
+    "minicpm5-2b":  { zs: [.617, 64, 2.7, "M4 Pro"], tuned: [.757, 38, 2.7, "M5 Max"], label: "MiniCPM5-2B" },
+  };
+  const vs = { model: "wemm-4b-4bit", mode: "zs" };
+  // a MacPaint-patterned bar instead of block characters
+  const setBar = (id, v, max, label) => {
+    document.querySelector("#" + id + " i").style.width = Math.max(2, Math.min(v, max) / max * 100).toFixed(1) + "%";
+    document.getElementById(id.replace(/-b$/, "-l")).textContent = label;
+  };
+  const setDelta = (id, text, kind) => { const el = document.getElementById(id); el.textContent = text; el.className = "delta " + kind; };
+  const tween = (id, to, digits) => {
+    const el = document.getElementById(id);
+    const from = parseFloat(el.textContent) || 0;
+    if (reduced || from === to) { el.textContent = to.toFixed(digits); return; }
+    const t0 = performance.now(), dur = 350;
+    const step = t => {
+      const k = Math.min(1, (t - t0) / dur);
+      el.textContent = (from + (to - from) * (1 - Math.pow(1 - k, 3))).toFixed(digits);
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  };
+  const renderVs = () => {
+    const m = VS[vs.model];
+    const [acc, ms, gb, hw] = m[vs.mode];
+    tween("kpi-acc", acc * 100, 1);
+    tween("kpi-ms", ms, 0);
+    tween("kpi-gb", gb, gb < 1 ? 2 : 1);
+    setDelta("kpi-acc-d", vs.mode === "tuned" ? "with 1,000 labels per task" : "no example of the task", "even");
+    setBar("kpi-acc-b", acc, 1, (acc * 100).toFixed(1) + "%");
+    setDelta("kpi-ms-d", "0 tokens generated", "even");
+    setBar("kpi-ms-b", ms, 280, ms + " ms");
+    setDelta("kpi-gb-d", "on your machine", "even");
+    document.getElementById("kpi-gb-t").textContent = `Memory · ${m.bits || 4}-bit`;
+    setBar("kpi-gb-b", gb, 10, (gb < 1 ? gb.toFixed(2) : gb.toFixed(1)) + " GB");
+    document.getElementById("kpi-note").textContent =
+      `${m.label}${vs.mode === "tuned" ? " + autotune (1,000 labeled examples per task)" : ", zero-shot"}. ` +
+      `Latency on an ${hw}` + (m.slow ? `; ${m.slow}.` : ".") +
+      (vs.mode === "tuned" && m.extra ? m.extra : "") + (m.always || "");
+    document.querySelectorAll("[data-vs-model]").forEach(b => b.setAttribute("aria-pressed", b.dataset.vsModel === vs.model));
+    document.querySelectorAll("[data-vs-mode]").forEach(b => b.setAttribute("aria-pressed", b.dataset.vsMode === vs.mode));
+    document.getElementById("kpi-mode").textContent = vs.mode === "tuned" ? "+AUTOTUNE" : "ZERO-SHOT";
+  };
+  document.querySelectorAll("[data-vs-model]").forEach(b => b.addEventListener("click", () => { vs.model = b.dataset.vsModel; renderVs(); }));
+  document.querySelectorAll("[data-vs-mode]").forEach(b => b.addEventListener("click", () => { vs.mode = b.dataset.vsMode; renderVs(); }));
+  renderVs();
+})();
+</script>
+</body>
+</html>
