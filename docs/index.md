@@ -58,4 +58,4 @@ choose. [Models](models.md) has the details, [Benchmarks](benchmarks.md) the num
 | look up a word | [Glossary](glossary.md) |
 
 Keys on every page: <code>/</code> search, <code>D</code> docs home, <code>Q</code> quickstart, <code>A</code>
-Python API, <code>L</code> CLI reference, <code>P</code> phosphor, <code>G</code> GitHub.
+Python API, <code>L</code> CLI reference, <code>G</code> GitHub.
