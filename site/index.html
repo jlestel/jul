@@ -306,6 +306,28 @@ ul.mac li::before { content: ""; position: absolute; left: 0; top: .55em; width:
 .kpi .bar i { border-right: 1px solid #000; }
 .compat td.y::before { color: #000; text-shadow: none; }
 .compat td.y { background: var(--acc); }
+
+/* ── small animations (all off with prefers-reduced-motion) ── */
+.menubar .apple b .ltr { display: inline-block; }
+.menubar .apple b.hop .ltr { animation: ltr-hop .42s steps(3) both; }
+.menubar .apple b.hop .ltr:nth-child(2) { animation-delay: .09s; }
+.menubar .apple b.hop .ltr:nth-child(3) { animation-delay: .18s; }
+@keyframes ltr-hop { 0%, 100% { transform: none; } 50% { transform: translateY(-5px); } }
+.hero .mac { position: relative; cursor: pointer; }
+.hero .mac svg { animation: mac-bob 2.4s steps(1) infinite; }
+.hero .mac.jump svg { animation: mac-jump .5s steps(4) both; }
+@keyframes mac-bob { 0%, 100% { transform: none; } 50% { transform: translateY(-3px); } }
+@keyframes mac-jump { 0%, 100% { transform: none; } 40% { transform: translateY(-24px); } 70% { transform: translateY(-6px); } }
+.flow .ants { stroke: #000; stroke-width: 1; fill: none; stroke-dasharray: 2 8; animation: ants .6s linear infinite; }
+@keyframes ants { to { stroke-dashoffset: -10; } }
+.flow .fl-opt.def { transform-box: fill-box; animation: def-hop 9s linear infinite; }
+@keyframes def-hop { 0%, 6%, 100% { transform: none; } 2% { transform: translateY(-5px); } }
+.flow .fl-opt.def:hover, .flow .fl-opt.def:focus-visible { animation-play-state: paused; }
+.flow .fl-fill { transform-box: fill-box; transform-origin: left center; animation: fill-bar 9s steps(6, end) infinite; animation-delay: -8.37s; }
+@keyframes fill-bar { 0%, 93% { transform: scaleX(1); } 93.01% { transform: scaleX(0); } 100% { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) {
+  .hero .mac svg, .flow .ants, .flow .fl-opt.def, .flow .fl-fill, .menubar .apple b .ltr { animation: none !important; }
+}
 </style>
 </head>
 <body>
@@ -796,6 +818,29 @@ latency per decision, and the answer to the ticket.</pre>
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w * scale}" height="${h * scale}" shape-rendering="crispEdges"><path fill="${fill}" d="${bits(rows)}"/></svg>`;
   };
   document.querySelectorAll("[data-icon]").forEach(el => { el.innerHTML = svg(BMP[el.dataset.icon], +el.dataset.scale || 1); });
+  // ── the Mac blinks, winks now and then, and jumps when clicked; the logo letters hop ──
+  (() => {
+    const face = (l, r) => BMP.mac.map((row, y) => {
+      if (y !== 4) return row;   // the eyes are the two dots of row 4 (row 6 holds the smile's corners)
+      const c = row.split("");
+      [[5, l], [10, r]].forEach(([x, eye]) => { if (eye === "shut") { c[x - 1] = "#"; c[x] = "#"; c[x + 1] = "#"; } });
+      return c.join("");
+    });
+    const host = document.querySelector('.hero .mac [data-icon="mac"]');
+    const logo = document.querySelector("#apple b");
+    if (logo) logo.innerHTML = [...logo.textContent].map(ch => `<span class="ltr">${ch}</span>`).join("");
+    const hopLogo = () => { if (!logo || reduced) return; logo.classList.remove("hop"); void logo.offsetWidth; logo.classList.add("hop"); };
+    if (logo) { logo.parentElement.addEventListener("mouseenter", hopLogo); setTimeout(hopLogo, 700); }
+    if (!host || reduced) return;
+    const sc = +host.dataset.scale || 1, open = host.innerHTML;
+    const show = rows => { host.innerHTML = svg(rows, sc); };
+    const blink = (l = "shut", r = "shut", ms = 140) => { show(face(l, r)); setTimeout(() => { host.innerHTML = open; }, ms); };
+    let n = 0;
+    setInterval(() => { n++; if (n % 4 === 0) blink("open", "shut", 420); else blink(); }, 3200);
+    const mac = host.closest(".mac");
+    mac.addEventListener("click", () => { mac.classList.remove("jump"); void mac.offsetWidth; mac.classList.add("jump"); blink("shut", "shut", 300); hopLogo(); });
+    mac.addEventListener("animationend", () => mac.classList.remove("jump"));
+  })();
   const uri = rows => `url("data:image/svg+xml,${encodeURIComponent(svg(rows))}")`;
   document.documentElement.style.setProperty("--arrow-r", uri(BMP.arrowR));
   document.documentElement.style.setProperty("--arrow-d", uri(BMP.arrowD));
@@ -899,14 +944,14 @@ latency per decision, and the answer to the ticket.</pre>
       PROBS.forEach(([k, p], i) => {
         const yy = y + 32 + i * 26, c = i === 0 ? "fl-lbl10" : "fl-sub";
         s += txt(x + 6, yy, k, c) + txt(x + w - 6, yy, p.toFixed(2), c, 'text-anchor="end"');
-        s += `<rect x="${x + 6}" y="${yy + 4}" width="${w - 12}" height="7" fill="#fff" stroke="#000"/><rect x="${x + 7}" y="${yy + 5}" width="${Math.max(1, Math.round((w - 14) * p))}" height="5" fill="url(#fl-dither)"/>`;
+        s += `<rect x="${x + 6}" y="${yy + 4}" width="${w - 12}" height="7" fill="#fff" stroke="#000"/><rect x="${x + 7}" y="${yy + 5}" width="${Math.max(1, Math.round((w - 14) * p))}" height="5" fill="url(#fl-dither)" class="fl-fill"/>`;
       });
       return s;
     };
     const DEFS = `<defs><pattern id="fl-dither" width="2" height="2" patternUnits="userSpaceOnUse"><rect width="1" height="1"/><rect x="1" y="1" width="1" height="1"/></pattern><pattern id="fl-stripes" width="2" height="2" patternUnits="userSpaceOnUse"><rect width="2" height="1"/></pattern></defs>`;
     const token = route => reduced ? "" : `<rect x="-4" y="-4" width="8" height="8" fill="#fff" stroke="#000"><animateMotion dur="9s" repeatCount="indefinite" path="${route}"/></rect>`;
     const finish = (W, H, route, g, top, cls) =>
-      `<svg class="${cls}" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">${DEFS}<path class="route" d="${route}"/>${g}${token(route)}${top}</svg>`;
+      `<svg class="${cls}" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">${DEFS}<path class="route" d="${route}"/>${reduced ? "" : `<path class="ants" d="${route}"/>`}${g}${token(route)}${top}</svg>`;
 
     const horizontal = W => {
       const stateW = 60, cardW = 100, seg = 50, colW = Math.floor((W - stateW - cardW - seg) / 5), BW = 124, Y0 = 128;
@@ -989,6 +1034,18 @@ latency per decision, and the answer to the ticket.</pre>
       lastW = W; lastMode = mode;
       host.innerHTML = mode === "h" ? horizontal(W) : vertical(Math.min(W, 420));
       wire(); paint();
+      // each default box hops when the token passes it: delay = its share of the route
+      const route = host.querySelector(".route");
+      if (route && !reduced) {
+        const L = route.getTotalLength(), pts = [];
+        for (let i = 0; i <= 200; i++) pts.push(route.getPointAtLength(L * i / 200));
+        host.querySelectorAll(".fl-opt.def").forEach(el => {
+          const b = el.getBBox(), cx = b.x + b.width / 2, cy = b.y + b.height / 2;
+          let best = 0, bd = Infinity;
+          pts.forEach((p, i) => { const d = mode === "h" ? Math.abs(p.x - cx) : Math.abs(p.y - cy); if (d < bd) { bd = d; best = i; } });
+          el.style.animationDelay = (best / 200 * 9 - 0.18).toFixed(2) + "s";
+        });
+      }
     };
     build();
     let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(build, 120); });
