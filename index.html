@@ -172,11 +172,40 @@ p + p, p + pre, pre + p { margin-top: 1em; }
 .steps > div { min-width: 0; }
 .steps .eyebrow { margin-bottom: .4em; }
 @media (max-width: 1020px) { .steps { grid-template-columns: 1fr; gap: 2em; } }
-.term { min-height: 18em; }
 .new li { margin-bottom: .2em; }
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 1em 4ch; }
 @media (max-width: 700px) { .two { grid-template-columns: 1fr; } }
 .credits { margin-top: 1em; }
+
+/* ── terminal ─────────────────────────────────────────────────────────── */
+.term { min-height: 0; white-space: pre-wrap; word-break: break-word; line-height: 1.35; }
+.term .cmd::before { content: "C:\\JUL> "; color: var(--dim); }
+.term .ok { color: var(--dim); }
+.w-body:has(> .term) { display: flex; flex-direction: column; }
+.w-body > .term { flex: 1; }
+.term-bar { display: flex; justify-content: space-between; gap: 2ch; flex-wrap: wrap; margin-top: .8em; color: var(--dim); }
+
+/* ── choose your model ── */
+.vs-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: .4em 3ch; }
+.vs-head .eyebrow { flex: 1 1 100%; }
+.kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.4em 4ch; margin-top: 1.2em; }
+@media (max-width: 760px) { .kpis { grid-template-columns: 1fr; } }
+.kpi .big { font-family: var(--crt); font-size: clamp(3rem, 6vw, 4.6rem); line-height: .9; margin-top: .15em; }
+.kpi .big small { font-size: .45em; margin-left: .3ch; }
+.kpi .delta { margin-top: .4em; min-height: 1.5em; }
+.kpi .delta.win { display: inline-block; background: var(--ph); color: var(--ink); text-shadow: none; padding: 0 .5ch; }
+.kpi .delta.lose, .kpi .delta.even { color: var(--dim); }
+.minibars { margin-top: .6em; line-height: 1.35; overflow: hidden; }
+.minibars .jev { color: var(--dim); }
+.vs-foot { margin-top: 1.4em; padding-top: .8em; border-top: 1px dashed var(--dim); }
+.chart-bar { display: flex; flex-wrap: wrap; gap: .3em 1ch; margin-bottom: .4em; }
+.chart-bar button { color: var(--dim); }
+.chart-bar button[aria-pressed="true"] { background: var(--ph); color: var(--ink); text-shadow: none; }
+.chart-bar button:hover, .chart-bar button:focus-visible { background: none; color: var(--ph); text-shadow: 0 0 3px var(--glow); outline: 1px dashed var(--ph); }
+.chart-bar button[aria-pressed="true"]:hover, .chart-bar button[aria-pressed="true"]:focus-visible { background: var(--ph); color: var(--ink); text-shadow: none; }
+.term { font-size: 1.05em; line-height: 1.45; }
+.win { scroll-margin-top: 3em; }
+.term .out { margin: .4em 0; }
 
 /* ── agent prompt ─────────────────────────────────────────────────────── */
 .prompt[hidden] { display: none; }
@@ -328,8 +357,56 @@ model="fast"       <span class="dim"># half the size</span></pre>
     </div>
   </section>
 
+
+  <section class="win c12" data-title="CHOOSE.EXE" id="vs">
+    <div class="vs-head">
+      <p class="eyebrow">CHOOSE YOUR MODEL · AG NEWS, BANKING77, EMOTION · 300 EXAMPLES</p>
+      <div class="chart-bar vs-models" role="group" aria-label="Model">
+        <button type="button" data-vs-model="wemm-4b-4bit" aria-pressed="true">[ WEMM-4B-4BIT ]</button>
+        <button type="button" data-vs-model="f2llm-1.7b" aria-pressed="false">[ F2LLM-1.7B ]</button>
+        <button type="button" data-vs-model="harrier-0.6b" aria-pressed="false">[ HARRIER-0.6B ]</button>
+        <button type="button" data-vs-model="jul-decision-e5-small" aria-pressed="false">[ JUL-DECISION-E5-SMALL ]</button>
+        <button type="button" data-vs-model="minicpm5-2b" aria-pressed="false">[ MINICPM5-2B ]</button>
+      </div>
+      <div class="chart-bar" role="group" aria-label="Setting">
+        <button type="button" data-vs-mode="zs" aria-pressed="true">[ ZERO-SHOT ]</button>
+        <button type="button" data-vs-mode="tuned" aria-pressed="false">[ +AUTOTUNE ]</button>
+      </div>
+    </div>
+    <div class="kpis" aria-live="polite">
+      <div class="kpi">
+        <p class="eyebrow">ACCURACY · <span id="kpi-mode">ZERO-SHOT</span></p>
+        <p class="big"><span id="kpi-acc">85.7</span><small>%</small></p>
+        <p class="delta" id="kpi-acc-d"></p>
+        <pre class="minibars" id="kpi-acc-b"></pre>
+      </div>
+      <div class="kpi">
+        <p class="eyebrow">LATENCY · P50</p>
+        <p class="big"><span id="kpi-ms">55</span><small>ms</small></p>
+        <p class="delta" id="kpi-ms-d"></p>
+        <pre class="minibars" id="kpi-ms-b"></pre>
+      </div>
+      <div class="kpi">
+        <p class="eyebrow" id="kpi-gb-t">MEMORY · 4-BIT</p>
+        <p class="big"><span id="kpi-gb">2.6</span><small>GB</small></p>
+        <p class="delta" id="kpi-gb-d"></p>
+        <pre class="minibars" id="kpi-gb-b"></pre>
+      </div>
+    </div>
+    <p class="vs-foot">0 tokens generated · 0 bytes sent · no key · $0 per call.</p>
+    <p class="note" id="kpi-note"></p>
+  </section>
+
+  <section class="win c12" data-title="COMMAND.COM">
+    <div class="term" id="term" aria-live="off"></div>
+    <div class="term-bar">
+      <span>Illustrative output.</span>
+      <button type="button" id="replay">[ ↻ RUN AGAIN ]</button>
+    </div>
+  </section>
+
   <!-- ── IN CODE ────────────────────────────────────────────── -->
-  <section class="win c7" data-title="DROPIN.PY">
+  <section class="win c12" data-title="DROPIN.PY">
     <p class="eyebrow">ALREADY ON JEV? CHANGE ONE IMPORT.</p>
 <pre class="scroll"><span class="dim">- from typesafe_sdk import TypeSafeClient, Choice</span>
 + from jul import TypeSafeClient, Choice
@@ -345,14 +422,6 @@ r.choices["team"].probabilities  <span class="dim"># {"billing": 0.88, ...}</spa
 
 <span class="dim"># labels? one call, the next ones use the head</span>
 client.autotune("tickets", {"team": team}, labeled)</pre>
-  </section>
-
-  <section class="win c5" data-title="COMMAND.COM">
-    <div class="term" id="term" aria-live="off"></div>
-    <div class="term-bar">
-      <span>Illustrative output.</span>
-      <button type="button" id="replay">[ ↻ RUN AGAIN ]</button>
-    </div>
   </section>
 
   <!-- ── GO FURTHER ─────────────────────────────────────────── -->
@@ -624,7 +693,7 @@ latency per decision, and the answer to the ticket.</pre>
   function startTerm() {
     const term = document.getElementById("term");
     const script = [
-      ["cmd", 'jul ask choice "Which team should handle this ticket?" -o billing:"payments, invoices" -o technical:"bugs, errors" -o sales:"pricing, plans" --state "I was charged twice"'],
+      ["cmd", 'jul ask choice "Which team should handle this ticket?" \\\n      -o billing:"payments, invoices" -o technical:"bugs, errors" \\\n      -o sales:"pricing, plans" --state "I was charged twice"'],
       ["out", `{
   "model": "jul-decision-wemm-4b",
   "usage": {"input_tokens": 24, "output_tokens": 0, "total_tokens": 24},
@@ -769,6 +838,67 @@ latency per decision, and the answer to the ticket.</pre>
     };
     if (actions[k]) { e.preventDefault(); actions[k](); }
   });
+
+  // ── one model, three KPIs ─────────────────────────────────────────
+  // acc, ms, gb, where the latency was measured; tuned: acc, ms, where
+  const VS = {
+    "wemm-4b-4bit": { zs: [.857, 55, 2.6, "M5 Max"], tuned: [.897, 59, 2.6, "M5 Max"], label: "WeMM-Embedding-4B",
+                      slow: "about 145 ms on an M4 Pro" },
+    "f2llm-1.7b":   { zs: [.817, 24, 1.0, "M5 Max"], tuned: [.833, 24, 1.0, "M5 Max"], label: "F2LLM-v2-1.7B" },
+    "harrier-0.6b": { zs: [.667, 13, .31, "M5 Max"], tuned: [.814, 13, .31, "M5 Max"], label: "Harrier-OSS-0.6B" },
+    "jul-decision-e5-small": { zs: [.557, 4, .09, "M4 Pro"], tuned: [.780, 4, .09, "M4 Pro"],
+                      label: "jul-decision-e5-small (multilingual-e5-small, trained on jul decisions)", bits: 8,
+                      always: " Runs in an AWS Lambda: 17 ms, $0.59 per million.",
+                      extra: " Hybrid head (vectors + TF-IDF); vectors alone: 0.723." },
+    "minicpm5-2b":  { zs: [.617, 64, 2.7, "M4 Pro"], tuned: [.757, 38, 2.7, "M5 Max"], label: "MiniCPM5-2B" },
+  };
+  const vs = { model: "wemm-4b-4bit", mode: "zs" };
+  const KB = 20;
+  const kbar = (v, max) => { const n = Math.max(1, Math.round(Math.min(v, max) / max * KB)); return "█".repeat(n) + "░".repeat(KB - n); };
+  const setBars = (id, julTxt) => {
+    const el = document.getElementById(id);
+    el.innerHTML = "";
+    const a = document.createElement("div"); a.textContent = julTxt;
+    el.append(a);
+  };
+  const setDelta = (id, text, kind) => { const el = document.getElementById(id); el.textContent = text; el.className = "delta " + kind; };
+  const tween = (id, to, digits) => {
+    const el = document.getElementById(id);
+    const from = parseFloat(el.textContent) || 0;
+    if (reduced || from === to) { el.textContent = to.toFixed(digits); return; }
+    const t0 = performance.now(), dur = 350;
+    const step = t => {
+      const k = Math.min(1, (t - t0) / dur);
+      el.textContent = (from + (to - from) * (1 - Math.pow(1 - k, 3))).toFixed(digits);
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  };
+  const renderVs = () => {
+    const m = VS[vs.model];
+    const [acc, ms, gb, hw] = m[vs.mode];
+    tween("kpi-acc", acc * 100, 1);
+    tween("kpi-ms", ms, 0);
+    tween("kpi-gb", gb, gb < 1 ? 2 : 1);
+    setDelta("kpi-acc-d", vs.mode === "tuned" ? "with 1,000 labels per task" : "no example of the task", "even");
+    setBars("kpi-acc-b", kbar(acc, 1) + " " + (acc * 100).toFixed(1) + "%");
+    setDelta("kpi-ms-d", "0 tokens generated", "even");
+    setBars("kpi-ms-b", kbar(ms, 280) + " " + ms + " ms");
+    setDelta("kpi-gb-d", "on your machine", "even");
+    document.getElementById("kpi-gb-t").textContent = `MEMORY · ${m.bits || 4}-BIT`;
+    setBars("kpi-gb-b", kbar(gb, 10) + " " + (gb < 1 ? gb.toFixed(2) : gb.toFixed(1)) + " GB");
+    document.getElementById("kpi-note").textContent =
+      `${m.label}${vs.mode === "tuned" ? " + autotune (1,000 labeled examples per task)" : ", zero-shot"}. ` +
+      `Latency on an ${hw}` + (m.slow ? `; ${m.slow}.` : ".") +
+      (vs.mode === "tuned" && m.extra ? m.extra : "") + (m.always || "");
+    document.querySelectorAll("[data-vs-model]").forEach(b => b.setAttribute("aria-pressed", b.dataset.vsModel === vs.model));
+    document.querySelectorAll("[data-vs-mode]").forEach(b => b.setAttribute("aria-pressed", b.dataset.vsMode === vs.mode));
+    document.getElementById("kpi-mode").textContent = vs.mode === "tuned" ? "+AUTOTUNE" : "ZERO-SHOT";
+  };
+  document.querySelectorAll("[data-vs-model]").forEach(b => b.addEventListener("click", () => { vs.model = b.dataset.vsModel; renderVs(); }));
+  let setMode = mode => { vs.mode = mode; renderVs(); };   // the bench chart below joins in once defined
+  document.querySelectorAll("[data-vs-mode]").forEach(b => b.addEventListener("click", () => setMode(b.dataset.vsMode)));
+  renderVs();
 
   // ── glider ────────────────────────────────────────────────────────────
   const W = 22, Hh = 9, life = document.getElementById("life");
