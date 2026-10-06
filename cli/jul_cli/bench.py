@@ -347,7 +347,7 @@ def _pct(xs: list[float], q: float) -> float:
 
 def readings(client, methods: list, features: list) -> tuple[list, list, dict]:
     """The zero-shot methods and autotune features this model can take; the others with the reason why.
-    A decision model reads with its pointer head only and is not autotuned; a contrastive one reads its
+    A decision model reads zero-shot with its own readings only (its heads train on its vector fallback); a contrastive one reads its
     embedding only; `cross` needs a preset with a cross model."""
     skipped: dict[str, str] = {}
     engine = None
@@ -371,9 +371,7 @@ def readings(client, methods: list, features: list) -> tuple[list, list, dict]:
         for m in methods:
             if m:
                 skipped[f"zero-shot:{m}"] = "decision model: read with its pointer head only"
-        for f in features:
-            skipped[f"autotune:{f}"] = "decision model: no autotune"
-        return [None], [], skipped
+        return [None], features, skipped
     if engine is not None and getattr(engine, "contrastive", None) is not None:
         for m in methods:
             if m and m != "vector":

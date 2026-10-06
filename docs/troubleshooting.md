@@ -40,10 +40,10 @@ A `Score`'s `criteria` lists the levels; give at least two. On the CLI, one `-o`
 `autotune` found almost no line answering that question. Check the names in `answers` match the question
 names, and that each line has a `state` (or `text`).
 
-### `is a decision model (pointer method): autotune … does not apply`
+### `is a decision model with no vector reading fitted on its weights`
 
-Decision models bring their own trained head; `autotune` trains heads on vectors. Use an embedding preset
-for tuning, or fine-tune the decision model itself.
+`autotune` trains a decision model's heads on its vector reading (the preset's `routing` block). A model added
+with `jul models add --no-routing` has none: add it again without `--no-routing`.
 
 ### `only the vector method packs`
 

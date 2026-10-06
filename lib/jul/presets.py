@@ -308,8 +308,6 @@ PRESETS["jul-decision-minicpm5-2b"] = Preset(
 ONE_WORD_ONLY: dict[str, tuple[int, float]] = {"minicpm5-2b": (39, 0.04554)}
 
 ALIASES = {"fast": "jul-decision-minicpm5-2b", "accurate": "jul-decision-wemm-4b"}
-#: What to autotune instead of a decision model, until autotune supports them: the same base read with vectors.
-TUNE_INSTEAD = {"jul-decision-minicpm5-2b": "minicpm5-2b"}
 DEFAULT_MODEL = "jul-decision-wemm-4b"
 
 
