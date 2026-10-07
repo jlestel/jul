@@ -383,7 +383,7 @@ class LoraCrossReader:
             name = f"{o.key}: {render(o.description)}" if o.description else o.key
             option = encode(c["option"].format(option=name))
             truncation.record(f"{self.backbone.name} cross (choice option)", c["max_option"],
-                              len(option) - c["max_option"])
+                              len(option) - c["max_option"], part="option")
             ids = ids + option[: c["max_option"]] + sep
             ends.append(len(ids) - 1)
         return ids + encode(c["answer"]), ends

@@ -24,7 +24,8 @@ changing only its base URL.
 
 JuL additions, all optional and ignored by Jev clients:
 
-- request: `context` (name of a saved context), `method`, `route_above`, as in `system_one`;
+- request: `context` (name of a saved context), `method`, `route_above`, `on_long`, as in `system_one`
+  (`jul serve` reads `JUL_ON_LONG` for the default);
   a Choice's `criteria` may also be a plain list of keys, as in the library.
 - response: `jul: {"latency_ms": ...}`, plus `jul.escalation` (which tier answered each question)
   when the server escalates (`--escalate-to`).
@@ -66,7 +67,7 @@ _escalate: dict | None = None
 
 MAX_BODY = 10_000_000
 SYSTEMONE_PATHS = ("/v1/systemone", "/v1/classify", "/classify")
-EXTRAS = ("context", "method", "route_above")
+EXTRAS = ("context", "method", "route_above", "on_long")
 
 
 class RequestError(Exception):

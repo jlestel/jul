@@ -16,6 +16,7 @@ environment variable the code reads and every file it writes.
 | `JUL_BATCH_TOKENS` | `16384` | most tokens in one batch (rows × longest prompt), mlx and torch |
 | `JUL_BATCH_SIZE` | `64` | most rows in one batch, mlx and torch |
 | `JUL_HOME` | `~/.jul` | where presets, contexts, heads and calibration data live (point it at a read-only package in a Lambda) |
+| `JUL_ON_LONG` | `cut` | a state over a reading's limit: `cut` answers on its beginning, `error` refuses the call ([input limits](models.md#input-limits)) |
 
 ### ONNX
 

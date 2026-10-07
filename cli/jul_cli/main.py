@@ -438,7 +438,11 @@ def cmd_models_add(a):
 
 
 def cmd_bench(a):
+    import os
+
     from jul_cli.bench import run
+    if a.on_long:          # read by every local client the bench builds (TypeSafeClient(on_long=) default)
+        os.environ["JUL_ON_LONG"] = a.on_long
     run(a)
 
 
@@ -625,6 +629,8 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--drop-overlap", action="store_true", help="drop test rows found in train (exact or near)")
     s.add_argument("--allow-overlap", action="store_true", help="run even with exact duplicates train/test")
     s.add_argument("--quiet", "-q", action="store_true", help="no progress on stderr")
+    s.add_argument("--on-long", choices=["cut", "error"],
+                   help="a state over a reading's limit: cut (default, answer on its beginning) or error (refuse)")
     s.set_defaults(fn=cmd_bench)
 
     s = sub.add_parser("lab", help="research commands")

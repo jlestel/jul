@@ -311,12 +311,16 @@ def predicted(kind: str, answer) -> str:
 def evaluate(client, task: Task, context=None, method=None) -> dict:
     from jul import truncation
     question = task.question()
-    hits, errors, times, sent, cut = 0, [], [], 0, 0
+    hits, errors, times, sent, cut, refused = 0, [], [], 0, 0, 0
     with truncation.tracking():     # one log line per reading for the task, not one per row
         for state, gold in task.test:
             t = time.perf_counter()
-            response = client.system_one(state=state, questions={"q": question}, context=context,
-                                         **({"method": method} if method else {}))
+            try:
+                response = client.system_one(state=state, questions={"q": question}, context=context,
+                                             **({"method": method} if method else {}))
+            except truncation.InputTooLong:      # on_long="error": counted apart, left out of the accuracy
+                refused += 1
+                continue
             times.append((time.perf_counter() - t) * 1000)
             got = predicted(task.kind, response.answers["q"])
             hits += got == gold
@@ -326,7 +330,9 @@ def evaluate(client, task: Task, context=None, method=None) -> dict:
                 sent += 1
             if task.kind == "score":
                 errors.append(abs(response.answers["q"].score - int(gold)))
-    n = len(task.test)
+    n = len(task.test) - refused          # the accuracy is over the rows answered
+    if refused and not n:
+        return {"skipped": "every row refused: over the input limit (on_long=error)", "refused_rows": refused}
     lo, hi = wilson(hits, n)
     out = {"n": n, "correct": hits, "accuracy": round(hits / n, 4) if n else None,
            "ci95": [round(lo, 4), round(hi, 4)], "latency_ms_p50": round(_pct(times, 50), 1),
@@ -335,6 +341,8 @@ def evaluate(client, task: Task, context=None, method=None) -> dict:
         out["mae"] = round(sum(errors) / len(errors), 4)
     if cut:
         out["truncated_rows"] = cut          # rows whose state some reading did not read whole
+    if refused:
+        out["refused_rows"] = refused        # rows refused by on_long="error", not in n nor the accuracy
     if getattr(client, "tiers", None):
         out["escalated"] = sent
         out["escalated_share"] = round(sent / n, 4) if n else None
@@ -637,6 +645,8 @@ def render(report: dict, ink: Ink | None = None) -> str:
                 acc = f"{run['accuracy'] * 100:5.1f}% " + bar(run["accuracy"], *run["ci95"], width=14)
                 cell = (lead + f"{how[:19]:<20}{acc:<23}"
                         f"{run['ci95'][0] * 100:4.0f}–{run['ci95'][1] * 100:3.0f}%     {run['latency_ms_p50']:>8.0f}")
+                if run.get("refused_rows"):
+                    cell += ink.dim(f"  {run['refused_rows']} refused (too long)")
                 if "escalated" in run:
                     cell += ink.dim(f"  {run['escalated_share'] * 100:.0f}% sent ({run['escalated']}/{run['n']})"
                                     + (f", {run['remote_errors']} failed there" if run.get("remote_errors") else ""))
