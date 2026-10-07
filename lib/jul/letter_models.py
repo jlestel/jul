@@ -34,7 +34,6 @@ scripts/letters_parity.py compares the probabilities with the runtimes themselve
 from __future__ import annotations
 
 import json
-import logging
 import math
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -266,17 +265,11 @@ def _spark_dropped(state: Any, max_chars: int) -> int:
     return max(0, len(text) - max_chars)
 
 
-def _cut(model: str, limit: str, what: str, tokens: tuple[int, int] | None = None) -> None:
-    """A state cut by the model's own prompt rule (its runtime warns too): logged on `jul.truncation`, and
-    counted in `usage.truncated_tokens` when it is in tokens and jul.truncation (#38) is there."""
-    logging.getLogger("jul.truncation").warning("input cut: %s reads at most %s, %s", model, limit, what)
-    if tokens is None:
-        return
-    try:
-        from . import truncation
-    except ImportError:
-        return
-    truncation.record(f"{model} letters", *tokens)
+def _cut(reading: str, limit: int, dropped: int) -> None:
+    """A state cut by the model's own prompt rule (its runtime warns too), in tokens: recorded on
+    jul.truncation, so it is logged, counted in `usage.truncated_tokens` and refused by on_long="error"."""
+    from . import truncation
+    truncation.record(reading, limit, dropped)
 
 
 def spark_question(kind: str, instructions: str, options: list[Option],
@@ -421,9 +414,13 @@ class LetterReader:
         max_chars = s.limits.get("max_state_chars", 12000)
         state_text = spark_state(state, max_chars)
         dropped = _spark_dropped(state, max_chars)
-        if dropped:
-            _cut(self.backbone.name, f"{max_chars} characters of state (head and tail kept)",
-                 f"{dropped} characters from the middle were dropped")
+        if dropped:      # its runtime cuts characters (the middle): said here in the tokens they make
+            text = state if isinstance(state, str) else json.dumps(state, ensure_ascii=False, separators=(",", ":"),
+                                                                   default=str)
+            middle = text[max_chars * 2 // 3: len(text) - max_chars // 3]
+            kept = text[: max_chars * 2 // 3] + text[len(text) - max_chars // 3:]
+            _cut(f"{self.backbone.name} letters ({max_chars} characters of state, head and tail kept)",
+                 len(self._encode(kept)), len(self._encode(middle)))
         prefix = (f"<|im_start|>system\n{s.system or SPARK_SYSTEM}<|im_end|>\n<|im_start|>user\n### State\n"
                   f"<<<STATE\n{state_text}\nSTATE>>>\n\n")
         return [self._encode(prefix) + self._encode(f"{block}<|im_end|>\n{SPARK_ASSISTANT}")], [order]
@@ -450,8 +447,8 @@ class LetterReader:
             over = max(len(x) for x in ids) - s.limits["max_prompt_tokens"]
             if over <= 0:
                 if len(full) > cap:
-                    _cut(self.backbone.name, f"{cap} tokens of state ({'tail' if isinstance(state, list) else 'head'}"
-                         " kept)", f"{len(full) - cap} tokens were dropped", tokens=(cap, len(full) - cap))
+                    _cut(f"{self.backbone.name} letters (state, {'tail' if isinstance(state, list) else 'head'} kept)",
+                         cap, len(full) - cap)
                 return ids
             cap = min(cap, len(full)) - over - 16
             if cap < s.limits["min_state_tokens"]:

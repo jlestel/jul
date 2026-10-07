@@ -262,7 +262,7 @@ def test_quyet_cuts_the_state_once_for_the_whole_request(caplog):
                               ("choice", "Team?", options_of(Choice("Team?", long_options)))])
     short, long_ = r.backbone.states
     assert short == long_ and len(short) < 600, "both questions read the cut the long one needs"
-    assert "input cut: fake reads at most" in caplog.text and "tokens were dropped" in caplog.text
+    assert "input cut: fake letters (state, head kept) reads at most" in caplog.text
     alone = quyet_reader(max_state_tokens=600, max_prompt_tokens=900, min_state_tokens=50)
     alone.logits("x" * 2000, [("noul", "Late?", options_of(Noul("Late?")))])
     assert len(alone.backbone.states[0]) > len(short), "alone, the short question would read more"
@@ -280,7 +280,18 @@ def test_open_spark_jev_char_cut_is_said(caplog):
     r = LetterReader(FakeBackbone({}), LetterSpec.from_dict({**spec.to_dict(), "limits": {"max_state_chars": 100}}))
     with caplog.at_level("WARNING", logger="jul.truncation"):
         r.prompts("y" * 250, "noul", "Late?", options_of(Noul("Late?")))
-    assert "input cut: fake reads at most 100 characters" in caplog.text and "150 characters" in caplog.text
+    assert "input cut: fake letters (100 characters of state, head and tail kept) reads at most 99 tokens, " \
+           "151 tokens past it were dropped" in caplog.text
+
+
+def test_letter_cuts_are_counted_and_refused_like_the_others():
+    """Recorded on jul.truncation: in usage.truncated_tokens, and a state cut on_long="error" refuses."""
+    from jul import truncation
+    r = quyet_reader(max_state_tokens=600, max_prompt_tokens=900, min_state_tokens=50)
+    with truncation.tracking() as cuts:
+        r.logits("x" * 2000, [("noul", "Late?", options_of(Noul("Late?")))])
+    reading, limit, over = cuts.state_worst()
+    assert reading == "fake letters (state, head kept)" and over == 2000 - limit and cuts.tokens == over
 
 
 def test_letter_models_are_read_on_torch_only():

@@ -360,11 +360,12 @@ answers moved out of the 0.2–0.8 band, a score temperature of 1.2) are output 
 that benchmark, not part of the model, and are not applied. They are read with `--backend torch` only:
 parity is measured there, `mlx`, `onnx` and `api` are refused.
 
-A state too long for the model's own prompt rule is cut as its runtime cuts it, and logged on
-`jul.truncation` (`input cut: …`): Quyet keeps the head of the state (the tail of a list) within
-`max_state_tokens`, cut once for the whole request so that every question reads the same text, and the cut
-is counted in `usage.truncated_tokens`; open-spark-jev keeps the head and tail of a state over
-`max_state_chars` characters. JevK5 and Plumb refuse a prompt over `max_tokens` (16384), like their runtime:
+A state too long for the model's own prompt rule is cut as its runtime cuts it: Quyet keeps the head of the
+state (the tail of a list) within `max_state_tokens`, cut once for the whole request so that every question
+reads the same text; open-spark-jev keeps the head and tail of a state over `max_state_chars` characters. Like
+every cut ([input limits](#input-limits)), it is logged (`input cut: <model> letters …`), counted in
+`usage.truncated_tokens` (open-spark-jev's in the tokens of the dropped middle), and refused by
+`on_long="error"`. JevK5 and Plumb refuse a prompt over `max_tokens` (16384), like their runtime:
 `ValueError`, HTTP 400 from `jul serve`. open-spark-jev's `abstain` is not read: its gateway does not add it on
 `/v1/systemone` either.
 
