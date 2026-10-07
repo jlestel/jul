@@ -66,7 +66,8 @@ class Preset:
     calibration: dict | None = field(default=None, compare=False, hash=False)
     #: "vector" (formulations, layers, tau), "pointer": a decision model read with the format stored
     #: in its own decision.json (jul/decision.py), or "contrastive": projection heads on a frozen
-    #: backbone (jul/contrastive.py). Formulations and tau are unused by the last two.
+    #: backbone (jul/contrastive.py), or "letter-readout": a decision model answering with an option letter
+    #: after its own prompt (jul/letter_models.py). Formulations and tau are unused by the last three.
     method: str = "vector"
     #: On a pointer preset: the vector reading a long question falls back to, fitted by `jul models add`
     #: on these very weights (formulations, tau, center) plus `above_options`. None = no routing.
@@ -77,6 +78,9 @@ class Preset:
     #: On a "contrastive" preset (jul/contrastive.py): the directory holding contrastive.json and the
     #: heads, trained or converted by `jul models add`. The repos are the frozen backbone's.
     heads: str | None = None
+    #: On a "letter-readout" preset: its LetterSpec (jul/letter_models.py) as a dict. None = read the
+    #: spec from next to the weights.
+    letters: dict | None = field(default=None, compare=False, hash=False)
 
     @property
     def layers(self) -> list[int]:
@@ -109,7 +113,8 @@ class Preset:
                 "latency_ms": self.latency_ms, "quality": self.quality, "notes": self.notes,
                 "calibration": self.calibration, "method": self.method, "routing": self.routing,
                 **({"cross": self.cross} if self.cross else {}),
-                **({"heads": self.heads} if self.heads else {})}
+                **({"heads": self.heads} if self.heads else {}),
+                **({"letters": self.letters} if self.letters else {})}
 
     @classmethod
     def from_json(cls, d: dict, asset_dir: Path) -> "Preset":
@@ -122,7 +127,8 @@ class Preset:
                    latency_ms=d.get("latency_ms", "?"), quality=d.get("quality", ""),
                    notes=d.get("notes", ""), backend=d.get("backend"), asset_dir=asset_dir,
                    calibration=d.get("calibration"), method=d.get("method", "vector"),
-                   routing=d.get("routing"), cross=d.get("cross"), heads=d.get("heads"))
+                   routing=d.get("routing"), cross=d.get("cross"), heads=d.get("heads"),
+                   letters=d.get("letters"))
 
 
 def formulations_for(preset: Preset, names) -> tuple[Formulation, ...]:
@@ -188,6 +194,17 @@ def pointer_preset(name: str, repo: str, backend: str) -> Preset:
     return Preset(name=name, **repo_fields(backend, repo), backend=backend, formulations=(), tau=1.0,
                   latency_ms="?", quality="decision model (pointer method)", method="pointer",
                   notes=f"format and temperature ({spec.temperature:.3f}) read from {repo}/decision.json")
+
+
+def letters_preset(name: str, repo: str, backend: str, spec) -> Preset:
+    """A letter-readout decision model's preset: nothing to fit, its spec (prompt format, letters,
+    temperatures) is stored in it, read from the model's decision.json or its runtime's config."""
+    temps = ", ".join(f"{k} {v:g}" for k, v in spec.temperature.items())
+    return Preset(name=name, **repo_fields(backend, repo), backend=backend, formulations=(), tau=1.0,
+                  latency_ms="?", quality=f"decision model (letter readout, {spec.format} prompt)",
+                  method="letter-readout", letters=spec.to_dict(),
+                  notes=f"{spec.format} prompt, letters {spec.letters[:spec.max_options]}, temperature {temps}; "
+                        f"from {spec.source}")
 
 
 def contrastive_preset(name: str, heads_dir: str | Path, backend: str) -> Preset:
@@ -338,7 +355,7 @@ def one_word_preset(name: str | None = None, backend: str | None = None, home: P
     A decision model reads every question in one pass of its own format already, so it comes back as it is
     (`one_word_only=True` with `fast` kept working when `fast` became one)."""
     p = resolve(name, backend, home)
-    if p.method == "pointer":
+    if p.method in ("pointer", "letter-readout"):
         return p
     one_word = p.one_word or ONE_WORD_ONLY.get(p.name)
     if one_word is None:

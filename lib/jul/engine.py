@@ -114,6 +114,13 @@ class Engine:
         if preset.method == "pointer":
             from .decision import DecisionSpec, PointerReader
             self.pointer = PointerReader(backbone, DecisionSpec.load(backbone.model_dir))
+        self.reader = None
+        if preset.method == "letter-readout":
+            from .letter_models import LetterReader, LetterSpec, spec_from_repo
+            spec = LetterSpec.from_dict(preset.letters) if preset.letters else spec_from_repo(str(backbone.model_dir))
+            if spec is None:
+                raise ValueError(f"{preset.name!r}: no letters spec in the preset nor next to the weights")
+            self.reader = LetterReader(backbone, spec)
         self.contrastive = None
         if preset.method == "contrastive":
             from .contrastive import ContrastiveReader, ContrastiveSpec

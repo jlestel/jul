@@ -115,6 +115,7 @@ def ensure_preset(model: str, backend: str):
                          f"Fit it for {backend} with: jul models add {preset.name} --backend {backend}")
     origin = "fitted on " + preset.backend if preset.backend else "built-in"
     settings = ("pointer method, from its decision.json" if preset.method == "pointer"
+                else "letter readout, with its own prompt and temperature" if preset.method == "letter-readout"
                 else f"tau {preset.tau}, center {preset.center}")
     _step("preset", f"{preset.name} ({origin}): {settings}")
     return preset, repo
