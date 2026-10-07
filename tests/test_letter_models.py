@@ -117,13 +117,11 @@ def test_open_spark_jev_prompt_is_its_gateways():
 # --- reading, with a fake backbone -------------------------------------------------------------
 
 class FakeTokenizer:
-    """One token per character, letters A..Z as ids 65..90; the chat template joins the contents."""
+    """One token per character, letters A..Z as ids 65..90; the chat template joins the contents. No `__call__`,
+    like mlx-lm's TokenizerWrapper: the reader only uses `encode`."""
 
     def encode(self, text, add_special_tokens=False):
         return [ord(c) for c in text]
-
-    def __call__(self, text, add_special_tokens=False):
-        return {"input_ids": self.encode(text)}
 
     def decode(self, ids):
         return "".join(map(chr, ids))
@@ -233,3 +231,64 @@ def test_the_client_answers_with_the_reader(monkeypatch):
     assert r.scores["level"].score == pytest.approx(1 / (1 + np.exp(-1)), abs=1e-4)
     with pytest.raises(ValueError, match="own prompt only"):
         c.system_one("x", {"team": Choice("Which team?", ["billing", "tech"])}, method="vector")
+
+
+# --- Quyet: one state cut per request; cuts are said -----------------------------------------------
+
+class QuyetBackbone(FakeBackbone):
+    """Records each prompt's state text; every letter scores 0."""
+
+    def __init__(self):
+        super().__init__({})
+        self.states = []
+
+    def forward(self, tokens, logits=False, prefix=None, **_):
+        text = self.tokenizer.decode(list(prefix or ()) + list(tokens))
+        self.states.append(text.split("State:\n")[1].split("\n\nQuestion:")[0])
+        return {}, np.zeros(200)
+
+
+def quyet_reader(**limits):
+    spec = spec_from_config("quyet_config.json", {**QUYET, "limits": {**QUYET["limits"], **limits}})
+    return LetterReader(QuyetBackbone(), spec)
+
+
+def test_quyet_cuts_the_state_once_for_the_whole_request(caplog):
+    """quyet.llm.runtime._prompt_ids: the longest prompt sets the state budget, every question reads it."""
+    r = quyet_reader(max_state_tokens=600, max_prompt_tokens=900, min_state_tokens=50)
+    long_options = {f"o{i}": "a long description of this option " * 2 for i in range(5)}
+    with caplog.at_level("WARNING", logger="jul.truncation"):
+        r.logits("x" * 2000, [("noul", "Late?", options_of(Noul("Late?"))),
+                              ("choice", "Team?", options_of(Choice("Team?", long_options)))])
+    short, long_ = r.backbone.states
+    assert short == long_ and len(short) < 600, "both questions read the cut the long one needs"
+    assert "input cut: fake reads at most" in caplog.text and "tokens were dropped" in caplog.text
+    alone = quyet_reader(max_state_tokens=600, max_prompt_tokens=900, min_state_tokens=50)
+    alone.logits("x" * 2000, [("noul", "Late?", options_of(Noul("Late?")))])
+    assert len(alone.backbone.states[0]) > len(short), "alone, the short question would read more"
+
+
+def test_quyet_under_its_limits_is_not_cut(caplog):
+    r = quyet_reader()
+    with caplog.at_level("WARNING", logger="jul.truncation"):
+        r.logits("short state", [("noul", "Late?", options_of(Noul("Late?")))])
+    assert r.backbone.states == ["short state"] and "input cut" not in caplog.text
+
+
+def test_open_spark_jev_char_cut_is_said(caplog):
+    spec = spec_from_config("calibration.json", SPARK)
+    r = LetterReader(FakeBackbone({}), LetterSpec.from_dict({**spec.to_dict(), "limits": {"max_state_chars": 100}}))
+    with caplog.at_level("WARNING", logger="jul.truncation"):
+        r.prompts("y" * 250, "noul", "Late?", options_of(Noul("Late?")))
+    assert "input cut: fake reads at most 100 characters" in caplog.text and "150 characters" in caplog.text
+
+
+def test_letter_models_are_read_on_torch_only():
+    from jul.engine import Engine
+
+    class Mlx:
+        name, backend, model_dir = "m", "mlx", "."
+
+    preset = letters_preset("q", "r", "torch", spec_from_config("quyet_config.json", QUYET))
+    with pytest.raises(ValueError, match="backend='torch' for now"):
+        Engine(preset, backbone=Mlx())

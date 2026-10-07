@@ -361,9 +361,9 @@ def cmd_models_add(a):
         from jul.backbone import resolve_backend
         from jul.presets import letters_preset, save_preset
         backend = resolve_backend(a.backend)
-        if backend not in ("torch", "mlx"):
-            raise SystemExit(f"error: a letter-readout model needs next-token logits: --backend torch or mlx, "
-                             f"not {backend}")
+        if backend != "torch":
+            raise SystemExit(f"error: a letter-readout model is read with --backend torch for now, not {backend} "
+                             "(its parity with the model's runtime is measured on torch only)")
         path = save_preset(letters_preset(a.name, a.repo, backend, letters))
         temps = ", ".join(f"{k} {v:.3g}" if k != "default" else f"{v:.3g}" for k, v in letters.temperature.items())
         print(f"{a.name}: letter-readout decision model on {backend}, read with its own {letters.format} prompt "

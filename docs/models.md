@@ -357,8 +357,16 @@ the questions of one call share the state, which runs once as a cached prefix.
 What they do not do: no vector reading is fitted on their weights, so `method=` cannot pick another reading,
 `autotune` has nothing to train a head on, `jul pack` refuses them; plumb's JevBench v1.5 settings (yes/no
 answers moved out of the 0.2–0.8 band, a score temperature of 1.2) are output transforms of its own server for
-that benchmark, not part of the model, and are not applied. They need next-token logits: `--backend torch` or
-`mlx` (an MLX conversion of the weights), not `onnx` or `api`.
+that benchmark, not part of the model, and are not applied. They are read with `--backend torch` only:
+parity is measured there, `mlx`, `onnx` and `api` are refused.
+
+A state too long for the model's own prompt rule is cut as its runtime cuts it, and logged on
+`jul.truncation` (`input cut: …`): Quyet keeps the head of the state (the tail of a list) within
+`max_state_tokens`, cut once for the whole request so that every question reads the same text, and the cut
+is counted in `usage.truncated_tokens`; open-spark-jev keeps the head and tail of a state over
+`max_state_chars` characters. JevK5 and Plumb refuse a prompt over `max_tokens` (16384), like their runtime:
+`ValueError`, HTTP 400 from `jul serve`. open-spark-jev's `abstain` is not read: its gateway does not add it on
+`/v1/systemone` either.
 
 ## Laya
 

@@ -34,6 +34,7 @@ scripts/letters_parity.py compares the probabilities with the runtimes themselve
 from __future__ import annotations
 
 import json
+import logging
 import math
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -259,6 +260,25 @@ def spark_state(state: Any, max_chars: int) -> str:
     return text.replace("STATE>>>", "STATE>>").replace("<<<STATE", "<<STATE")
 
 
+def _spark_dropped(state: Any, max_chars: int) -> int:
+    text = state if isinstance(state, str) else json.dumps(state, ensure_ascii=False, separators=(",", ":"),
+                                                           default=str)
+    return max(0, len(text) - max_chars)
+
+
+def _cut(model: str, limit: str, what: str, tokens: tuple[int, int] | None = None) -> None:
+    """A state cut by the model's own prompt rule (its runtime warns too): logged on `jul.truncation`, and
+    counted in `usage.truncated_tokens` when it is in tokens and jul.truncation (#38) is there."""
+    logging.getLogger("jul.truncation").warning("input cut: %s reads at most %s, %s", model, limit, what)
+    if tokens is None:
+        return
+    try:
+        from . import truncation
+    except ImportError:
+        return
+    truncation.record(f"{model} letters", *tokens)
+
+
 def spark_question(kind: str, instructions: str, options: list[Option],
                    letters: str) -> tuple[str, list[int]]:
     """The question block of open_spark_jev.prompting, for a Jev question mapped as its gateway does."""
@@ -394,32 +414,44 @@ class LetterReader:
             return out, [[order[i] for i in sub] for sub in subsets]
         if s.format == "quyet":
             texts, order = quyet_texts(kind, options)
-            return [self._quyet_prompt(state, kind, instructions, texts)], [order]
+            return self._quyet_prompts(state, [(kind, instructions, texts)]), [order]
         # Its runtime tokenizes the state part and the question part apart (the state is a cached prefix
         # there), so they are here too: tokens can differ from those of the joined text at the seam.
         block, order = spark_question(kind, instructions, options, s.letters)
+        max_chars = s.limits.get("max_state_chars", 12000)
+        state_text = spark_state(state, max_chars)
+        dropped = _spark_dropped(state, max_chars)
+        if dropped:
+            _cut(self.backbone.name, f"{max_chars} characters of state (head and tail kept)",
+                 f"{dropped} characters from the middle were dropped")
         prefix = (f"<|im_start|>system\n{s.system or SPARK_SYSTEM}<|im_end|>\n<|im_start|>user\n### State\n"
-                  f"<<<STATE\n{spark_state(state, s.limits.get('max_state_chars', 12000))}\nSTATE>>>\n\n")
+                  f"<<<STATE\n{state_text}\nSTATE>>>\n\n")
         return [self._encode(prefix) + self._encode(f"{block}<|im_end|>\n{SPARK_ASSISTANT}")], [order]
 
-    def _quyet_prompt(self, state: Any, kind: str, instructions: str, texts: list[str]) -> list[int]:
-        """quyet.llm.runtime._prompt_ids for one question: the state is cut until the prompt fits."""
-        s, tok = self.spec, self.backbone.tokenizer
+    def _quyet_prompts(self, state: Any, questions: list[tuple[str, str, list[str]]]) -> list[list[int]]:
+        """quyet.llm.runtime._prompt_ids: one prompt per (kind, instructions, option texts), all on the same
+        state text. The state budget is set for the whole request: it shrinks until the longest prompt fits
+        `max_prompt_tokens`, so every question reads the same cut of the state."""
+        s = self.spec
         compact = s.prompt_version == 2
         text = quyet_state(state, compact)
-        full = tok(text, add_special_tokens=False)["input_ids"]
+        full = self._encode(text)
         cap = s.limits["max_state_tokens"]
         for _ in range(4):
             if len(full) <= cap:
                 state_text = text
             else:
                 keep = full[-cap:] if isinstance(state, list) else full[:cap]
-                state_text = ("… " if isinstance(state, list) else "") + tok.decode(keep) + \
+                state_text = ("… " if isinstance(state, list) else "") + self.backbone.tokenizer.decode(keep) + \
                              ("" if isinstance(state, list) else " …")
-            user = quyet_user(state_text, kind, instructions, texts, s.letters)
-            ids = self._encode(self._chat(quyet_messages(user, s.prompt_version, s.system)))
-            over = len(ids) - s.limits["max_prompt_tokens"]
+            ids = [self._encode(self._chat(quyet_messages(quyet_user(state_text, kind, instructions, texts,
+                                                                      s.letters), s.prompt_version, s.system)))
+                   for kind, instructions, texts in questions]
+            over = max(len(x) for x in ids) - s.limits["max_prompt_tokens"]
             if over <= 0:
+                if len(full) > cap:
+                    _cut(self.backbone.name, f"{cap} tokens of state ({'tail' if isinstance(state, list) else 'head'}"
+                         " kept)", f"{len(full) - cap} tokens were dropped", tokens=(cap, len(full) - cap))
                 return ids
             cap = min(cap, len(full)) - over - 16
             if cap < s.limits["min_state_tokens"]:
@@ -463,8 +495,14 @@ class LetterReader:
                 raise ValueError(f"{len(options)} options: this model reads at most {s.max_options} "
                                  "in one pass")
         if single:
-            built = [self.prompts(state, *questions[qi]) for qi in single]
-            prompts = [ids[0] for ids, _ in built]
+            if s.format == "quyet":   # its runtime cuts the state once for the whole request
+                texts = [quyet_texts(questions[qi][0], questions[qi][2]) for qi in single]
+                prompts = self._quyet_prompts(state, [(questions[qi][0], questions[qi][1], t)
+                                                      for qi, (t, _) in zip(single, texts)])
+                built = [([p], [order]) for p, (_, order) in zip(prompts, texts)]
+            else:
+                built = [self.prompts(state, *questions[qi]) for qi in single]
+                prompts = [ids[0] for ids, _ in built]
             logits = self._letter_logits(prompts, [len(questions[qi][2]) for qi in single])
             for qi, (_, orders), z in zip(single, built, logits):
                 p = _softmax(z / s.temperature_for(questions[qi][0]))

@@ -120,6 +120,10 @@ class Engine:
             spec = LetterSpec.from_dict(preset.letters) if preset.letters else spec_from_repo(str(backbone.model_dir))
             if spec is None:
                 raise ValueError(f"{preset.name!r}: no letters spec in the preset nor next to the weights")
+            if backbone.backend != "torch":
+                raise ValueError(f"{preset.name!r} is a letter-readout model, read with backend='torch' for now "
+                                 f"(not {backbone.backend!r}): its parity with the model's runtime is measured "
+                                 "on torch only")
             self.reader = LetterReader(backbone, spec)
         self.contrastive = None
         if preset.method == "contrastive":
