@@ -31,6 +31,15 @@ from dataclasses import dataclass, field
 logger = logging.getLogger("jul.truncation")
 
 ON_LONG = ("cut", "error")
+
+
+class InputTooLong(ValueError):
+    """A call refused by on_long="error": its state is over a reading's limit. A ValueError, so callers
+    that catch those (`jul serve`: HTTP 400) keep working; `jul bench` counts these rows apart."""
+
+    def __init__(self, message: str, reading: str, limit: int, over: int):
+        super().__init__(message)
+        self.reading, self.limit, self.over = reading, limit, over
 #: What a cut can drop: the state (refused by on_long="error"), or another part of the input (an option).
 PARTS = ("state", "option")
 

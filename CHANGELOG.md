@@ -17,8 +17,9 @@ Versions come from git tags (see [publishing](docs/publishing.md)): a `v*` tag r
 
 - **`on_long="cut|error"`** (`system_one`, `TypeSafeClient`, a `jul serve` request, `JUL_ON_LONG`,
   `jul bench --on-long`): past a reading's limit, answer on what was read (default, unchanged) or refuse the
-  call (`ValueError`, HTTP 400) naming the reading and its limit. Only a cut of the state is refused; an option
-  description cut to its own limit is logged and counted (#36).
+  call (`jul.truncation.InputTooLong`, a `ValueError`; HTTP 400) naming the reading and its limit. Only a cut of
+  the state is refused; an option description cut to its own limit is logged and counted. `jul bench --on-long
+  error` counts the refused rows in `refused_rows`, the accuracy is over the others (#36).
 
 ### Changed
 

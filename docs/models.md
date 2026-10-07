@@ -498,7 +498,11 @@ of a `jul serve` request), per client (`TypeSafeClient(on_long=)`) or by default
 
 Only the state is refused: an option description cut to a cross model's `max_option` is logged and counted in
 `usage.truncated_tokens`, the call is answered. `error` refuses after the call was read, so a refused call
-costs as much as an answered one. `jul bench --on-long error` counts the rows a model would refuse.
+costs as much as an answered one. The refusal is a `jul.truncation.InputTooLong`, a `ValueError`.
+
+`jul bench --on-long error` counts the rows a model refuses in `refused_rows`, and computes `accuracy` (and `n`)
+over the rows it answered. With an escalation (`--escalate-to`), a refusal by the local tier is raised, not
+sent to the next tier: `error` means the call is refused.
 
 ## How it answers
 

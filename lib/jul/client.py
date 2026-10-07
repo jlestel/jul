@@ -152,8 +152,9 @@ class TypeSafeClient:
                 reading, limit, cut = worst
                 truncation.logger.warning("input refused (on_long=error): %s reads at most %d tokens of state, "
                                           "the state is %d tokens over", reading, limit, cut)
-                raise ValueError(f"the state is over the input limit of {reading} ({limit} tokens, {cut} more): "
-                                 "shorten it, or pass on_long=\"cut\" to answer on its beginning")
+                raise truncation.InputTooLong(
+                    f"the state is over the input limit of {reading} ({limit} tokens, {cut} more): shorten it, "
+                    "or pass on_long=\"cut\" to answer on its beginning", reading, limit, cut)
         response.usage.truncated_tokens = max(response.usage.truncated_tokens, cuts.tokens)
         return response
 

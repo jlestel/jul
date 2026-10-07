@@ -99,3 +99,30 @@ def test_a_refused_call_hands_nothing_up(monkeypatch, caplog):
                 c.system_one(LONG, QS, on_long="error")
             c.system_one("short", QS)
     assert outer.tokens == 0 and "input cut" not in caplog.text
+
+
+def test_bench_counts_the_refused_rows_and_scores_the_others(monkeypatch):
+    """jul bench --on-long error: a refused row is counted in refused_rows, the accuracy is over the others."""
+    from jul_cli import bench
+
+    c = client(monkeypatch, [])
+    c.on_long = "error"
+    task = bench.Task("late", "noul", "Is it late?", {"true": "", "false": ""},
+                      test=[("short LATE", "true"), (LONG, "true"), ("short", "false")])
+    out = bench.evaluate(c, task)
+    assert (out["n"], out["correct"], out["accuracy"], out["refused_rows"]) == (2, 2, 1.0, 1)
+    c.on_long = "cut"
+    out = bench.evaluate(c, task)
+    assert out["n"] == 3 and "refused_rows" not in out and out["truncated_rows"] == 1
+    c.on_long = "error"
+    every = bench.Task("late", "noul", "Is it late?", {"true": "", "false": ""}, test=[(LONG, "true")])
+    assert bench.evaluate(c, every) == {"skipped": "every row refused: over the input limit (on_long=error)",
+                                        "refused_rows": 1}
+
+
+def test_the_refusal_is_input_too_long_a_value_error(monkeypatch):
+    c = client(monkeypatch, [])
+    with pytest.raises(truncation.InputTooLong) as e:
+        c.system_one(LONG, QS, on_long="error")
+    assert isinstance(e.value, ValueError) and (e.value.reading, e.value.limit) == ("fake reading", LIMIT)
+    assert e.value.over == len(LONG) - LIMIT
