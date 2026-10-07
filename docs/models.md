@@ -319,6 +319,47 @@ the pointer head for Choice and Noul, the vector reading for a routed question (
 
 A state longer than the limit in its `decision.json` is truncated rather than stretched.
 
+### Letter-readout decision models (JevK5, Plumb, Quyet, spark-s1)
+
+Other open decision models answer with a letter: a causal LM with a merged LoRA, trained to write the letter
+of an option after **its own** fixed prompt, read as the softmax of the option letters' logits divided by a
+calibration temperature ([SemIf](https://github.com/TheoLeeCJ/SemIf)'s protocol). jul's own `letters`
+reading uses jul's prompt, which they were not trained on, so `jul models add` recognises them and reads them
+the way their own runtime does (`lib/jul/letter_models.py`). Nothing is fitted:
+
+```bash
+jul models add jevk5 --repo alibiserikbay/JevK5 --backend torch
+jul models add plumb-4b --repo crh225/plumb-4b --backend torch
+jul models add quyet-medium --repo chinhnc/Quyet-1.0-Medium --backend torch
+jul models add spark-s1-4b --repo abhishek085/spark-s1-4b-v6 --backend torch
+jul ask noul "Does the customer ask for money back?" --state "I was billed twice, please refund" --model jevk5
+```
+
+| Model | Its runtime | Read from | Prompt | Options per pass | Temperature |
+| --- | --- | --- | --- | ---: | --- |
+| [JevK5](https://huggingface.co/alibiserikbay/JevK5) v0.3 | [jevk5](https://github.com/allebee/jevk5) 0.3 | `jevk5_config.json` | SemIf (JSON evidence, criterion, options) | 16, then knockout | 1.22 (knockout 0.93) |
+| [plumb-4b](https://huggingface.co/crh225/plumb-4b) | jevk5 | `jevk5_config.json` | SemIf | 16, then knockout | 2.07 |
+| [Quyet-1.0-Medium](https://huggingface.co/chinhnc/Quyet-1.0-Medium) | [quyet](https://github.com/ncchinh/quyet) | `quyet_config.json` | Quyet (prompt version 1 or 2) | 10 | per type |
+| [spark-s1-4b-v6](https://huggingface.co/abhishek085/spark-s1-4b-v6) | [open-spark-jev](https://github.com/abhishek085/open-spark-jev) | `calibration.json` | fenced state, a menu per type | 26 | per type |
+
+The spec is stored in the preset (`letters`): the prompt format, the answer letters, how many options one pass
+reads, the temperature per question type and the input limits. A repo can also ship it as a `decision.json`
+with `"method": "letters"` (same keys: `format`, `letters`, `max_options`, `temperature`, `many_options`,
+`prompt_version`, `limits`), which wins over the runtime configs. Each format keeps its runtime's input rules:
+SemIf refuses inputs over 16,384 tokens, Quyet cuts the state to its token limit (the head kept, the tail for a
+list), spark-s1 cuts it to 12,000 characters (head and tail kept).
+
+Parity with the runtimes themselves, on the examples of each README (`scripts/letters_parity.py`, float32 on
+CPU, same weights): the probabilities agree to within 5e-5 on all four models (13 questions: Choice, Noul,
+Score, and a 20-option Choice through the knockout). The prompts are the runtimes' token for token;
+the questions of one call share the state, which runs once as a cached prefix.
+
+What they do not do: no vector reading is fitted on their weights, so `method=` cannot pick another reading,
+`autotune` has nothing to train a head on, `jul pack` refuses them; plumb's JevBench v1.5 settings (yes/no
+answers moved out of the 0.2–0.8 band, a score temperature of 1.2) are output transforms of its own server for
+that benchmark, not part of the model, and are not applied. They need next-token logits: `--backend torch` or
+`mlx` (an MLX conversion of the weights), not `onnx` or `api`.
+
 ## Laya
 
 [Laya](https://huggingface.co/convaiinnovations/laya) (ConvAI Innovations, Apache-2.0) is a decision model
@@ -520,13 +561,14 @@ the center — is computed once, so a call only pays for its own tokens.
 
 ## Every reading, and every setting
 
-Four ways to read a model. A preset picks one; a call may override it.
+Five ways to read a model. A preset picks one; a call may override it.
 
 | Reading | What it compares | Chosen by | Available on |
 | --- | --- | --- | --- |
 | **vector** (default) | cosine between the state's hidden state and each option's, `softmax(cos / tau)` | preset `method: "vector"` | any model |
 | **letters** | the logits of the option letters (A, B, C…) at the next position | `method="letters"`, per call or per client | any model; a tuned head overrides it |
 | **pointer** | a trained pointer head, at the delimiter tokens of the format in `decision.json` | preset `method: "pointer"` | decision models only |
+| **letter-readout** | the option letters' logits after the model's own prompt, at its own temperature | preset `method: "letter-readout"` | letter-readout decision models only (JevK5, Plumb, Quyet, spark-s1) |
 | **tuned head** | a logistic head fitted by `autotune` on vector features | `autotune()` plus a `Context` | pins the reading to vectors (on a decision model, its vector fallback) |
 
 A decision model may also **route by option count**: below the threshold the pointer head answers, above

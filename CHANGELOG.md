@@ -21,6 +21,13 @@ Versions come from git tags (see [publishing](docs/publishing.md)): a `v*` tag r
   the state is refused; an option description cut to its own limit is logged and counted. `jul bench --on-long
   error` counts the refused rows in `refused_rows`, the accuracy is over the others (#36).
 
+- **Letter-readout decision models** (#41): JevK5, plumb-4b, Quyet-1.0-Medium and spark-s1-4b-v6, which answer
+  with the logits of their option letters after their own prompt, divided by a calibration temperature, are read
+  as their own runtime reads them. `jul models add NAME --repo REPO` recognises them by their runtime's config
+  (`jevk5_config.json`, `quyet_config.json`, `calibration.json`) or a `decision.json` with
+  `"method": "letters"`; nothing is fitted. JevK5's knockout reads more than 16 options.
+  `scripts/letters_parity.py` compares the probabilities with each runtime on its README examples.
+
 ### Changed
 
 - The encoder and onnx cuts were a `warnings.warn` shown once per call site; they are now logged on every

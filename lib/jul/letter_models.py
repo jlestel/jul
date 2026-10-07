@@ -80,6 +80,8 @@ class LetterSpec:
     def from_dict(cls, d: dict) -> "LetterSpec":
         if d.get("method", "letters") != "letters":
             raise ValueError(f"not a letters spec (method {d.get('method')!r})")
+        if d.get("format") not in FORMATS:
+            raise ValueError(f"unknown letters format {d.get('format')!r}; expected one of {', '.join(FORMATS)}")
         t = d.get("temperature", 1.0)
         return cls(format=d["format"], letters=d.get("letters") or DEFAULT_LETTERS[d["format"]],
                    max_options=int(d.get("max_options") or MAX_OPTIONS[d["format"]]),

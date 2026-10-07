@@ -365,7 +365,7 @@ def cmd_models_add(a):
             raise SystemExit(f"error: a letter-readout model needs next-token logits: --backend torch or mlx, "
                              f"not {backend}")
         path = save_preset(letters_preset(a.name, a.repo, backend, letters))
-        temps = ", ".join(f"{k} {v:g}" for k, v in letters.temperature.items())
+        temps = ", ".join(f"{k} {v:.3g}" if k != "default" else f"{v:.3g}" for k, v in letters.temperature.items())
         print(f"{a.name}: letter-readout decision model on {backend}, read with its own {letters.format} prompt "
               f"(letters {letters.letters[:letters.max_options]}, temperature {temps}; from {letters.source}). "
               f"Nothing fitted -> {path}")

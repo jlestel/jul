@@ -199,7 +199,7 @@ def pointer_preset(name: str, repo: str, backend: str) -> Preset:
 def letters_preset(name: str, repo: str, backend: str, spec) -> Preset:
     """A letter-readout decision model's preset: nothing to fit, its spec (prompt format, letters,
     temperatures) is stored in it, read from the model's decision.json or its runtime's config."""
-    temps = ", ".join(f"{k} {v:g}" for k, v in spec.temperature.items())
+    temps = ", ".join(f"{k} {v:.3g}" if k != "default" else f"{v:.3g}" for k, v in spec.temperature.items())
     return Preset(name=name, **repo_fields(backend, repo), backend=backend, formulations=(), tau=1.0,
                   latency_ms="?", quality=f"decision model (letter readout, {spec.format} prompt)",
                   method="letter-readout", letters=spec.to_dict(),
