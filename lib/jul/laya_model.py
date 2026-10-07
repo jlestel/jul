@@ -97,5 +97,6 @@ class LayaModel:
             answers[name] = answer
         usage = data.get("usage") or {}
         return SystemOneResponse(answers=answers, model=self.name,
-                                 usage=Usage(input_tokens=int(usage.get("input_tokens") or 0)),
+                                 usage=Usage(input_tokens=int(usage.get("input_tokens") or 0),
+                                             truncated_tokens=int(usage.get("truncated_tokens") or 0)),
                                  request_id=str(uuid.uuid4()))

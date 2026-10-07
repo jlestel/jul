@@ -34,7 +34,7 @@ The response is `SystemOneResponse.as_dict()`, the shape of the Jev API:
 
 ```json
 {"request_id": "...", "model": "wemm-4b-4bit",
- "usage": {"input_tokens": 41, "output_tokens": 0, "total_tokens": 41},
+ "usage": {"input_tokens": 41, "output_tokens": 0, "total_tokens": 41, "truncated_tokens": 0},
  "answers": {"team": {"type": "choice", "choice": "billing", "probabilities": {...}, "confidence": 0.93},
              "is_bug": {"type": "noul", "noul": 0.08}},
  "jul": {"latency_ms": 54.2}}

@@ -309,20 +309,23 @@ def predicted(kind: str, answer) -> str:
 
 
 def evaluate(client, task: Task, context=None, method=None) -> dict:
+    from jul import truncation
     question = task.question()
-    hits, errors, times, sent = 0, [], [], 0
-    for state, gold in task.test:
-        t = time.perf_counter()
-        response = client.system_one(state=state, questions={"q": question}, context=context,
-                                     **({"method": method} if method else {}))
-        times.append((time.perf_counter() - t) * 1000)
-        got = predicted(task.kind, response.answers["q"])
-        hits += got == gold
-        trace = getattr(response, "escalation", None)
-        if trace and len(trace["q"]["tried"]) > 1:      # reached the next tier (even if it failed there)
-            sent += 1
-        if task.kind == "score":
-            errors.append(abs(response.answers["q"].score - int(gold)))
+    hits, errors, times, sent, cut = 0, [], [], 0, 0
+    with truncation.tracking():     # one log line per reading for the task, not one per row
+        for state, gold in task.test:
+            t = time.perf_counter()
+            response = client.system_one(state=state, questions={"q": question}, context=context,
+                                         **({"method": method} if method else {}))
+            times.append((time.perf_counter() - t) * 1000)
+            got = predicted(task.kind, response.answers["q"])
+            hits += got == gold
+            cut += getattr(response.usage, "truncated_tokens", 0) > 0
+            trace = getattr(response, "escalation", None)
+            if trace and len(trace["q"]["tried"]) > 1:      # reached the next tier (even if it failed there)
+                sent += 1
+            if task.kind == "score":
+                errors.append(abs(response.answers["q"].score - int(gold)))
     n = len(task.test)
     lo, hi = wilson(hits, n)
     out = {"n": n, "correct": hits, "accuracy": round(hits / n, 4) if n else None,
@@ -330,6 +333,8 @@ def evaluate(client, task: Task, context=None, method=None) -> dict:
            "latency_ms_p95": round(_pct(times, 95), 1)}
     if errors:
         out["mae"] = round(sum(errors) / len(errors), 4)
+    if cut:
+        out["truncated_rows"] = cut          # rows whose state some reading did not read whole
     if getattr(client, "tiers", None):
         out["escalated"] = sent
         out["escalated_share"] = round(sent / n, 4) if n else None

@@ -81,7 +81,7 @@ def test_onnx_names_what_it_cannot_read(pair):
 
 
 @needs_export
-def test_onnx_cuts_a_long_input_and_keeps_the_prompt_around_it(pair, monkeypatch):
+def test_onnx_cuts_a_long_input_and_keeps_the_prompt_around_it(pair, monkeypatch, caplog):
     """Past JUL_ONNX_MAX_TOKENS the end of the input goes; the prefix and suffix stay, so the vector
     is the one of the cut text in the same prompt."""
     _, onnx = pair
@@ -91,8 +91,9 @@ def test_onnx_cuts_a_long_input_and_keeps_the_prompt_around_it(pair, monkeypatch
     n_prompt = len(template.prefix_tokens) + len(onnx.encode(long_text + suffix))
     limit = n_prompt - 30
     monkeypatch.setenv("JUL_ONNX_MAX_TOKENS", str(limit))
-    with pytest.warns(UserWarning, match="is cut by 30 tokens"):
+    with caplog.at_level("WARNING", logger="jul.truncation"):
         cut, _ = template.run(long_text, layers=[3])
+    assert f"JUL_ONNX_MAX_TOKENS) reads at most {limit} tokens, 30 tokens past it were dropped" in caplog.text
     kept = onnx.tokenizer.decode(onnx.encode(long_text)[:-30])
     monkeypatch.delenv("JUL_ONNX_MAX_TOKENS")
     expected, _ = template.run(kept, layers=[3])

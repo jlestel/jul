@@ -241,7 +241,7 @@ class TorchEncoderBackbone(Backbone):
     def forward_batch(self, queries, layers=(), pools=None, prefix=None):
         if not layers:
             return [{} for _ in queries]
-        fitted = [encoder.fit(list(prefix or []), list(q), p, self.max_tokens)
+        fitted = [encoder.fit(list(prefix or []), list(q), p, self.max_tokens, self.name)
                   for q, p in zip(queries, pools or [None] * len(queries))]
         ids, mask, spans = encoder.batch([s for s, _ in fitted], [p for _, p in fitted],
                                          self._head, self._tail, self._pad)

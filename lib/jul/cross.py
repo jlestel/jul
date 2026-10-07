@@ -40,6 +40,7 @@ from typing import Any
 
 import numpy as np
 
+from . import truncation
 from .decision import render
 from .types import NOUL_DEFAULTS, Option
 
@@ -158,7 +159,9 @@ class CrossReader:
         encode = self.backbone.tokenizer.encode
         a = encode(self.spec.prefix + first, add_special_tokens=False)
         b = encode(text, add_special_tokens=False)
+        n = len(a) + len(b)
         a, b = cut(a, b, self.spec.max_length - self._specials)
+        truncation.record(f"{self.backbone.name} cross", self.spec.max_length, n - len(a) - len(b))
         return a + self._sep + b
 
     @staticmethod
@@ -365,17 +368,23 @@ class LoraCrossReader:
         head, tail = self.spec.prompt.split("{state}")
         tail_ids = self.backbone.encode(tail.replace("{first}", first))
         room = max(8, self.spec.max_length - len(tail_ids))
-        return self.backbone.encode(head + text)[:room] + tail_ids
+        ids = self.backbone.encode(head + text)
+        truncation.record(f"{self.backbone.name} cross", self.spec.max_length, len(ids) - room)
+        return ids[:room] + tail_ids
 
     def listwise(self, text: str, instructions: str, options: list[Option]) -> tuple[list[int], list[int]]:
         """Token ids of the listwise prompt and the position closing each option (see LoraSpec)."""
         c, encode = self.spec.choice, self.backbone.encode
-        ids = (encode(c["before"]) + encode(text)[: c["max_state"]]
-               + encode(c["after"].format(question=instructions)))
+        state = encode(text)
+        truncation.record(f"{self.backbone.name} cross (choice)", c["max_state"], len(state) - c["max_state"])
+        ids = encode(c["before"]) + state[: c["max_state"]] + encode(c["after"].format(question=instructions))
         sep, ends = encode(c["separator"]), []
         for o in options:
             name = f"{o.key}: {render(o.description)}" if o.description else o.key
-            ids = ids + encode(c["option"].format(option=name))[: c["max_option"]] + sep
+            option = encode(c["option"].format(option=name))
+            truncation.record(f"{self.backbone.name} cross (choice option)", c["max_option"],
+                              len(option) - c["max_option"])
+            ids = ids + option[: c["max_option"]] + sep
             ends.append(len(ids) - 1)
         return ids + encode(c["answer"]), ends
 

@@ -143,5 +143,5 @@ Do you have a yearly plan?
 response:
 
 ```json
-{"request_id": "c3b355de-…", "model": "e5-small", "usage": {"input_tokens": 9, "output_tokens": 0, "total_tokens": 9}, "answers": {"team": {"choice": "billing", "probabilities": {"billing": 0.91, "technical": 0.06, "sales": 0.03}, "confidence": 0.91}}, "id": "T-1042"}
+{"request_id": "c3b355de-…", "model": "e5-small", "usage": {"input_tokens": 9, "output_tokens": 0, "total_tokens": 9, "truncated_tokens": 0}, "answers": {"team": {"choice": "billing", "probabilities": {"billing": 0.91, "technical": 0.06, "sales": 0.03}, "confidence": 0.91}}, "id": "T-1042"}
 ```

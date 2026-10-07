@@ -20,7 +20,7 @@ from typing import Any, Mapping
 
 import numpy as np
 
-from . import tuning
+from . import truncation, tuning
 from .calibration import fit_temperature_bias
 from .backbone import model_key, resolve_backend
 from .context import Context, question_digest, resolve_context
@@ -133,6 +133,13 @@ class TypeSafeClient:
         """
         if not questions:
             raise ValueError("system_one needs at least one question")
+        with truncation.tracking() as cuts:
+            response = self._system_one(state, questions, context, model, method, route_above)
+        response.usage.truncated_tokens = max(response.usage.truncated_tokens, cuts.tokens)
+        return response
+
+    def _system_one(self, state: Any, questions: Mapping[str, Question], context, model, method,
+                    route_above) -> SystemOneResponse:
         if self._laya is not None:
             if model and model != self._laya.name:
                 raise ValueError(f"this client runs {self._laya.name!r}; create another one for {model!r}")
@@ -297,6 +304,10 @@ class TypeSafeClient:
         by name ("one_word", "question_options", "question"), for every question (a list) or per
         question (a mapping); the head remembers them, so answering and packing read the same way.
         """
+        with truncation.tracking():     # one line per reading for the whole run, not one per example
+            return self._autotune(context, questions, labeled, model, save, features, formulations)
+
+    def _autotune(self, context, questions, labeled, model, save, features, formulations):
         ctx = resolve_context(context, self._context_home)
         if ctx is None:
             raise ValueError("autotune needs a Context or the name of one")

@@ -98,10 +98,14 @@ Answer = ChoiceAnswer | NoulAnswer | ScoreAnswer
 
 @dataclass
 class Usage:
-    """Tokens fed to the local model. Nothing is generated, so `output_tokens` is always 0."""
+    """Tokens fed to the local model. Nothing is generated, so `output_tokens` is always 0.
+
+    `truncated_tokens` is the most tokens a reading dropped from its input to fit its limit during the
+    call (0 when every reading saw the whole state; see jul/truncation.py)."""
 
     input_tokens: int = 0
     output_tokens: int = 0
+    truncated_tokens: int = 0
 
     @property
     def total_tokens(self) -> int:
@@ -109,7 +113,7 @@ class Usage:
 
     def as_dict(self) -> dict:
         return {"input_tokens": self.input_tokens, "output_tokens": self.output_tokens,
-                "total_tokens": self.total_tokens}
+                "total_tokens": self.total_tokens, "truncated_tokens": self.truncated_tokens}
 
 
 @dataclass

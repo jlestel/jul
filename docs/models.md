@@ -468,6 +468,26 @@ Score goes to the vector reading of the same weights, shipped fitted per backend
 are that reading's, on MLX). `autotune(...)` trains its heads on that same vector reading: a question with an
 active head is read through it, the others keep the pointer head (see [Decision models](#decision-models)).
 
+### Input limits
+
+Every reading takes a bounded input. Past the limit the **end** of the text is dropped: an answer that
+sits there is never seen by that reading. The cut is logged each time on the `jul.truncation` logger
+(`jul serve` prints it), naming the reading, its limit and the tokens dropped, and
+`usage.truncated_tokens` in the response is the largest cut of the call (0 when nothing was cut).
+
+| Reading | Limit | Set by |
+| --- | --- | --- |
+| cross models (`jul-decision-wemm-4b`: Noul, Choice; PyTorch) | the `max_length` / `max_state` tokens of its `cross.json` (2048 on the Hub today); `max_option` per option in a listwise Choice (48) | its `cross.json` |
+| pointer models (`jul-decision-minicpm5-2b` and its MLX 4-bit) | the `limits.max_state_tokens` of its `decision.json` (2048 on the Hub today) | its `decision.json` |
+| encoders (e5-small) | the model's positions, 512 | the model |
+| onnx backend, decoders | 2048 tokens | `JUL_ONNX_MAX_TOKENS` |
+| `--backend api` | 8000 characters (a warning, not counted in `usage`) | `JUL_API_MAX_CHARS` |
+| vector reading of the MLX / torch decoders (`wemm-4b-4bit`, `minicpm5-2b`, …) | the model's positions (131k / 262k) | the model |
+
+A state longer than its `cross.json` limit is therefore answered from its beginning only on
+`jul-decision-wemm-4b` for Noul and Choice, while Score (vector reading) sees it whole. The limits come from the
+files next to the weights, so they follow the Hub: read them there rather than from this page.
+
 ## How it answers
 
 For each formulation of the preset, the state and every option go through the same prompt; the answer
@@ -506,7 +526,7 @@ weights: **868 ms → 77 ms at equal accuracy**.
 | `center` | preset | `"options"` | what is subtracted before the cosine: `options`, `generic`, `none` |
 | `one_word` | preset | — | layer and tau of the single-formulation variant (`one_word_only=True`) |
 | `head.temperature` | `decision.json` | 1.954 for ours | divides the pointer logits; never changes an answer |
-| `limits.max_state_tokens` / `max_branch_tokens` | `decision.json` | 384 / 1024 | where a too-long state or question is cut |
+| `limits.max_state_tokens` / `max_branch_tokens` | `decision.json` | 2048 / 1024 | where a too-long state or question is cut |
 | `routing.above_options` | preset, measured by `jul models add` | measured | option count above which the vector reading answers |
 | `routing` formulations, `tau`, `center` | preset, fitted by `jul models add` | — | the fallback reading, fitted on these very weights |
 | `routing.types` | `decision.json` | none | question types the vector reading answers at any option count (e.g. `["score"]`) |

@@ -34,6 +34,7 @@ from typing import Any
 
 import numpy as np
 
+from . import truncation
 from .types import NOUL_DEFAULTS, Option
 
 _log = logging.getLogger(__name__)
@@ -251,6 +252,8 @@ class Embedder:
     def tokens(self, text: str) -> list[int]:
         tok = self.backbone.tokenizer
         ids = list(tok.encode(self.spec.prefix + text, add_special_tokens=self.spec.add_special_tokens))
+        truncation.record(f"{getattr(self.backbone, 'name', '?')} contrastive", self.spec.max_tokens,
+                          len(ids) - self.spec.max_tokens)
         if len(ids) > self.spec.max_tokens and self.spec.prefix:
             # the input convention is kept whole: the text's tail is what is cut
             head = list(tok.encode(self.spec.prefix, add_special_tokens=self.spec.add_special_tokens))

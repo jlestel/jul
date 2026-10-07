@@ -30,6 +30,7 @@ from typing import Any
 
 import numpy as np
 
+from . import truncation
 from .types import NOUL_DEFAULTS, Option
 
 SPEC_FILE = "decision.json"
@@ -199,7 +200,9 @@ class PointerReader:
 
     def encode_state(self, state: Any) -> list[int]:
         text = state if isinstance(state, str) else render(state)
-        return self._pieces(self.spec.layout["prefix"], {"state": text})[: self.spec.max_state_tokens]
+        ids, limit = self._pieces(self.spec.layout["prefix"], {"state": text}), self.spec.max_state_tokens
+        truncation.record(f"{self.backbone.name} pointer", limit, len(ids) - limit)
+        return ids[:limit]
 
     def encode_question(self, instructions: str, option_texts: list[str]) -> tuple[list[int], int, list[int]]:
         """-> branch tokens, offset of the question token, offsets of each option token."""

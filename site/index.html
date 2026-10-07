@@ -1112,7 +1112,7 @@ latency per decision, and the answer to the ticket.</pre>
       ["cmd", 'jul ask choice "Which team should handle this ticket?" \\\n      -o billing:"payments, invoices" -o technical:"bugs, errors" \\\n      -o sales:"pricing, plans" --state "I was charged twice"'],
       ["out", `{
   "model": "jul-decision-wemm-4b",
-  "usage": {"input_tokens": 24, "output_tokens": 0, "total_tokens": 24},
+  "usage": {"input_tokens": 24, "output_tokens": 0, "total_tokens": 24, "truncated_tokens": 0},
   "answers": {
     "choice": {
       "choice": "billing",

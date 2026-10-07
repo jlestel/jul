@@ -3,6 +3,23 @@
 Versions come from git tags (see [publishing](docs/publishing.md)): a `v*` tag releases to PyPI, every push to
 `main` publishes a dev build to TestPyPI.
 
+## Unreleased
+
+### Added
+
+- **A cut input is no longer silent.** Each time a reading drops the end of a state to fit its limit (a cross model at the
+  `max_length` / `max_state` of its `cross.json`, a pointer model at the `max_state_tokens` of its `decision.json`,
+  an encoder at its positions, the onnx backend at `JUL_ONNX_MAX_TOKENS`), a warning is logged on the `jul.truncation`
+  logger, printed by `jul serve`: the reading, its limit, the tokens dropped. The response carries
+  `usage.truncated_tokens`, the largest cut of the call (0 when nothing was cut), so an HTTP client sees it
+  too; `jul serve --escalate-to` and remote targets pass it on. The limit of each reading is in
+  [docs/models.md](docs/models.md#input-limits). The cut itself is unchanged (#35).
+
+### Changed
+
+- The encoder and onnx cuts were a `warnings.warn` shown once per call site; they are now logged on every
+  call, like the others.
+
 ## 0.5.1 — 2026-10-07
 
 ### Fixed
