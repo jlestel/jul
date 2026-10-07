@@ -14,6 +14,7 @@ held in memory at a time, since a single model can weigh several GB.
 from __future__ import annotations
 
 import math
+import os
 import uuid
 from pathlib import Path
 from typing import Any, Mapping
@@ -54,8 +55,11 @@ class TypeSafeClient:
     def __init__(self, model: str | None = None, context: Context | str | None = None,
                  method: str | None = None, one_word_only: bool = False, backend: str | None = None,
                  context_home: Path | None = None, api_key: str | None = None, base_url: str | None = None,
-                 timeout: float | None = None, max_retries: int | None = None, **_ignored: Any):
+                 timeout: float | None = None, max_retries: int | None = None, on_long: str | None = None,
+                 **_ignored: Any):
         self._one_word_only = one_word_only
+        #: what a state over a reading's limit does: "cut" or "error" (see jul/truncation.py)
+        self.on_long = _on_long(on_long or os.environ.get("JUL_ON_LONG") or "cut")
         #: Resolved on the first call, not here: constructing a client must not need a backend
         #: installed, nor load anything. `backend=` is remembered until then.
         self._requested_backend = backend
@@ -118,7 +122,7 @@ class TypeSafeClient:
 
     def system_one(self, state: Any, questions: Mapping[str, Question], context: Context | str | None = None,
                    model: str | None = None, method: str | None = None, route_above: int | None = None,
-                   **_ignored: Any) -> SystemOneResponse:
+                   on_long: str | None = None, **_ignored: Any) -> SystemOneResponse:
         """Answer every question about one state, in a single pass per formulation.
 
         With a cross model in the preset (jul/cross.py), the types it declares are read by it; `method`
@@ -128,13 +132,28 @@ class TypeSafeClient:
         question to its vector reading (its decision.json sets the default; 0 disables that routing). The
         question types its decision.json routes (`routing.types`) go to the vector reading in any case.
 
+        `on_long` overrides, for this call, what a state over a reading's limit does: "cut" (answer on what
+        was read, `usage.truncated_tokens` says how much was not) or "error" (a ValueError naming the reading
+        and its limit, so nothing is decided on a text the model did not read). Only a cut of the state is
+        refused: an option description cut to a cross model's `max_option` is logged and counted. The call
+        is refused after it was read. See jul/truncation.py.
+
         `_ignored` swallows the Jev arguments that mean nothing locally (`response_model`, `retry`,
         `extra_body`, ...) so existing code keeps running.
         """
         if not questions:
             raise ValueError("system_one needs at least one question")
+        on_long = _on_long(on_long or getattr(self, "on_long", "cut"))
         with truncation.tracking() as cuts:
             response = self._system_one(state, questions, context, model, method, route_above)
+            worst = cuts.state_worst() if on_long == "error" else None
+            if worst:
+                cuts.silent = True           # refused: the refusal below says it, not an "input cut" line
+                reading, limit, cut = worst
+                truncation.logger.warning("input refused (on_long=error): %s reads at most %d tokens of state, "
+                                          "the state is %d tokens over", reading, limit, cut)
+                raise ValueError(f"the state is over the input limit of {reading} ({limit} tokens, {cut} more): "
+                                 "shorten it, or pass on_long=\"cut\" to answer on its beginning")
         response.usage.truncated_tokens = max(response.usage.truncated_tokens, cuts.tokens)
         return response
 
@@ -475,6 +494,12 @@ def _answer_index(kind: str, answer: Any, index: Mapping[str, int]) -> int:
     if key not in index:
         raise ValueError(f"Answer {answer!r} is not one of the options {list(index)}")
     return index[key]
+
+
+def _on_long(value: str) -> str:
+    if value not in truncation.ON_LONG:
+        raise ValueError(f"on_long must be one of {', '.join(truncation.ON_LONG)}, not {value!r}")
+    return value
 
 
 def _format(kind: str, question: Question, options: list[Option], probabilities: np.ndarray):
