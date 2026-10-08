@@ -376,3 +376,55 @@ def test_a_remote_decider_with_telemetry_off_sends_nothing_and_answers_the_same(
         assert response.model == "jev-1.13.0" and response.answers["team"].choice == "billing"
     finally:
         telemetry.reset()
+
+
+def _histogram(reader, name):
+    for rm in reader.get_metrics_data().resource_metrics:
+        for sm in rm.scope_metrics:
+            for m in sm.metrics:
+                if m.name == name:
+                    return m.data.data_points
+    return []
+
+
+def test_confidences_land_in_buckets_between_0_and_1(otel, monkeypatch):
+    """The default buckets put every confidence in "<= 5": a 0.35 must land in "<= 0.4", a 0.92 in "<= 0.95"."""
+    logs, reader = otel
+
+    def two(self, state, questions, context, model, method, route_above, methods):
+        methods.update(dict.fromkeys(questions, "vector"))
+        return SystemOneResponse(
+            answers={"team": ChoiceAnswer(choice="billing", probabilities={"billing": 0.35, "technical": 0.65},
+                                          confidence=0.35),
+                     "anger": ScoreAnswer(score=0.9, legend={"0": "Calm", "1": "Angry"},
+                                          probabilities={"0": 0.08, "1": 0.92}, confidence=0.92)},
+            model="minicpm5-2b", usage=Usage(input_tokens=1), request_id="r")
+
+    monkeypatch.setattr(TypeSafeClient, "_system_one", two)
+    TypeSafeClient(model="minicpm5-2b").system_one(
+        state=STATE, questions={"team": QUESTIONS["team"], "anger": QUESTIONS["anger"]})
+    landed = {}
+    for point in _histogram(reader, "jul.decision.confidence"):
+        bounds = list(point.explicit_bounds)
+        assert bounds == list(telemetry.CONFIDENCE_BUCKETS)
+        i = next(i for i, c in enumerate(point.bucket_counts) if c)
+        landed[point.attributes["question.type"]] = bounds[i] if i < len(bounds) else float("inf")
+    assert landed == {"choice": 0.4, "score": 0.95}
+
+
+def test_laya_reports_the_torch_backend(otel, monkeypatch):
+    """Laya runs on its own PyTorch runtime: its metrics carry backend=torch like every other model's."""
+    from jul.laya_model import LayaModel
+
+    logs, reader = otel
+    monkeypatch.undo()   # the real TypeSafeClient._system_one, which hands Laya models to LayaModel
+    monkeypatch.setenv("JUL_ENABLE_TELEMETRY", "1")
+    monkeypatch.setattr(LayaModel, "system_one", lambda self, state, questions, **_: _canned(
+        None, state, questions, None, None, None, None, {}))
+    client = TypeSafeClient(model="laya")
+    _ask(client)
+    m = _metrics(reader)
+    assert {p["backend"] for p in m["jul.decision.count"]} == {"torch"}
+    assert {p["method"] for p in m["jul.decision.count"]} == {"laya"}
+    (request,) = [e for e in _events(logs) if e["event.name"] == "request"]
+    assert request["backend"] == "torch"

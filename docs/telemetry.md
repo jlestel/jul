@@ -74,6 +74,13 @@ switches and redaction. Under `Escalation` / `--escalate-to`, each tier's call i
 model, so a dashboard can put the local model and the remote one side by side. An HTTP error is a
 `jul.request_error` (`error_type=RemoteError`).
 
-`jul.request.duration` has explicit buckets, from 5 ms to 5 min (`5, 10, 25, 50, 100, 250, 500, 1000, 2500,
-5000, 10000, 20000, 30000, 60000, 120000, 300000`): OpenTelemetry's default ones stop at 10 s, and a slow
-local call (a cold first load takes about a minute) would read as 10 s.
+The two histograms have explicit buckets, since OpenTelemetry's default ones (`0, 5, 10, 25 … 10000`) fit
+neither:
+
+| Histogram | Buckets | Why |
+|---|---|---|
+| `jul.request.duration` | `5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 20000, 30000, 60000, 120000, 300000` ms | a slow local call (a cold first load takes about a minute) would read as 10 s |
+| `jul.decision.confidence` | `0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.99, 1.0` | every confidence would land in `≤ 5`; finer at the top, where escalation bars sit |
+
+`backend` is always set: `torch`, `mlx` or `onnx` for a local model, `torch` for Laya (its own PyTorch
+runtime), `remote` for a `SystemOneHTTP` server.

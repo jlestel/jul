@@ -83,6 +83,11 @@ class TypeSafeClient:
             self._backend = resolve_backend(self._requested_backend)
         return self._backend
 
+    @property
+    def _telemetry_backend(self) -> str | None:
+        """The backend label of telemetry: Laya runs on its own PyTorch runtime, whatever was resolved."""
+        return "torch" if self._laya is not None else self._backend
+
     def _resolve_preset(self, model: str | None) -> Preset:
         """Before the first call there may be no backend at all: fall back to the built-in preset."""
         try:
@@ -152,7 +157,7 @@ class TypeSafeClient:
         try:
             response = self._decide(state, questions, context, model, method, route_above, on_long, methods)
         except Exception as error:
-            telemetry.record_error(self._telemetry, model=self.model, backend=self._backend, error=error,
+            telemetry.record_error(self._telemetry, model=self.model, backend=self._telemetry_backend, error=error,
                                    duration_ms=(time.perf_counter() - started) * 1000,
                                    question_count=len(questions))
             raise
@@ -163,7 +168,7 @@ class TypeSafeClient:
             methods.setdefault(name, getattr(self._preset, "method", None) or "unknown")
         ctx = resolve_context(context, self._context_home) if context is not None else self.context
         telemetry.record_request(
-            self._telemetry, model=response.model, backend=self._backend, state_text=serialize_state(state),
+            self._telemetry, model=response.model, backend=self._telemetry_backend, state_text=serialize_state(state),
             questions=questions, kinds={n: _kind_of(q) for n, q in questions.items()},
             methods=methods, response=response, duration_ms=duration_ms,
             context_name=getattr(ctx, "name", None))

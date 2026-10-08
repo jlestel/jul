@@ -83,6 +83,8 @@ def _warn_once(message: str, *args: Any) -> None:
 
 #: bounds of the jul.request.duration histogram, in ms
 DURATION_BUCKETS_MS = (5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 20000, 30000, 60000, 120000, 300000)
+#: bounds of the jul.decision.confidence histogram (0 to 1), finer at the top where escalation bars sit
+CONFIDENCE_BUCKETS = (0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.99, 1.0)
 
 
 class _Telemetry:
@@ -103,9 +105,12 @@ class _Telemetry:
         from opentelemetry.sdk.metrics.view import ExplicitBucketHistogramAggregation, View
         # OpenTelemetry's default buckets stop at 10 s: a slow local call (a cold first load is ~60 s) would
         # land in +Inf and read as 10 s on a dashboard. These cover a remote call (~300 ms) up to 5 min.
-        duration = View(instrument_name="jul.request.duration",
-                        aggregation=ExplicitBucketHistogramAggregation(DURATION_BUCKETS_MS))
-        self.meter_provider = MeterProvider(resource=resource, metric_readers=readers, views=[duration])
+        # The default buckets (0, 5, 10, 25 ... 10000) put every confidence in "<= 5" too.
+        views = [View(instrument_name="jul.request.duration",
+                      aggregation=ExplicitBucketHistogramAggregation(DURATION_BUCKETS_MS)),
+                 View(instrument_name="jul.decision.confidence",
+                      aggregation=ExplicitBucketHistogramAggregation(CONFIDENCE_BUCKETS))]
+        self.meter_provider = MeterProvider(resource=resource, metric_readers=readers, views=views)
         self.logger_provider = LoggerProvider(resource=resource)
         for p in processors:
             self.logger_provider.add_log_record_processor(p)
