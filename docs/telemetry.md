@@ -30,7 +30,8 @@ Metrics, meter `com.usejul.jul`, resource `service.name=jul`:
 
 The standard attributes are `session.id`, `app.version`, `app.entrypoint` (`sdk-py` or `cli`),
 `model` and `backend`. `method` is how the question was actually read: `vector`, `letters`, `cross`, `contrastive`, `head`
-(a tuned head from `autotune`), `pointer` (a decision model) or `laya`.
+(a tuned head from `autotune`), `pointer` (a decision model), `letter-readout` (a letter-readout decision
+model) or `laya`.
 
 Events (OTel logs), each with `event.name`, `event.timestamp` and `event.sequence`:
 

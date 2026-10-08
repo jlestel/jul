@@ -213,6 +213,7 @@ class TypeSafeClient:
             logits, tokens = engine.reader.logits(state, items)
             for (name, question), (kind, _, options), z in zip(questions.items(), items, logits):
                 answers[name] = _format(kind, question, options, self._calibrated(ctx, kind, question, options, z))
+                methods[name] = "letter-readout"
             return SystemOneResponse(answers=answers, model=self._preset.name, usage=Usage(input_tokens=tokens),
                                      request_id=str(uuid.uuid4()))
 

@@ -229,3 +229,27 @@ def test_event_sequence_is_unique_across_threads(otel):
         t.join()
     seq = [e["event.sequence"] for e in _events(logs)]
     assert len(seq) == 4 * 10 * 4 and len(set(seq)) == len(seq)
+
+
+def test_a_letter_readout_model_is_reported_as_such(otel, monkeypatch):
+    """The engine.reader branch (#41) runs for real here, on a fake reader: method="letter-readout"."""
+    import numpy as np
+
+    logs, reader = otel
+    monkeypatch.undo()                 # the real _system_one, not the canned one
+    monkeypatch.setenv("JUL_ENABLE_TELEMETRY", "1")
+
+    class Reader:
+        def logits(self, state, items):
+            return [np.zeros(len(options)) for _, _, options in items], 7
+
+    class Engine:
+        reader, pointer, contrastive = Reader(), None, None
+
+    client = TypeSafeClient(model="minicpm5-2b")
+    monkeypatch.setattr(client, "_engine_for", lambda model: Engine())
+    response = _ask(client)
+    assert response.usage.input_tokens == 7
+    decisions = [e for e in _events(logs) if e["event.name"] == "decision"]
+    assert len(decisions) == 3 and {e["method"] for e in decisions} == {"letter-readout"}
+    assert {p["method"] for p in _metrics(reader)["jul.decision.count"]} == {"letter-readout"}
