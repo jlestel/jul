@@ -385,6 +385,13 @@ def readings(client, methods: list, features: list) -> tuple[list, list, dict]:
             if m:
                 skipped[f"zero-shot:{m}"] = "decision model: read with its pointer head only"
         return [None], features, skipped
+    if engine is not None and getattr(engine, "reader", None) is not None:
+        for m in methods:
+            if m:
+                skipped[f"zero-shot:{m}"] = "letter-readout decision model: read with its own prompt only"
+        for f in features:
+            skipped[f"autotune:{f}"] = "letter-readout decision model: no vector reading to tune"
+        return [None], [], skipped
     if engine is not None and getattr(engine, "contrastive", None) is not None:
         for m in methods:
             if m and m != "vector":

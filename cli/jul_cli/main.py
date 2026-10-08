@@ -254,6 +254,8 @@ def cmd_models(a):
         print(f"\n{name} ({backend}): " + ", ".join(f"{b} {r}" for b, r in p.repos.items()))
         if p.method == "pointer":
             print("  method: pointer (decision model; format, head and temperature in its decision.json)")
+        elif p.method == "letter-readout":
+            print("  method: letter readout (decision model; its own prompt, option-letter logits, temperature)")
         elif p.method == "contrastive":
             print(f"  method: contrastive (projection heads on the frozen backbone, in {p.heads})")
         else:
@@ -353,6 +355,22 @@ def cmd_models_add(a):
     from jul.contrastive import is_heads_source
     if a.repo and is_heads_source(a.repo):
         return _add_contrastive(a)
+    from jul.letter_models import spec_from_repo
+    letters = spec_from_repo(a.repo) if a.repo else None
+    if letters is not None:
+        from jul.backbone import resolve_backend
+        from jul.presets import letters_preset, save_preset
+        backend = resolve_backend(a.backend)
+        if backend != "torch":
+            raise SystemExit(f"error: a letter-readout model is read with --backend torch for now, not {backend} "
+                             "(its parity with the model's runtime is measured on torch only)")
+        path = save_preset(letters_preset(a.name, a.repo, backend, letters))
+        temps = ", ".join(f"{k} {v:.3g}" if k != "default" else f"{v:.3g}" for k, v in letters.temperature.items())
+        print(f"{a.name}: letter-readout decision model on {backend}, read with its own {letters.format} prompt "
+              f"(letters {letters.letters[:letters.max_options]}, temperature {temps}; from {letters.source}). "
+              f"Nothing fitted -> {path}")
+        print(f"\nUse it: jul ask ... --model {a.name} --backend {backend}")
+        return
     from jul.decision import spec_source
     source = spec_source(a.repo) if a.repo else None
     if source:

@@ -170,6 +170,20 @@ class TypeSafeClient:
         shared: dict[int, np.ndarray] = {}
         answers, tokens = {}, 0
 
+        if engine.reader is not None:
+            # A letter-readout decision model (jul/letter_models.py): every question is written in the
+            # model's own prompt and read at its option letters, with its own temperature. It has no
+            # vector reading fitted, so `method` cannot pick another one.
+            if method and method != "letter-readout":
+                raise ValueError(f"{self._preset.name!r} is a letter-readout decision model: it reads with its "
+                                 f"own prompt only (method={method!r} is not available)")
+            items = [(_kind_of(q), q.instructions, options_of(q)) for q in questions.values()]
+            logits, tokens = engine.reader.logits(state, items)
+            for (name, question), (kind, _, options), z in zip(questions.items(), items, logits):
+                answers[name] = _format(kind, question, options, self._calibrated(ctx, kind, question, options, z))
+            return SystemOneResponse(answers=answers, model=self._preset.name, usage=Usage(input_tokens=tokens),
+                                     request_id=str(uuid.uuid4()))
+
         if engine.pointer is not None:
             # A decision model reads the raw state in its own format, once for all the questions. Some
             # questions go to the vector reading of the same weights instead (its fallback, fitted by
@@ -337,6 +351,9 @@ class TypeSafeClient:
         states = [serialize_state(s) for s, _ in labeled]
         reports: dict[str, tuning.TuningReport] = {}
         features_mode = features
+        if engine.reader is not None:
+            raise ValueError(f"{self._preset.name!r} is a letter-readout decision model: it has no vector "
+                             "reading for autotune to train a head on")
         if engine.contrastive is not None:
             if features != "vector" or formulations:
                 raise ValueError(f"{self._preset.name!r} is a contrastive model: its heads read the backbone "
