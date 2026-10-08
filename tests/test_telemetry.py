@@ -80,7 +80,7 @@ def test_one_request_event_and_one_decision_event_per_question(otel):
     logs, _ = otel
     _ask()
     events = _events(logs)
-    assert [e["event.name"] for e in events] == ["request", "decision", "decision", "decision"]
+    assert [e["event.name"] for e in events] == ["jul.request", "jul.decision", "jul.decision", "jul.decision"]
     assert [e["event.sequence"] for e in events] == [0, 1, 2, 3]
     request = events[0]
     assert request["model"] == "minicpm5-2b"
@@ -177,7 +177,7 @@ def test_an_error_is_counted_and_still_raised(otel, monkeypatch):
     with pytest.raises(RuntimeError):
         _ask()
     event = _events(logs)[0]
-    assert event["event.name"] == "request_error"
+    assert event["event.name"] == "jul.request_error"
     assert event["error_type"] == "RuntimeError"
     assert "error" not in event                                   # the message can hold paths or data
     assert _metrics(reader)["jul.request.error.count"][0]["_value"] == 1
@@ -212,7 +212,7 @@ def test_a_reading_that_does_not_say_its_method_is_reported_under_the_presets(ot
     client = TypeSafeClient(model="minicpm5-2b")
     client._preset = dataclasses.replace(client._preset, method="letter-readout")
     _ask(client)
-    decisions = [e for e in _events(logs) if e["event.name"] == "decision"]
+    decisions = [e for e in _events(logs) if e["event.name"] == "jul.decision"]
     assert {e["method"] for e in decisions} == {"letter-readout"}
     assert {p["method"] for p in _metrics(reader)["jul.decision.count"]} == {"letter-readout"}
 
@@ -250,7 +250,7 @@ def test_a_letter_readout_model_is_reported_as_such(otel, monkeypatch):
     monkeypatch.setattr(client, "_engine_for", lambda model: Engine())
     response = _ask(client)
     assert response.usage.input_tokens == 7
-    decisions = [e for e in _events(logs) if e["event.name"] == "decision"]
+    decisions = [e for e in _events(logs) if e["event.name"] == "jul.decision"]
     assert len(decisions) == 3 and {e["method"] for e in decisions} == {"letter-readout"}
     assert {p["method"] for p in _metrics(reader)["jul.decision.count"]} == {"letter-readout"}
 
@@ -324,10 +324,10 @@ def test_a_remote_decider_reports_its_calls(otel, server):
     response = SystemOneHTTP(server, model="jev-latest", api_key="k").system_one(state=STATE, questions=QUESTIONS)
     assert response.model == "jev-1.13.0"
     events = _events(logs)
-    (request,) = [e for e in events if e["event.name"] == "request"]
+    (request,) = [e for e in events if e["event.name"] == "jul.request"]
     assert (request["model"], request["backend"], request["input_tokens"]) == ("jev-1.13.0", "remote", 123)
     assert request["state"] == "<REDACTED>", "same default redaction as a local call"
-    decisions = [e for e in events if e["event.name"] == "decision"]
+    decisions = [e for e in events if e["event.name"] == "jul.decision"]
     assert len(decisions) == 3 and {e["method"] for e in decisions} == {"remote"}
     assert {e["model"] for e in decisions} == {"jev-1.13.0"}
     m = _metrics(reader)
@@ -344,7 +344,7 @@ def test_a_remote_http_error_is_a_request_error(otel, server):
     logs, reader = otel
     with pytest.raises(RemoteError, match="HTTP 401"):
         SystemOneHTTP(server, model="jev-latest", api_key="bad").system_one(state=STATE, questions=QUESTIONS)
-    (error,) = [e for e in _events(logs) if e["event.name"] == "request_error"]
+    (error,) = [e for e in _events(logs) if e["event.name"] == "jul.request_error"]
     assert (error["model"], error["backend"], error["error_type"]) == ("jev-latest", "remote", "RemoteError")
     assert "error" not in error, "the message stays out without JUL_OTEL_LOG_QUESTION_DETAILS"
     assert _metrics(reader)["jul.request.error.count"][0]["error_type"] == "RemoteError"
@@ -358,7 +358,7 @@ def test_escalation_records_each_tier_under_its_own_model(otel, server, monkeypa
     local = TypeSafeClient(model="minicpm5-2b")
     client = Escalation(tiers=[("local", local), ("jev", SystemOneHTTP(server, api_key="k"))], min_confidence=0.99)
     client.system_one(state=STATE, questions=QUESTIONS)
-    requests = [e for e in _events(logs) if e["event.name"] == "request"]
+    requests = [e for e in _events(logs) if e["event.name"] == "jul.request"]
     assert {(e["model"], e.get("backend")) for e in requests} == {("minicpm5-2b", local._backend),
                                                                   ("jev-1.13.0", "remote")}
     methods = {(p["model"], p["method"]) for p in _metrics(reader)["jul.decision.count"]}
@@ -426,5 +426,25 @@ def test_laya_reports_the_torch_backend(otel, monkeypatch):
     m = _metrics(reader)
     assert {p["backend"] for p in m["jul.decision.count"]} == {"torch"}
     assert {p["method"] for p in m["jul.decision.count"]} == {"laya"}
-    (request,) = [e for e in _events(logs) if e["event.name"] == "request"]
+    (request,) = [e for e in _events(logs) if e["event.name"] == "jul.request"]
     assert request["backend"] == "torch"
+
+
+def test_event_name_attribute_is_the_records_event_name(otel, monkeypatch):
+    """Grafana maps the attribute and the record's event_name onto one label: they must agree (jul.*)."""
+    logs, _ = otel
+    _ask()
+
+    def boom(*args, **kwargs):
+        raise RuntimeError("down")
+
+    monkeypatch.setattr(TypeSafeClient, "_system_one", boom)
+    with pytest.raises(RuntimeError):
+        _ask()
+    records = [r.log_record for r in logs.get_finished_logs()]
+    seen = set()
+    for record in records:
+        name = record.attributes["event.name"]
+        assert name == record.event_name and name.startswith("jul.")
+        seen.add(name)
+    assert seen == {"jul.request", "jul.decision", "jul.request_error"}

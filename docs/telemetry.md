@@ -33,7 +33,8 @@ The standard attributes are `session.id`, `app.version`, `app.entrypoint` (`sdk-
 (a tuned head from `autotune`), `pointer` (a decision model), `letter-readout` (a letter-readout decision
 model), `laya` or `remote` (a `SystemOneHTTP` server).
 
-Events (OTel logs), each with `event.name`, `event.timestamp` and `event.sequence`:
+Events (OTel logs), each with `event.name` (the same value as the record's `event_name`, e.g. `jul.decision`),
+`event.timestamp` and `event.sequence`:
 
 - `jul.request`: one per call. `request_id`, `duration_ms`, `input_tokens`, `question_count`,
   `state_length`, `state`.

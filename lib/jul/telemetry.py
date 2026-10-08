@@ -185,7 +185,7 @@ class _Telemetry:
 
     def event(self, name: str, attributes: Mapping[str, Any]) -> None:
         attrs = {k: v for k, v in attributes.items() if v is not None}
-        attrs["event.name"] = name
+        attrs["event.name"] = f"jul.{name}"     # the same value as the record's event_name
         attrs["event.timestamp"] = time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime()) + "Z"
         attrs["event.sequence"] = next(self.sequence)
         self.logger.emit(event_name=f"jul.{name}", body=f"jul.{name}", attributes=attrs)
