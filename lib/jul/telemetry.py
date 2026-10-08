@@ -81,6 +81,10 @@ def _warn_once(message: str, *args: Any) -> None:
         log.warning(message, *args)
 
 
+#: bounds of the jul.request.duration histogram, in ms
+DURATION_BUCKETS_MS = (5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 20000, 30000, 60000, 120000, 300000)
+
+
 class _Telemetry:
     """The providers, meter instruments and logger for one process."""
 
@@ -96,7 +100,12 @@ class _Telemetry:
 
         readers = metric_readers if metric_readers is not None else self._metric_readers()
         processors = log_processors if log_processors is not None else self._log_processors()
-        self.meter_provider = MeterProvider(resource=resource, metric_readers=readers)
+        from opentelemetry.sdk.metrics.view import ExplicitBucketHistogramAggregation, View
+        # OpenTelemetry's default buckets stop at 10 s: a slow local call (a cold first load is ~60 s) would
+        # land in +Inf and read as 10 s on a dashboard. These cover a remote call (~300 ms) up to 5 min.
+        duration = View(instrument_name="jul.request.duration",
+                        aggregation=ExplicitBucketHistogramAggregation(DURATION_BUCKETS_MS))
+        self.meter_provider = MeterProvider(resource=resource, metric_readers=readers, views=[duration])
         self.logger_provider = LoggerProvider(resource=resource)
         for p in processors:
             self.logger_provider.add_log_record_processor(p)
@@ -107,7 +116,7 @@ class _Telemetry:
         self.decision_count = meter.create_counter(
             "jul.decision.count", description="Questions answered")
         self.token_usage = meter.create_counter(
-            "jul.token.usage", unit="tokens", description="Tokens read by the local model")
+            "jul.token.usage", unit="tokens", description="Input tokens of a call (local model, or the server's usage)")
         self.request_duration = meter.create_histogram(
             "jul.request.duration", unit="ms", description="Wall-clock time of one system_one call")
         self.decision_confidence = meter.create_histogram(

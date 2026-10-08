@@ -23,7 +23,7 @@ Metrics, meter `com.usejul.jul`, resource `service.name=jul`:
 |---|---|---|
 | `jul.session.count` | clients that made their first call | standard |
 | `jul.decision.count` | questions answered | `question.type`, `method` |
-| `jul.token.usage` | tokens read by the local model (unit `tokens`) | `type=input` |
+| `jul.token.usage` | input tokens of a call: read by the local model, or the server's `usage` for a remote one (unit `tokens`) | `type=input` |
 | `jul.request.duration` | one `system_one` call, histogram (unit `ms`) | standard |
 | `jul.decision.confidence` | confidence of each Choice and Score answer, histogram | `question.type` |
 | `jul.request.error.count` | calls that raised | `error_type` |
@@ -31,7 +31,7 @@ Metrics, meter `com.usejul.jul`, resource `service.name=jul`:
 The standard attributes are `session.id`, `app.version`, `app.entrypoint` (`sdk-py` or `cli`),
 `model` and `backend`. `method` is how the question was actually read: `vector`, `letters`, `cross`, `contrastive`, `head`
 (a tuned head from `autotune`), `pointer` (a decision model), `letter-readout` (a letter-readout decision
-model) or `laya`.
+model), `laya` or `remote` (a `SystemOneHTTP` server).
 
 Events (OTel logs), each with `event.name`, `event.timestamp` and `event.sequence`:
 
@@ -63,7 +63,17 @@ A telemetry failure (collector down, OpenTelemetry missing) logs one warning and
 decision. With telemetry off, OpenTelemetry is not imported. `jul[otel]` needs OpenTelemetry 1.38 or later
 (`Logger.emit(event_name=)`); CI runs the telemetry tests at that floor.
 
-A session is one client: `session.id` is drawn when a `TypeSafeClient` makes its first call, and
-`jul.session.count` counts clients. Under `jul serve` every HTTP request goes through the server's one
-client, so a server process is one session, whoever calls it. With `--escalate-to`, only the local tier is
-measured: a question answered by the remote tier sends no `jul.decision`.
+A session is one client: `session.id` is drawn when a `TypeSafeClient` (or a `SystemOneHTTP`) makes its
+first call, and `jul.session.count` counts clients. Under `jul serve` every HTTP request goes through the
+server's one client, so a server process is one session, whoever calls it.
+
+Remote deciders report too. A `SystemOneHTTP` call (Jev via `typesafe`, Ollama, Clef on Workers AI, a remote
+`jul serve`) is recorded like a local one, with `model` the model the server answered with (e.g.
+`jev-1.13.0`), `backend` and `method` set to `remote`, `input_tokens` from the server's `usage`, and the same
+switches and redaction. Under `Escalation` / `--escalate-to`, each tier's call is recorded under its own
+model, so a dashboard can put the local model and the remote one side by side. An HTTP error is a
+`jul.request_error` (`error_type=RemoteError`).
+
+`jul.request.duration` has explicit buckets, from 5 ms to 5 min (`5, 10, 25, 50, 100, 250, 500, 1000, 2500,
+5000, 10000, 20000, 30000, 60000, 120000, 300000`): OpenTelemetry's default ones stop at 10 s, and a slow
+local call (a cold first load takes about a minute) would read as 10 s.

@@ -253,3 +253,126 @@ def test_a_letter_readout_model_is_reported_as_such(otel, monkeypatch):
     decisions = [e for e in _events(logs) if e["event.name"] == "decision"]
     assert len(decisions) == 3 and {e["method"] for e in decisions} == {"letter-readout"}
     assert {p["method"] for p in _metrics(reader)["jul.decision.count"]} == {"letter-readout"}
+
+
+# --- the duration histogram -------------------------------------------------------------------------
+
+def test_a_slow_call_lands_in_a_bucket_below_inf(otel, monkeypatch):
+    """OpenTelemetry's default buckets stop at 10 s: a 30 s local call must not read as 10 s."""
+    logs, reader = otel
+    clock = iter([0.0, 30.0])
+    monkeypatch.setattr(jul.client.time, "perf_counter", lambda: next(clock))
+    _ask()
+    for rm in reader.get_metrics_data().resource_metrics:
+        for sm in rm.scope_metrics:
+            for m in sm.metrics:
+                if m.name == "jul.request.duration":
+                    (point,) = m.data.data_points
+    bounds = list(point.explicit_bounds)
+    assert bounds == list(telemetry.DURATION_BUCKETS_MS) and bounds[-1] == 300000
+    landed = next(i for i, c in enumerate(point.bucket_counts) if c)
+    assert landed < len(bounds) and bounds[landed - 1] < 30000 <= bounds[landed]
+
+
+# --- remote deciders (SystemOneHTTP) ------------------------------------------------------------------
+
+@pytest.fixture
+def server():
+    """A System One server on localhost: answers as `jev-1.13.0`, or HTTP 401 when the key is "bad"."""
+    import json
+    import threading
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_POST(self):
+            body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+            if self.headers.get("Authorization") == "Bearer bad":
+                self.send_response(401)
+                self.end_headers()
+                self.wfile.write(b'{"error": "bad key"}')
+                return
+            answers = {}
+            for name, q in body["questions"].items():
+                if q["type"] == "choice":
+                    answers[name] = {"type": "choice", "choice": "billing",
+                                     "probabilities": {"billing": 0.8, "technical": 0.2}, "confidence": 0.8}
+                elif q["type"] == "noul":
+                    answers[name] = {"type": "noul", "noul": 0.3}
+                else:
+                    answers[name] = {"type": "score", "score": 0.6, "legend": {"0": "Calm", "1": "Angry"},
+                                     "probabilities": {"0": 0.4, "1": 0.6}, "confidence": 0.6}
+            out = json.dumps({"model": "jev-1.13.0", "request_id": "remote-1", "answers": answers,
+                              "usage": {"input_tokens": 123}}).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(out)
+
+        def log_message(self, *args):
+            pass
+
+    httpd = HTTPServer(("127.0.0.1", 0), Handler)
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    yield f"http://127.0.0.1:{httpd.server_address[1]}"
+    httpd.shutdown()
+
+
+def test_a_remote_decider_reports_its_calls(otel, server):
+    from jul import SystemOneHTTP
+
+    logs, reader = otel
+    response = SystemOneHTTP(server, model="jev-latest", api_key="k").system_one(state=STATE, questions=QUESTIONS)
+    assert response.model == "jev-1.13.0"
+    events = _events(logs)
+    (request,) = [e for e in events if e["event.name"] == "request"]
+    assert (request["model"], request["backend"], request["input_tokens"]) == ("jev-1.13.0", "remote", 123)
+    assert request["state"] == "<REDACTED>", "same default redaction as a local call"
+    decisions = [e for e in events if e["event.name"] == "decision"]
+    assert len(decisions) == 3 and {e["method"] for e in decisions} == {"remote"}
+    assert {e["model"] for e in decisions} == {"jev-1.13.0"}
+    m = _metrics(reader)
+    assert {(p["model"], p["backend"], p["method"]) for p in m["jul.decision.count"]} == \
+        {("jev-1.13.0", "remote", "remote")}
+    assert [p["_value"] for p in m["jul.token.usage"]] == [123]
+    assert m["jul.session.count"][0]["_value"] == 1
+
+
+def test_a_remote_http_error_is_a_request_error(otel, server):
+    from jul import SystemOneHTTP
+    from jul.escalate import RemoteError
+
+    logs, reader = otel
+    with pytest.raises(RemoteError, match="HTTP 401"):
+        SystemOneHTTP(server, model="jev-latest", api_key="bad").system_one(state=STATE, questions=QUESTIONS)
+    (error,) = [e for e in _events(logs) if e["event.name"] == "request_error"]
+    assert (error["model"], error["backend"], error["error_type"]) == ("jev-latest", "remote", "RemoteError")
+    assert "error" not in error, "the message stays out without JUL_OTEL_LOG_QUESTION_DETAILS"
+    assert _metrics(reader)["jul.request.error.count"][0]["error_type"] == "RemoteError"
+
+
+def test_escalation_records_each_tier_under_its_own_model(otel, server, monkeypatch):
+    """Local tier unsure on everything: every question goes on to the remote tier. Two requests, two models."""
+    from jul import Escalation, SystemOneHTTP
+
+    logs, reader = otel
+    local = TypeSafeClient(model="minicpm5-2b")
+    client = Escalation(tiers=[("local", local), ("jev", SystemOneHTTP(server, api_key="k"))], min_confidence=0.99)
+    client.system_one(state=STATE, questions=QUESTIONS)
+    requests = [e for e in _events(logs) if e["event.name"] == "request"]
+    assert {(e["model"], e.get("backend")) for e in requests} == {("minicpm5-2b", local._backend),
+                                                                  ("jev-1.13.0", "remote")}
+    methods = {(p["model"], p["method"]) for p in _metrics(reader)["jul.decision.count"]}
+    assert ("jev-1.13.0", "remote") in methods and ("minicpm5-2b", "head") in methods
+
+
+def test_a_remote_decider_with_telemetry_off_sends_nothing_and_answers_the_same(server, monkeypatch):
+    from jul import SystemOneHTTP
+
+    monkeypatch.delenv("JUL_ENABLE_TELEMETRY", raising=False)
+    telemetry.reset()
+    try:
+        assert not telemetry.active()
+        response = SystemOneHTTP(server, api_key="k").system_one(state=STATE, questions=QUESTIONS)
+        assert response.model == "jev-1.13.0" and response.answers["team"].choice == "billing"
+    finally:
+        telemetry.reset()

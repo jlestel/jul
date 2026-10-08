@@ -32,7 +32,10 @@ Versions come from git tags (see [publishing](docs/publishing.md)): a `v*` tag r
   `jul.decision.count`, `jul.token.usage`, `jul.request.duration`, `jul.decision.confidence`, `jul.request.error.count`)
   and events (`jul.request`, `jul.decision`, `jul.request_error`) to the collector set by the standard `OTEL_*`
   variables, named after Claude Code's. State, question details and probabilities stay out unless switched on
-  (`JUL_OTEL_LOG_*`); off, OpenTelemetry is never imported. See [docs/telemetry.md](docs/telemetry.md) (#6).
+  (`JUL_OTEL_LOG_*`); off, OpenTelemetry is never imported. Remote deciders (`SystemOneHTTP`: Jev, Ollama,
+  Clef, a remote `jul serve`) report too, under the model the server answered with and `backend=remote`, so
+  each escalation tier shows up under its own model. `jul.request.duration` buckets go up to 5 min. See
+  [docs/telemetry.md](docs/telemetry.md) (#6).
 
 ### Changed
 
