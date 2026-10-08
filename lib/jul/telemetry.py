@@ -34,6 +34,7 @@ A telemetry failure never breaks a decision: every export error is swallowed aft
 from __future__ import annotations
 
 import atexit
+import itertools
 import logging
 import os
 import time
@@ -114,7 +115,7 @@ class _Telemetry:
         self.error_count = meter.create_counter(
             "jul.request.error.count", description="system_one calls that raised")
         self.logger = self.logger_provider.get_logger(METER_NAME, __version__)
-        self.sequence = 0
+        self.sequence = itertools.count()  # next() is atomic under the GIL: a client shared across threads
 
     # --- exporters from the environment -----------------------------------------------------------
 
@@ -172,8 +173,7 @@ class _Telemetry:
         attrs = {k: v for k, v in attributes.items() if v is not None}
         attrs["event.name"] = name
         attrs["event.timestamp"] = time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime()) + "Z"
-        attrs["event.sequence"] = self.sequence
-        self.sequence += 1
+        attrs["event.sequence"] = next(self.sequence)
         self.logger.emit(event_name=f"jul.{name}", body=f"jul.{name}", attributes=attrs)
 
 

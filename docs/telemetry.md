@@ -59,4 +59,10 @@ their own `JUL_` names so that a machine configured to log Claude Code prompts d
 sending JuL states without being asked.
 
 A telemetry failure (collector down, OpenTelemetry missing) logs one warning and never fails the
-decision. With telemetry off, OpenTelemetry is not imported.
+decision. With telemetry off, OpenTelemetry is not imported. `jul[otel]` needs OpenTelemetry 1.38 or later
+(`Logger.emit(event_name=)`); CI runs the telemetry tests at that floor.
+
+A session is one client: `session.id` is drawn when a `TypeSafeClient` makes its first call, and
+`jul.session.count` counts clients. Under `jul serve` every HTTP request goes through the server's one
+client, so a server process is one session, whoever calls it. With `--escalate-to`, only the local tier is
+measured: a question answered by the remote tier sends no `jul.decision`.

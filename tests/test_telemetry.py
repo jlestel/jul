@@ -11,10 +11,14 @@ import pytest
 
 pytest.importorskip("opentelemetry.sdk")
 
-from opentelemetry.sdk._logs.export import InMemoryLogRecordExporter, SimpleLogRecordProcessor  # noqa: E402
+from opentelemetry.sdk._logs import export as _logs_export  # noqa: E402
+from opentelemetry.sdk._logs.export import SimpleLogRecordProcessor  # noqa: E402
 from opentelemetry.sdk.metrics.export import InMemoryMetricReader  # noqa: E402
 
 import jul  # noqa: E402
+
+# 1.38 (the floor of jul[otel]) names it InMemoryLogExporter; 1.39 added InMemoryLogRecordExporter
+InMemoryLogRecordExporter = getattr(_logs_export, "InMemoryLogRecordExporter", None) or _logs_export.InMemoryLogExporter
 from jul import Choice, Noul, Score, TypeSafeClient, telemetry  # noqa: E402
 from jul.types import ChoiceAnswer, NoulAnswer, ScoreAnswer, SystemOneResponse, Usage  # noqa: E402
 
@@ -193,3 +197,35 @@ def test_off_by_default_and_opentelemetry_is_not_even_imported():
             "assert not telemetry.active(); "
             "assert not [m for m in sys.modules if m.startswith('opentelemetry')], 'imported'")
     subprocess.run([sys.executable, "-c", code], check=True, cwd=str(__import__("pathlib").Path(__file__).parents[1]))
+
+
+def test_a_reading_that_does_not_say_its_method_is_reported_under_the_presets(otel, monkeypatch):
+    """A model family whose branch does not fill `methods` (letter-readout, #41) is not "unknown"."""
+    import dataclasses
+
+    logs, reader = otel
+
+    def silent(self, state, questions, context, model, method, route_above, methods):
+        return _canned(self, state, questions, context, model, method, route_above, {})
+
+    monkeypatch.setattr(TypeSafeClient, "_system_one", silent)
+    client = TypeSafeClient(model="minicpm5-2b")
+    client._preset = dataclasses.replace(client._preset, method="letter-readout")
+    _ask(client)
+    decisions = [e for e in _events(logs) if e["event.name"] == "decision"]
+    assert {e["method"] for e in decisions} == {"letter-readout"}
+    assert {p["method"] for p in _metrics(reader)["jul.decision.count"]} == {"letter-readout"}
+
+
+def test_event_sequence_is_unique_across_threads(otel):
+    import threading
+
+    logs, _ = otel
+    client = TypeSafeClient(model="minicpm5-2b")
+    threads = [threading.Thread(target=lambda: [_ask(client) for _ in range(10)]) for _ in range(4)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    seq = [e["event.sequence"] for e in _events(logs)]
+    assert len(seq) == 4 * 10 * 4 and len(set(seq)) == len(seq)

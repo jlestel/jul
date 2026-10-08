@@ -157,6 +157,10 @@ class TypeSafeClient:
                                    question_count=len(questions))
             raise
         duration_ms = (time.perf_counter() - started) * 1000
+        # A reading that does not say how it read (a model family added later, e.g. letter-readout) is
+        # reported under its preset's method rather than "unknown".
+        for name in questions:
+            methods.setdefault(name, getattr(self._preset, "method", None) or "unknown")
         ctx = resolve_context(context, self._context_home) if context is not None else self.context
         telemetry.record_request(
             self._telemetry, model=response.model, backend=self._backend, state_text=serialize_state(state),
@@ -185,7 +189,7 @@ class TypeSafeClient:
     def _system_one(self, state: Any, questions: Mapping[str, Question], context, model, method,
                     route_above, methods: dict[str, str]) -> SystemOneResponse:
         """`methods` is filled with how each question was read (pointer, vector, letters, cross,
-        contrastive, head), for telemetry."""
+        contrastive, head), for telemetry; a question left out is reported under the preset's method."""
         if self._laya is not None:
             if model and model != self._laya.name:
                 raise ValueError(f"this client runs {self._laya.name!r}; create another one for {model!r}")
